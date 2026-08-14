@@ -23,12 +23,26 @@ Tài liệu này chuyển yêu cầu tính năng Bình luận trên MyTV thành 
 
 | Epic | Tên Epic | Số User Story | File chi tiết |
 |---|---|---:|---|
-| EP01 | Trải nghiệm bình luận và đánh giá | 6 | [EP01](EP01_TRAI_NGHIEM_BINH_LUAN_VA_DANH_GIA.md) |
-| EP02 | Tương tác cộng đồng | 3 | [EP02](EP02_TUONG_TAC_CONG_DONG.md) |
-| EP03 | An toàn và kiểm duyệt | 3 | [EP03_AN_TOAN_VA_KIEM_DUYET](EP03_AN_TOAN_VA_KIEM_DUYET.md) |
-| EP04 | CMS quản trị bình luận | 4 | [EP04](EP04_CMS_QUAN_TRI_BINH_LUAN.md) |
-| EP05 | Tăng trưởng và phân tích | 4 | [EP05](EP05_TANG_TRUONG_VA_PHAN_TICH.md) |
+| EP01 | Trải nghiệm bình luận và đánh giá | 6 | [README EP01](EP01_TRAI_NGHIEM_BINH_LUAN_VA_DANH_GIA/README.md) |
+| EP02 | Tương tác cộng đồng | 3 | [README EP02](EP02_TUONG_TAC_CONG_DONG/README.md) |
+| EP03 | An toàn và kiểm duyệt | 3 | [README EP03](EP03_AN_TOAN_VA_KIEM_DUYET/README.md) |
+| EP04 | CMS quản trị bình luận | 4 | [README EP04](EP04_CMS_QUAN_TRI_BINH_LUAN/README.md) |
+| EP05 | Tăng trưởng và phân tích | 4 | [README EP05](EP05_TANG_TRUONG_VA_PHAN_TICH/README.md) |
 | **Tổng** |  | **20** |  |
+
+## 3.1. Cấu trúc thư mục
+
+Mỗi Epic có một thư mục riêng. README trong thư mục Epic chứa thông tin Epic, danh sách story và liên kết đến từng file User Story.
+
+| Thư mục | Nội dung |
+|---|---|
+| [EP01 — Trải nghiệm bình luận và đánh giá](EP01_TRAI_NGHIEM_BINH_LUAN_VA_DANH_GIA/README.md) | US01–US06 |
+| [EP02 — Tương tác cộng đồng](EP02_TUONG_TAC_CONG_DONG/README.md) | US07–US09 |
+| [EP03 — An toàn và kiểm duyệt](EP03_AN_TOAN_VA_KIEM_DUYET/README.md) | US10–US12 |
+| [EP04 — CMS quản trị bình luận](EP04_CMS_QUAN_TRI_BINH_LUAN/README.md) | US13–US16 |
+| [EP05 — Tăng trưởng và phân tích](EP05_TANG_TRUONG_VA_PHAN_TICH/README.md) | US17–US20 |
+
+Các file `EPxx_*.md` ở cấp gốc vẫn được giữ làm bản tổng hợp tham chiếu; bản dùng để quản lý chi tiết nằm trong 5 thư mục Epic.
 
 ## 4. Danh sách 20 User Story
 
