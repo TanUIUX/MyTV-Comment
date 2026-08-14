@@ -21,7 +21,7 @@ Tài liệu này chuyển yêu cầu tính năng Bình luận trên MyTV thành 
 
 ## 3. Danh sách Epic
 
-| Epic | Tên Epic | Số User Story | File chi tiết |
+| Epic | Tên Epic | Số User Story | README Epic |
 |---|---|---:|---|
 | EP01 | Trải nghiệm bình luận và đánh giá | 6 | [README EP01](EP01_TRAI_NGHIEM_BINH_LUAN_VA_DANH_GIA/README.md) |
 | EP02 | Tương tác cộng đồng | 3 | [README EP02](EP02_TUONG_TAC_CONG_DONG/README.md) |
@@ -32,7 +32,7 @@ Tài liệu này chuyển yêu cầu tính năng Bình luận trên MyTV thành 
 
 ## 3.1. Cấu trúc thư mục
 
-Mỗi Epic có một thư mục riêng. README trong thư mục Epic chứa thông tin Epic, danh sách story và liên kết đến từng file User Story.
+Mỗi Epic có một thư mục riêng. README trong thư mục Epic chứa thông tin Epic, danh sách story và liên kết đến từng file User Story. Đây là cấu trúc tài liệu chính của backlog.
 
 | Thư mục | Nội dung |
 |---|---|
@@ -41,8 +41,6 @@ Mỗi Epic có một thư mục riêng. README trong thư mục Epic chứa thô
 | [EP03 — An toàn và kiểm duyệt](EP03_AN_TOAN_VA_KIEM_DUYET/README.md) | US10–US12 |
 | [EP04 — CMS quản trị bình luận](EP04_CMS_QUAN_TRI_BINH_LUAN/README.md) | US13–US16 |
 | [EP05 — Tăng trưởng và phân tích](EP05_TANG_TRUONG_VA_PHAN_TICH/README.md) | US17–US20 |
-
-Các file tổng hợp `EPxx_*.md` ở cấp gốc đã được loại bỏ; bản dùng để quản lý chi tiết nằm trong 5 thư mục Epic.
 
 ## 4. Danh sách 20 User Story
 
