@@ -42,7 +42,7 @@ Mỗi Epic có một thư mục riêng. README trong thư mục Epic chứa thô
 | [EP04 — CMS quản trị bình luận](EP04_CMS_QUAN_TRI_BINH_LUAN/README.md) | US13–US16 |
 | [EP05 — Tăng trưởng và phân tích](EP05_TANG_TRUONG_VA_PHAN_TICH/README.md) | US17–US20 |
 
-Các file `EPxx_*.md` ở cấp gốc vẫn được giữ làm bản tổng hợp tham chiếu; bản dùng để quản lý chi tiết nằm trong 5 thư mục Epic.
+Các file tổng hợp `EPxx_*.md` ở cấp gốc đã được loại bỏ; bản dùng để quản lý chi tiết nằm trong 5 thư mục Epic.
 
 ## 4. Danh sách 20 User Story
 
