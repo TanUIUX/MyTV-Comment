@@ -77,3 +77,40 @@
 
 ---
 
+## Phân tích kiểm thử
+
+### Mục tiêu
+
+Kiểm tra các hành động kiểm duyệt, Report, Flag và Spoiler được phân quyền, yêu cầu lý do, cập nhật trạng thái đúng, không mất audit và xử lý xung đột đồng thời.
+
+### Rủi ro chính
+
+- Admin thao tác sai state hoặc hai Admin ghi đè nhau.
+- Xóa comment gốc không cascade thread; Report/Flag lộ ra người dùng.
+- Bỏ cờ/Spoiler không cập nhật app hoặc audit thiếu dữ liệu.
+
+### Dữ liệu kiểm thử
+
+Comment/reply Chờ duyệt, Hiển thị, Report, Flag, Spoiler; C1 có R1/R2; Admin kiểm duyệt đủ quyền, role chỉ đọc, hai Admin thao tác đồng thời.
+
+## Test Cases
+
+| ID | Loại | Tiền điều kiện / dữ liệu | Bước kiểm thử | Kết quả mong đợi |
+|---|---|---|---|---|
+| TC-US14-001 | Moderation | Comment Chờ duyệt | Admin chọn Duyệt, nhập lý do và xác nhận | State chuyển Hiển thị; app cập nhật; audit lưu actor/thời gian/lý do trước-sau. |
+| TC-US14-002 | Moderation | Comment Chờ duyệt | Admin chọn Từ chối với lý do hợp lệ | State không công khai; tác giả nhận trạng thái theo UX; audit đầy đủ. |
+| TC-US14-003 | Moderation | Comment Hiển thị | Admin chọn Ẩn rồi Xóa mềm | Ẩn không xóa dữ liệu; Xóa yêu cầu xác nhận, loại khỏi công khai và giữ audit. |
+| TC-US14-004 | Cascade | C1 có R1/R2 | Admin xóa C1 | C1 và toàn bộ thread biến mất khỏi UI/API công khai; không xóa nhầm thread khác. |
+| TC-US14-005 | Reason validation | Thao tác yêu cầu lý do | Bỏ trống lý do hoặc nhập ngoài giới hạn | Không cho lưu; hiển thị validation và không đổi state. |
+| TC-US14-006 | Concurrency | Hai Admin cùng mở C1 | Admin A xử lý trước, Admin B lưu state cũ | Admin B nhận cảnh báo xung đột; không ghi đè im lặng quyết định mới. |
+| TC-US14-007 | Report queue | C1 có nhiều Report | Mở Report, chọn Bỏ qua/Duyệt/Ẩn/Xóa | Hiển thị người gửi/lý do/version; hành động đúng kết luận và lưu lịch sử từng Report. |
+| TC-US14-008 | Report rule | C1 nhận nhiều Report | Tạo thêm Report rồi kiểm tra ngay | State không tự đổi chỉ vì số lượng; Admin là người quyết định. |
+| TC-US14-009 | Flag | C1 đang Hiển thị | Gắn từng lý do Flag, cập nhật đang xử lý/hoàn tất, bỏ cờ | Flag chỉ hiển thị nội bộ; trạng thái, người thao tác, thời gian, lý do được lưu. |
+| TC-US14-010 | Spoiler | C1 chưa/đã có Spoiler | Admin thêm rồi bỏ Spoiler | App che/bỏ che theo state mới; thay đổi không làm mất text và có audit. |
+| TC-US14-011 | Authorization | Role chỉ xem hoặc không có quyền xóa | Gọi UI/API từng hành động | Hành động không được cấp bị ẩn/chặn; không bypass qua API. |
+| TC-US14-012 | Data retention | Comment bị Xóa mềm | Kiểm tra CMS/audit sau thao tác | Dữ liệu không hiển thị công khai nhưng còn record phục vụ audit 90 ngày theo policy. |
+
+### Điểm cần PO chốt
+
+- Danh mục lý do, thông báo tác giả và có thao tác hàng loạt trong MVP hay không.
+- Cơ chế hoàn tác quyết định sai và quyền được phép hoàn tác.

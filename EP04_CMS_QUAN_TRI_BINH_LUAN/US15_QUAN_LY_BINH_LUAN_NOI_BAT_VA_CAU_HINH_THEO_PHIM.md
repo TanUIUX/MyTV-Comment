@@ -66,3 +66,40 @@
 
 ---
 
+## Phân tích kiểm thử
+
+### Mục tiêu
+
+Kiểm tra Admin ghim/bỏ ghim đúng giới hạn, cấu hình Mở/Đóng/Chế độ 1/2 theo từng phim, thời điểm hiệu lực, propagation và audit.
+
+### Rủi ro chính
+
+- Ghim comment không công khai, vượt giới hạn hoặc hiển thị sai thứ tự.
+- Cấu hình một phim ảnh hưởng phim/tập khác.
+- Đóng UI nhưng API vẫn nhận tương tác; thay đổi cấu hình không truyền tới app đúng SLA.
+
+### Dữ liệu kiểm thử
+
+Phim P1/P2, comment Hiển thị/Ẩn/Xóa/Chờ duyệt, cấu hình giới hạn ghim 3, Admin có/không có quyền, mốc hiệu lực hiện tại và tương lai.
+
+## Test Cases
+
+| ID | Loại | Tiền điều kiện / dữ liệu | Bước kiểm thử | Kết quả mong đợi |
+|---|---|---|---|---|
+| TC-US15-001 | Pinning | P1 có comment Hiển thị C1 | Admin ghim C1 | C1 xuất hiện khu vực Nổi bật; audit lưu actor/thời gian/phim. |
+| TC-US15-002 | Pinning | C1 đã ghim | Admin bỏ ghim rồi refresh app | C1 không còn ưu tiên; trạng thái hai phía nhất quán. |
+| TC-US15-003 | Boundary | Đã có 3 comment ghim, giới hạn = 3 | Thử ghim C4 | CMS yêu cầu bỏ ghim/thay thế hoặc xử lý đúng UX; không vượt quá 3. |
+| TC-US15-004 | Invalid pin | C1 Chờ duyệt/Ẩn/Xóa | Thử ghim qua UI và API | Không cho ghim nội dung không công khai; không tạo record ghim. |
+| TC-US15-005 | Ordering | Có nhiều comment ghim | Kiểm tra web/mobile và đổi thứ tự theo cấu hình | Thứ tự ghim nhất quán; tie/order tuân quy tắc đã chốt. |
+| TC-US15-006 | Config isolation | P1 và P2 đang Mở | Đổi cấu hình P1 sang Đóng/Chế độ 2 | Chỉ P1 đổi; P2 và dữ liệu/ghim của P2 không bị ảnh hưởng. |
+| TC-US15-007 | Config state | P1 đang Mở | Chọn Chế độ 1, Chế độ 2, Đóng và kiểm tra app/API | State hiển thị đúng; Đóng ẩn khu vực và ngừng tương tác; mode 1/2 áp dụng đúng US11. |
+| TC-US15-008 | Effective time | Cấu hình có thời điểm hiệu lực | Lưu mốc tương lai; kiểm tra trước/đúng/sau mốc | App/API chỉ áp dụng từ thời điểm hiệu lực, timezone nhất quán. |
+| TC-US15-009 | Impact warning | P1 có nhiều tương tác | Thay đổi cấu hình đang áp dụng | CMS hiển thị cảnh báo tác động và yêu cầu xác nhận theo thiết kế. |
+| TC-US15-010 | Propagation | Đã đổi cấu hình P1 | Kiểm tra app, CMS cache và public API trong SLA | Các kênh hội tụ state mới; không có cửa sổ cho phép tương tác trái cấu hình sau SLA. |
+| TC-US15-011 | Audit | Thực hiện ghim/bỏ ghim/đổi cấu hình | Tra cứu lịch sử | Ghi actor, thời gian, phim, trước/sau, lý do và thời điểm hiệu lực. |
+| TC-US15-012 | Authorization | Admin vận hành và role không có quyền | Thử thao tác ghim/cấu hình UI/API | Chỉ role được cấp phép thao tác; request trái quyền bị từ chối. |
+
+### Điểm cần PO chốt
+
+- Thứ tự ghim, ngày hết hạn và việc override ở cấp tập.
+- Cách tính mốc “sau X giờ” và hành vi comment đang xử lý khi đổi cấu hình.

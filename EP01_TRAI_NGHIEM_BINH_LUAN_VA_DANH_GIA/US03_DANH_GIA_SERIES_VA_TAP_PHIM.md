@@ -53,3 +53,36 @@
 
 ---
 
+## Phân tích kiểm thử
+
+### Mục tiêu
+
+Xác nhận điểm trung bình, tổng lượt đánh giá và bản ghi đánh giá của người dùng đúng độc lập ở cấp series/tập, đồng thời thao tác gửi lại có tính idempotent.
+
+### Rủi ro chính
+
+- Gộp nhầm rating series với rating tập.
+- Thay đổi rating làm tăng tổng lượt hoặc tính sai trung bình.
+- Retry/bấm nhiều lần tạo nhiều bản ghi hoặc làm sai điểm.
+
+### Dữ liệu kiểm thử
+
+Series S1, tập E1; hai tài khoản U1/U2; dữ liệu ban đầu có điểm trung bình và tổng lượt; phiên khách, phiên đăng nhập và tình huống API lỗi.
+
+## Test Cases
+
+| ID | Loại | Tiền điều kiện / dữ liệu | Bước kiểm thử | Kết quả mong đợi |
+|---|---|---|---|---|
+| TC-US03-001 | Functional | Nội dung có rating | Mở khu vực Bình luận bằng phiên khách | Hiển thị thang 5 sao, điểm trung bình và tổng lượt đánh giá hiện tại. |
+| TC-US03-002 | Authentication | Phiên khách | Chọn một mức sao | Hiển thị yêu cầu đăng nhập; không tạo rating mới. |
+| TC-US03-003 | Boundary | U1 đã đăng nhập | Gửi lần lượt 1 sao và 5 sao ở hai bản ghi dữ liệu độc lập | Giá trị biên 1 và 5 được chấp nhận và lưu đúng. |
+| TC-US03-004 | Negative/API | U1 đã đăng nhập | Gửi 0, 6, số âm, số thập phân hoặc giá trị không phải số qua API | Request bị từ chối; không thay đổi điểm/tổng lượt. |
+| TC-US03-005 | Data isolation | S1 và E1 đều cho phép rating | U1 đánh giá S1 rồi E1 | Tạo hai rating độc lập; điểm ở S1 không làm thay đổi điểm của E1. |
+| TC-US03-006 | Update | U1 đã có rating 3 sao | Đổi rating thành 5 sao | Chỉ bản ghi của U1 được cập nhật; tổng lượt không tăng; điểm trung bình tính lại đúng. |
+| TC-US03-007 | Idempotency | Request gửi chậm hoặc retry cùng idempotency key | Bấm gửi nhiều lần/đẩy lại request | Chỉ có một kết quả hợp lệ; UI không nhân đôi lượt hoặc bản ghi. |
+| TC-US03-008 | Error handling | Mock lỗi mạng/500 khi gửi rating | Gửi hoặc đổi rating | Trạng thái cũ được giữ; hiển thị lỗi và cho phép thử lại; không có bản ghi nửa chừng. |
+
+### Điểm cần PO chốt trước khi nghiệm thu số học
+
+- Số chữ số thập phân và quy tắc làm tròn điểm trung bình.
+- Có loại trừ rating của tài khoản bị khóa/vi phạm khỏi dữ liệu công khai hay không.

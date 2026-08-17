@@ -57,3 +57,37 @@
 
 ---
 
+## Phân tích kiểm thử
+
+### Mục tiêu
+
+Kiểm tra cách hệ thống phân tách dữ liệu series/tập, tính tổng số công khai và áp dụng đúng ba chế độ sắp xếp mà không lặp hoặc bỏ sót dữ liệu.
+
+### Rủi ro chính
+
+- Trộn bình luận giữa series và tập khi chuyển ngữ cảnh.
+- Tính cả Chờ duyệt/Ẩn/Xóa vào tổng số công khai.
+- Sai tie-break khi số Like bằng nhau hoặc phân trang làm lặp bản ghi.
+
+### Dữ liệu kiểm thử
+
+Series S1 có tập E1/E2; tạo bình luận gốc, reply, bình luận ghim, bình luận có số Like bằng nhau và nội dung không công khai ở từng phạm vi.
+
+## Test Cases
+
+| ID | Loại | Tiền điều kiện / dữ liệu | Bước kiểm thử | Kết quả mong đợi |
+|---|---|---|---|---|
+| TC-US02-001 | Functional | S1 có bình luận series và E1/E2 | Mở lần lượt phạm vi series, E1 và E2 | Mỗi phạm vi chỉ trả đúng bình luận được gắn với scope tương ứng. |
+| TC-US02-002 | Navigation | Đang xem E1 rồi chuyển sang E2 | Chuyển tập liên tục và tải lại danh sách | Dữ liệu E2 được tải mới; không giữ lại bình luận E1 hoặc dữ liệu cũ từ cache sai scope. |
+| TC-US02-003 | Data integrity | Scope có 2 comment gốc và 3 reply; thêm nội dung Chờ duyệt/Ẩn/Xóa | Đối chiếu tổng số trên UI với dữ liệu công khai | Tổng số gồm comment gốc + reply công khai; loại trừ trạng thái không công khai. |
+| TC-US02-004 | Functional | Có dữ liệu đủ cho ba thứ tự | Mở danh sách lần đầu, kiểm tra bộ chọn sắp xếp và đổi từng lựa chọn | Nổi bật là mặc định; có đúng Nổi bật, Mới nhất, Được yêu thích. |
+| TC-US02-005 | Sorting | Có 4 bình luận ghim và cấu hình giới hạn 3 | Chọn Nổi bật | Tối đa 3 bình luận ghim được ưu tiên; phần còn lại tuân theo công thức đã chốt. |
+| TC-US02-006 | Sorting | Có comment ở nhiều thời điểm | Chọn Mới nhất | Comment gốc được sắp từ mới đến cũ; reply không bị trộn thành item gốc. |
+| TC-US02-007 | Sorting/Boundary | Có comment A/B cùng số Like, A mới hơn B | Chọn Được yêu thích | Comment có Like cao hơn đứng trước; khi bằng Like, comment mới hơn đứng trước. |
+| TC-US02-008 | Scope isolation | Đã chọn E1 và một chế độ sắp xếp | Chuyển trang, refresh hoặc tải thêm | Chế độ và dữ liệu chỉ áp dụng cho scope hiện tại; không ảnh hưởng scope khác ngoài thiết kế. |
+| TC-US02-009 | Pagination | Có danh sách lớn hơn kích thước trang, ID ổn định | Tải thêm/phân trang nhiều lần đến cuối danh sách | Không trùng, không bỏ sót và không tạo vòng lặp; tổng số khớp dữ liệu công khai. |
+
+### Điểm cần PO chốt trước khi khóa expected result
+
+- Kích thước trang/số item tải lần đầu.
+- Công thức Nổi bật bên dưới các comment ghim và cách làm tròn thời gian nếu có.

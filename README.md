@@ -42,6 +42,21 @@ Mỗi Epic có một thư mục riêng. README trong thư mục Epic chứa thô
 | [EP04 — CMS quản trị bình luận](EP04_CMS_QUAN_TRI_BINH_LUAN/README.md) | US13–US16 |
 | [EP05 — Tăng trưởng và phân tích](EP05_TANG_TRUONG_VA_PHAN_TICH/README.md) | US17–US20 |
 
+## 3.2. Phạm vi phân tích và testcase
+
+Mỗi file User Story có thêm phần **Phân tích kiểm thử** và **Test Cases**, bao gồm testcase chức năng, biên, lỗi, phân quyền, tích hợp và toàn vẹn dữ liệu khi phù hợp.
+
+| Epic | User Story | Số testcase |
+|---|---:|---:|
+| EP01 — Trải nghiệm bình luận và đánh giá | US01–US06 | 56 |
+| EP02 — Tương tác cộng đồng | US07–US09 | 30 |
+| EP03 — An toàn và kiểm duyệt | US10–US12 | 34 |
+| EP04 — CMS quản trị bình luận | US13–US16 | 49 |
+| EP05 — Tăng trưởng và phân tích | US17–US20 | 47 |
+| **Tổng** | **US01–US20** | **216** |
+
+Các testcase hiện là baseline để QA/PO refinement; những expected result phụ thuộc quyết định chưa chốt được đánh dấu ngay trong file User Story tương ứng.
+
 ## 4. Danh sách 20 User Story
 
 | ID | Tên User Story | Epic | Ưu tiên đề xuất |

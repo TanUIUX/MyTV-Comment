@@ -60,3 +60,38 @@
 
 ---
 
+## Phân tích kiểm thử
+
+### Mục tiêu
+
+Kiểm tra reply được gắn đúng thread/scope, luôn giới hạn một cấp, đi qua kiểm duyệt, cập nhật số lượng và xử lý đúng khi comment gốc bị ẩn/xóa.
+
+### Rủi ro chính
+
+- Tạo reply lồng sâu hơn một cấp hoặc gắn sai comment gốc.
+- Reply Chờ duyệt làm tăng số công khai/hiển thị sai người.
+- Xóa/ẩn comment gốc nhưng vẫn cho reply mới hoặc vẫn lộ thread.
+
+### Dữ liệu kiểm thử
+
+C1 là comment gốc có R1/R2; U1/U2; series/tập khác nhau; phim Mở/Đóng; nội dung text, emoji, Spoiler và kết quả AI khác nhau.
+
+## Test Cases
+
+| ID | Loại | Tiền điều kiện / dữ liệu | Bước kiểm thử | Kết quả mong đợi |
+|---|---|---|---|---|
+| TC-US08-001 | Functional | U1 đăng nhập; C1 công khai | Chọn Trả lời, nhập text và gửi | Reply được lưu dưới C1, đúng series/tập và xuất hiện theo trạng thái kiểm duyệt. |
+| TC-US08-002 | Scope | C1 ở E1; đang xem E2 | Thử tạo reply với context E2 hoặc sửa request | Hệ thống từ chối mismatch; reply không bị gắn sang scope khác. |
+| TC-US08-003 | Depth | C1 có R1 | Chọn Trả lời trên R1 và gửi | Reply mới vẫn là cấp một dưới C1; không tạo C1→R1→R2. |
+| TC-US08-004 | Context | Reply trên R1 | Kiểm tra UI sau khi gửi | Giao diện giữ ngữ cảnh người được trả lời/mention theo thiết kế nhưng cấu trúc dữ liệu vẫn một cấp. |
+| TC-US08-005 | Content/moderation | Reply text, emoji và Spoiler; Chế độ 1/2 | Gửi từng loại nội dung | Nội dung hợp lệ được xử lý theo cùng cơ chế comment gốc; Spoiler được che; Chờ duyệt không lộ cộng đồng. |
+| TC-US08-006 | Counter | C1 có tổng số hiện tại | Tạo reply công khai rồi refresh/tải thêm | Tổng số tăng đúng một; reply không xuất hiện như comment gốc trong danh sách sắp xếp. |
+| TC-US08-007 | Pagination | C1 có nhiều reply hơn giới hạn ban đầu | Chọn Xem thêm phản hồi nhiều lần | Reply không trùng/bỏ sót và vẫn thuộc đúng C1. |
+| TC-US08-008 | Delete cascade | C1 có R1/R2 | Xóa/ẩn C1 bằng user/Admin rồi mở thread | Khi xóa, toàn bộ thread không còn công khai; khi ẩn/khóa, không cho reply mới theo chính sách. |
+| TC-US08-009 | Ownership | U1 tạo R1; U2 mở R1 | U2 thử sửa/xóa; U1 thử sửa/xóa | U2 bị từ chối; U1 được chuyển theo quy tắc US05. |
+| TC-US08-010 | Authentication | Phiên khách | Chọn Trả lời trên C1 | Yêu cầu đăng nhập; không tạo reply trước xác thực. |
+
+### Điểm cần PO chốt
+
+- Số reply hiển thị trước “Xem thêm”.
+- Hiển thị placeholder khi một reply bị xóa giữa hội thoại.

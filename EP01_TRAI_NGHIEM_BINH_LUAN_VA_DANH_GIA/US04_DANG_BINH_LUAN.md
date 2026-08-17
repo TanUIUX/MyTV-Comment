@@ -60,3 +60,39 @@
 
 ---
 
+## Phân tích kiểm thử
+
+### Mục tiêu
+
+Kiểm tra luồng tạo bình luận đúng scope, đúng danh tính hiển thị, đi qua kiểm duyệt, xử lý Spoiler và không tạo dữ liệu trùng hoặc lộ thông tin nhạy cảm.
+
+### Rủi ro chính
+
+- Bình luận gắn sai series/tập hoặc hiển thị trước khi được phép.
+- Lộ số thuê bao đầy đủ/nickname chưa được chấp nhận.
+- Retry tạo bản ghi trùng hoặc nội dung cá nhân đi qua API dù UI đã chặn.
+
+### Dữ liệu kiểm thử
+
+Tài khoản có nickname hợp lệ, tài khoản chưa có nickname, phim ở Chế độ 1/Chế độ 2/Đóng; nội dung an toàn, nghi ngờ, Spoiler, emoji-only, URL, quá giới hạn và request retry.
+
+## Test Cases
+
+| ID | Loại | Tiền điều kiện / dữ liệu | Bước kiểm thử | Kết quả mong đợi |
+|---|---|---|---|---|
+| TC-US04-001 | Functional | U1 đăng nhập, phim Mở | Nhập text và emoji rồi gửi ở scope E1 | Comment được tạo gắn đúng phim/tập; UI phản hồi thành công và xóa nội dung ô nhập. |
+| TC-US04-002 | Spoiler | U1 có nội dung có Spoiler | Bật cờ Spoiler, gửi và mở bằng tài khoản khác | Comment công khai bị che, hiển thị cảnh báo; chỉ mở nội dung khi người xem chủ động chọn. |
+| TC-US04-003 | Scope | Đang ở series và E1 | Gửi một comment ở mỗi scope | Hai comment có đúng content/episode scope; không xuất hiện chéo. |
+| TC-US04-004 | Moderation | Chế độ 1; AI trả an toàn và nghi ngờ | Gửi hai nội dung tương ứng | Nội dung an toàn chuyển Hiển thị theo chính sách; nội dung nghi ngờ Chờ duyệt và chỉ tác giả thấy. |
+| TC-US04-005 | Moderation | Chế độ 2 | Gửi nội dung an toàn về kỹ thuật | Comment không công khai trước khi Admin duyệt; tác giả thấy trạng thái Chờ duyệt. |
+| TC-US04-006 | Identity/privacy | U1 có số thuê bao và nickname khác nhau | Hiển thị comment trên app/web và kiểm tra response | Chỉ dùng nickname hợp lệ hoặc số đã che 4 số cuối; không có số đầy đủ/PII không cần thiết. |
+| TC-US04-007 | Validation | Nội dung rỗng, chỉ khoảng trắng, quá dài, URL không hợp lệ, emoji-only | Gửi từng dữ liệu | Hệ thống áp dụng rule đã cấu hình; thông báo lỗi rõ và không tạo comment không hợp lệ. |
+| TC-US04-008 | Security | Phiên bị logout/không có quyền bình luận | Gửi trực tiếp request tạo comment | API từ chối; không tạo dữ liệu và không thể bypass bằng cách bỏ qua UI. |
+| TC-US04-009 | Idempotency | Request gửi chậm hoặc client retry | Bấm gửi nhiều lần/đẩy lại cùng request | Chỉ tạo một comment; trạng thái cuối nhất quán. |
+| TC-US04-010 | Error handling | Mock AI timeout hoặc API lỗi | Gửi comment | Hệ thống dùng fallback an toàn; không tự động công khai nếu chưa có quyết định cho phép; người dùng nhận trạng thái thử lại/chờ. |
+| TC-US04-011 | Media restriction | Có nút/endpoint upload file cá nhân | Kiểm tra UI và gọi endpoint upload trực tiếp | UI không cung cấp upload; API từ chối media cá nhân trong luồng comment. |
+
+### Điểm cần PO chốt trước khi chốt bộ dữ liệu biên
+
+- Độ dài tối thiểu/tối đa, emoji-only, URL và rate limit.
+- Hành vi thông báo cho tác giả khi nội dung bị Từ chối.

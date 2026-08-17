@@ -66,3 +66,40 @@
 
 ---
 
+## Phân tích kiểm thử
+
+### Mục tiêu
+
+Kiểm tra ma trận hiển thị theo trạng thái, version công khai/chờ duyệt, cấu hình Mở/Chế độ 1/Chế độ 2/Đóng và hiệu lực chuyển trạng thái.
+
+### Rủi ro chính
+
+- Nội dung Chờ duyệt lọt qua API, count, notification hoặc deep link.
+- Bản sửa chờ duyệt ghi đè bản cũ.
+- Đóng bình luận chỉ khóa UI nhưng vẫn nhận request trực tiếp; mở lại làm mất lịch sử.
+
+### Dữ liệu kiểm thử
+
+Comment công khai C1, bản sửa V2 Chờ duyệt, nội dung Từ chối/Ẩn/Xóa mềm; phim ở Chế độ 1, Chế độ 2, Đóng; cấu hình có mốc X giờ.
+
+## Test Cases
+
+| ID | Loại | Tiền điều kiện / dữ liệu | Bước kiểm thử | Kết quả mong đợi |
+|---|---|---|---|---|
+| TC-US12-001 | Visibility | Comment mới Chờ duyệt; tác giả U1, người xem U2 | U1 và U2 mở UI/API công khai | U1 thấy comment + trạng thái; U2 không thấy qua UI/API/count/notification. |
+| TC-US12-002 | Versioning | C1 đang Hiển thị; V2 Chờ duyệt | U2 mở trong lúc chờ, sau đó Admin duyệt V2 | Trước duyệt U2 thấy C1; sau duyệt V2 là bản công khai hiện hành. |
+| TC-US12-003 | Rejection | C1 công khai; V2 bị từ chối | Admin từ chối V2 rồi mở lại C1 | C1 không bị ảnh hưởng; V2 không hiển thị cộng đồng theo UX chính sách. |
+| TC-US12-004 | Mode config | Phim cấu hình Chế độ 1 | Gửi nội dung an toàn/nghi ngờ | An toàn Hiển thị; nghi ngờ Chờ duyệt đúng US11. |
+| TC-US12-005 | Mode config | Phim cấu hình Chế độ 2 | Gửi nội dung an toàn về kỹ thuật | Nội dung vẫn Chờ duyệt cho tới khi Admin duyệt. |
+| TC-US12-006 | Closed state/UI | Phim chuyển Đóng | Mở trang chi tiết, app và API đọc | Toàn bộ khu vực bình luận bị ẩn; không trả dữ liệu công khai ngoài chính sách. |
+| TC-US12-007 | Closed state/API | Phim Đóng | Gửi comment, reply, Like, Mention, Report, Rating qua UI và API | Tất cả thao tác mới bị chặn; không tạo record hoặc event bất hợp lệ. |
+| TC-US12-008 | Reopen/history | Phim Đóng có dữ liệu cũ | Mở lại phim | Dữ liệu công khai đủ điều kiện hiển thị lại; nội dung đã xử lý vẫn bị loại; lịch sử không bị xóa. |
+| TC-US12-009 | Schedule | Có cấu hình “sau X giờ” | Kiểm tra trước, đúng và sau thời điểm hiệu lực | Chuyển state đúng mốc, chỉ áp dụng từ thời điểm hiệu lực và có timezone nhất quán. |
+| TC-US12-010 | In-flight | Có comment đang AI/Admin xử lý khi đổi chế độ | Đổi Chế độ 1↔2/Đóng và hoàn tất xử lý | Request đang xử lý theo quy tắc đã chốt; không tạo state trung gian mâu thuẫn. |
+| TC-US12-011 | Audit | Admin thay đổi state/cấu hình | Tra cứu audit | Ghi actor, thời gian, trước/sau, lý do và cấu hình áp dụng. |
+| TC-US12-012 | Authorization | Admin/user khác quyền | Gọi API đổi cấu hình hoặc state | Chỉ vai trò được cấp quyền thực hiện; request trái quyền bị từ chối. |
+
+### Điểm cần PO chốt
+
+- Rating có bị ẩn cùng khu vực khi Đóng hay không.
+- Cách xử lý queue đang Chờ duyệt khi đổi chế độ và mốc tính “sau X giờ”.

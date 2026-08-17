@@ -52,3 +52,35 @@
 
 ---
 
+## Phân tích kiểm thử
+
+### Mục tiêu
+
+Xác nhận người xem chưa đăng nhập đọc được đúng nội dung công khai, không làm lộ dữ liệu theo trạng thái/quyền, và được đưa qua luồng đăng nhập khi thực hiện tương tác.
+
+### Rủi ro chính
+
+- Lộ bình luận Chờ duyệt, Ẩn hoặc Xóa mềm qua UI, API hoặc cache.
+- Mất ngữ cảnh phim/tập sau khi đăng nhập.
+- Khu vực bình luận vẫn xuất hiện khi phim đã Đóng bình luận.
+
+### Dữ liệu kiểm thử
+
+Một phim đang Mở bình luận có bình luận gốc, reply, Chờ duyệt, Ẩn và Xóa mềm; một phim Đóng bình luận; tài khoản khách và tài khoản đã đăng nhập.
+
+## Test Cases
+
+| ID | Loại | Tiền điều kiện / dữ liệu | Bước kiểm thử | Kết quả mong đợi |
+|---|---|---|---|---|
+| TC-US01-001 | Functional | Phim đang Mở bình luận | Mở trang chi tiết phim bằng phiên khách | Khu vực Bình luận hiển thị đúng vị trí và có thể mở danh sách. |
+| TC-US01-002 | Authorization | Có bình luận công khai, Chờ duyệt, Ẩn và Xóa mềm | Mở danh sách bằng phiên khách; kiểm tra UI và response API công khai | Chỉ bình luận/reply công khai xuất hiện; các trạng thái còn lại không được trả về hoặc hiển thị. |
+| TC-US01-003 | Compatibility | Có cùng dữ liệu trên web và mobile | Mở cùng phim trên web và mobile | Khu vực, nội dung và quyền đọc nhất quán; không làm lộ dữ liệu ở một nền tảng. |
+| TC-US01-004 | Authentication | Phiên khách; có bình luận công khai | Chọn lần lượt Like, Reply, Report và Rating | Mỗi thao tác yêu cầu đăng nhập, không tạo dữ liệu trước khi xác thực. |
+| TC-US01-005 | Navigation | Khách đang ở một tập cụ thể và chọn Reply/Like | Đăng nhập thành công từ màn hình yêu cầu đăng nhập | Người dùng quay lại đúng phim/tập và đúng thread; thao tác được tiếp tục nếu sản phẩm hỗ trợ. |
+| TC-US01-006 | State/Negative | Phim ở trạng thái Đóng bình luận | Mở trang chi tiết, gọi API đọc và thử mở deep link bình luận | Toàn bộ khu vực bình luận bị ẩn; API/deep link không trả dữ liệu công khai ngoài phạm vi chính sách. |
+| TC-US01-007 | Security | Có ID bình luận Chờ duyệt/Ẩn | Gọi trực tiếp API bằng phiên khách với ID nội dung không công khai | API từ chối hoặc trả dữ liệu rỗng theo chuẩn bảo mật; không suy ra nội dung qua mã lỗi/metadata. |
+
+### Điểm cần xác nhận khi chạy test
+
+- Thiết kế breakpoint và vị trí khu vực Bình luận trên từng nền tảng.
+- Hành vi tiếp tục thao tác sau đăng nhập nếu SSO không hỗ trợ giữ pending action.

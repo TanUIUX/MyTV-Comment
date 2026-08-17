@@ -69,3 +69,39 @@
 
 ---
 
+## Phân tích kiểm thử
+
+### Mục tiêu
+
+Xác nhận dashboard tính đúng các chỉ số theo phim/series/tập/thời gian, phân biệt trạng thái, xử lý event retry không trùng và bảo vệ dữ liệu/role.
+
+### Rủi ro chính
+
+- Dashboard cộng Chờ duyệt vào số công khai hoặc tính duplicate event.
+- Bộ lọc/ranking sai chiều dữ liệu hoặc độ trễ không minh bạch.
+- Người không có quyền xem được dữ liệu chi tiết/PII.
+
+### Dữ liệu kiểm thử
+
+Event comment/reply/Like/Unlike/Report/AI/moderation có timestamp, phim/series/tập; event retry/trùng; state công khai, Chờ duyệt, Ẩn, Xóa; role dashboard khác nhau.
+
+## Test Cases
+
+| ID | Loại | Tiền điều kiện / dữ liệu | Bước kiểm thử | Kết quả mong đợi |
+|---|---|---|---|---|
+| TC-US19-001 | Functional | Có event ở nhiều phim/series/tập | Mở dashboard và xem theo từng chiều | Hiển thị đúng số comment theo phim, series, tập và khoảng thời gian. |
+| TC-US19-002 | Metrics | Có Like, Unlike, Reply, Report | Kiểm tra các card/bảng tương ứng | Số liệu đúng định nghĩa data dictionary và cùng phạm vi thời gian/filter. |
+| TC-US19-003 | State | Có comment công khai, Chờ duyệt, Ẩn, Xóa | Đối chiếu chỉ số tạo mới/đang hiển thị/bị xử lý | Các nhóm được tách đúng; Chờ duyệt không vào “công khai” nếu chưa hiển thị. |
+| TC-US19-004 | Filter/time | Có event ở biên ngày/giờ | Chọn khoảng thời gian, phim, tập và kết hợp filter | Kết quả đúng inclusive/exclusive rule; filter không làm mất hoặc nhân đôi event. |
+| TC-US19-005 | Ranking | Nhiều phim/tập có engagement khác nhau | Xem bảng xếp hạng | Thứ hạng theo công thức engagement score đã chốt; tie-break ổn định. |
+| TC-US19-006 | Freshness | Event mới phát sinh | Ghi nhận thời điểm event và refresh dashboard | Dữ liệu cập nhật trong độ trễ công bố; UI thể hiện thời điểm cập nhật. |
+| TC-US19-007 | Reconciliation | Có dataset chuẩn và báo cáo xuất | So sánh dashboard với báo cáo/API tổng hợp | Số liệu khớp định nghĩa; sai lệch được phát hiện/giải thích nếu pipeline trễ. |
+| TC-US19-008 | Deduplication | Gửi cùng event nhiều lần/retry | Nạp pipeline và kiểm tra metric | Event chỉ được tính theo định nghĩa một lần; retry không làm tăng sai số. |
+| TC-US19-009 | Authorization | Role quản lý, Admin vận hành, role không có quyền | Mở dashboard/detail/export | Mỗi role chỉ thấy dữ liệu được cấp; PII bị ẩn/loại trong báo cáo không cần thiết. |
+| TC-US19-010 | Empty state | Filter không có kết quả | Chọn phim/tập/thời gian không có event | Hiển thị trạng thái không có dữ liệu, không nhầm thành 0 lỗi hoặc dữ liệu cũ. |
+| TC-US19-011 | Error handling | Mock data service timeout/5xx | Tải/refresh dashboard | Hiển thị lỗi và nút thử lại; không trộn dữ liệu cũ với filter mới không rõ trạng thái. |
+| TC-US19-012 | Minimum KPI | Có event AI, thời gian xử lý queue, hidden/deleted | Kiểm tra bộ KPI tối thiểu | Dashboard có các KPI đã cam kết hoặc đánh dấu rõ KPI chưa khả dụng. |
+
+### Điểm cần PO chốt
+
+- Data dictionary, độ trễ dữ liệu, engagement score và phạm vi export CSV/XLSX/BI.

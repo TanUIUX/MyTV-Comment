@@ -55,3 +55,37 @@
 
 ---
 
+## Phân tích kiểm thử
+
+### Mục tiêu
+
+Xác nhận Like/Unlike hoạt động đúng trên comment gốc và reply, chỉ có một trạng thái trên mỗi tài khoản, cập nhật gần thời gian thực và không bị nhân đôi khi retry.
+
+### Rủi ro chính
+
+- Đếm Like sai do double-click, request retry hoặc cập nhật đồng thời.
+- Cho Like nội dung đã Ẩn/Xóa hoặc nội dung người dùng không còn quyền xem.
+- UI hiển thị trạng thái khác với dữ liệu server.
+
+### Dữ liệu kiểm thử
+
+U1/U2 đã đăng nhập, phiên khách, comment gốc C1, reply R1, comment công khai/Ẩn/Xóa, dữ liệu Like bằng 0/1/nhiều và mạng chậm.
+
+## Test Cases
+
+| ID | Loại | Tiền điều kiện / dữ liệu | Bước kiểm thử | Kết quả mong đợi |
+|---|---|---|---|---|
+| TC-US07-001 | Functional | U1 đăng nhập; C1 và R1 công khai | Like C1 rồi Like R1 | Mỗi đối tượng nhận đúng một Like; số Like và trạng thái nút cập nhật. |
+| TC-US07-002 | State transition | U1 đã Like C1 | Chọn Unlike | Like của U1 bị hủy, số Like giảm đúng một và nút trở về trạng thái chưa Like. |
+| TC-US07-003 | Idempotency | U1 chưa Like; mạng chậm | Double-click Like hoặc gửi lại cùng request | Chỉ tạo một trạng thái Like; không tăng số đếm nhiều lần. |
+| TC-US07-004 | Multi-user | U1/U2 cùng mở C1 | U1 Like/Unlike trong khi U2 refresh | Số Like cuối cùng phản ánh server; UI không ghi đè sai trạng thái của tài khoản khác. |
+| TC-US07-005 | Authentication | Phiên khách | Chọn Like trên C1 | Yêu cầu đăng nhập; không tạo Like trước xác thực. |
+| TC-US07-006 | Authorization | C1 bị Ẩn/Xóa hoặc U1 mất quyền xem | Thử Like bằng UI và API | Thao tác bị từ chối; số Like công khai không đổi. |
+| TC-US07-007 | Error handling | Mock API timeout/500 sau khi bấm Like | Theo dõi UI và tải lại trang | UI hoàn về trạng thái đúng server, hiển thị lỗi và cho phép thử lại. |
+| TC-US07-008 | Data integrity | C1 có số Like ban đầu | Like, Unlike, refresh và đối chiếu dữ liệu | Không có bản ghi Like trùng; dữ liệu giữ đúng một trạng thái/tài khoản/comment. |
+| TC-US07-009 | Integration | C1 có số Like mới | Mở chế độ Được yêu thích ở US02 sau khi Like | Thứ tự/điểm Like phản ánh thay đổi trong độ trễ đã thống nhất. |
+
+### Điểm cần PO chốt
+
+- Có cho phép tác giả Like comment của chính mình hay không.
+- SLA cập nhật số Like và thời điểm dữ liệu được dùng cho sắp xếp.

@@ -64,3 +64,39 @@
 
 ---
 
+## Phân tích kiểm thử
+
+### Mục tiêu
+
+Kiểm tra AI chỉ đề xuất ứng viên/chủ đề đủ điều kiện, giải thích được tín hiệu, loại trừ nội dung rủi ro và luôn để Admin quyết định ghim/đăng.
+
+### Rủi ro chính
+
+- AI đề xuất Chờ duyệt/Ẩn/Xóa hoặc nội dung có Report/Flag rủi ro.
+- AI tự động ghim/đăng mà không có human-in-the-loop.
+- Câu hỏi chứa Spoiler, thông tin nhạy cảm hoặc ưu tiên nội dung gây tranh cãi.
+
+### Dữ liệu kiểm thử
+
+Comment công khai có Like/Reply cao/thấp; comment Chờ duyệt, Report chưa xử lý, Flag nghiêm trọng, Ẩn, Xóa; metadata series/tập; câu hỏi có/không Spoiler.
+
+## Test Cases
+
+| ID | Loại | Tiền điều kiện / dữ liệu | Bước kiểm thử | Kết quả mong đợi |
+|---|---|---|---|---|
+| TC-US20-001 | Recommendation | Có nhiều comment công khai | Chạy tạo ứng viên theo series/tập | AI trả danh sách ứng viên từ nội dung Hiển thị, có liên kết đúng phim/tập. |
+| TC-US20-002 | Ranking signal | Comment khác nhau về Like, Reply, thời gian, liên quan | Kiểm tra output và rationale | Đề xuất có thể hiện tín hiệu chính trong phạm vi hỗ trợ; không chỉ dựa số Like nếu policy yêu cầu chất lượng. |
+| TC-US20-003 | Exclusion | Có Chờ duyệt, Report chưa xử lý rủi ro, Flag nghiêm trọng, Ẩn, Xóa | Chạy AI | Các nội dung bị loại không xuất hiện trong ứng viên được đề xuất. |
+| TC-US20-004 | Explainability | Có ứng viên được đề xuất | Admin mở chi tiết | Admin thấy lý do/tín hiệu chính, source và thời điểm dữ liệu đủ để đánh giá. |
+| TC-US20-005 | Human-in-loop/pin | Có ứng viên | Bỏ qua một ứng viên; thử kiểm tra trạng thái ghim | AI không tự ghim; chỉ thao tác Admin qua US15 mới thay đổi trạng thái. |
+| TC-US20-006 | Feedback | Admin bỏ qua/chấp nhận đề xuất | Thực hiện hành động và kiểm tra log | Hành động được ghi nhận để đánh giá chất lượng; không làm thay đổi comment ngoài lựa chọn. |
+| TC-US20-007 | Question generation | Series/tập có metadata hợp lệ | Yêu cầu AI tạo câu hỏi | Câu hỏi gắn đúng scope, phù hợp nội dung và không tự đăng. |
+| TC-US20-008 | Spoiler safety | Metadata/câu hỏi có khả năng tiết lộ tình tiết | Chạy safety check, xem preview | Câu hỏi bị chặn/chỉnh sửa/cảnh báo theo policy; không lộ Spoiler ngoài phạm vi cho phép. |
+| TC-US20-009 | Editing workflow | Có câu hỏi đề xuất | Admin chỉnh sửa, chấp nhận, loại bỏ | Mỗi hành động tạo đúng trạng thái; câu hỏi chỉ được dùng sau bước kiểm soát bắt buộc. |
+| TC-US20-010 | No auto-publish | AI trả đề xuất hợp lệ | Không thao tác Admin, theo dõi cộng đồng | Không có comment/câu hỏi tự xuất hiện trong trải nghiệm người dùng. |
+| TC-US20-011 | Tracking | Đề xuất được sử dụng và có tương tác sau đó | Kiểm tra event/metric | Ghi nhận đề xuất được dùng, kết quả tương tác và liên kết về source; không duplicate do retry. |
+| TC-US20-012 | Privacy/safety | AI không được truy cập dữ liệu ngoài scope | Kiểm tra input/output và role Admin | AI chỉ dùng dữ liệu được phê duyệt; không trả PII hoặc ưu tiên nội dung gây hại/chỉ vì tranh cãi. |
+
+### Điểm cần PO chốt
+
+- Tiêu chí “hay/tích cực”, dữ liệu đầu vào, quy trình duyệt một/hai lớp và metric đánh giá chất lượng AI.

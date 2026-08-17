@@ -72,3 +72,40 @@
 
 ---
 
+## Phân tích kiểm thử
+
+### Mục tiêu
+
+Kiểm tra cấp/hiển thị/thu hồi huy hiệu theo tiêu chí, loại trừ nội dung không hợp lệ, hỗ trợ nhiều huy hiệu và bảo đảm cấu hình Admin có audit.
+
+### Rủi ro chính
+
+- Huy hiệu cấp dựa trên spam, nội dung Ẩn/Xóa hoặc Report chưa xác minh.
+- Cấu hình tắt/bật làm ẩn sai huy hiệu cũ hoặc cấp trùng.
+- Huy hiệu hiển thị sai thứ tự/số lượng hoặc thu hồi làm mất comment.
+
+### Dữ liệu kiểm thử
+
+U1 đạt/chưa đạt tiêu chí; comment công khai, Ẩn, Xóa, Spam; Like; nhiều loại huy hiệu; Admin cấu hình, cấp thủ công, thu hồi và role chỉ đọc.
+
+## Test Cases
+
+| ID | Loại | Tiền điều kiện / dữ liệu | Bước kiểm thử | Kết quả mong đợi |
+|---|---|---|---|---|
+| TC-US17-001 | Display | U1 có huy hiệu đang hiệu lực | Mở comment/reply của U1 trên web/mobile | Huy hiệu hiển thị cạnh tên đúng icon/tên theo cấu hình. |
+| TC-US17-002 | Eligibility | U1 vừa đạt ngưỡng tiêu chí hợp lệ | Chạy job/sự kiện đánh giá | Huy hiệu được cấp đúng loại, lưu thời điểm và tiêu chí đạt. |
+| TC-US17-003 | Negative | U1 chỉ có comment Ẩn/Xóa/Spam | Chạy đánh giá huy hiệu | Nội dung bị loại không làm tăng thành tích; U1 không được cấp nhờ dữ liệu không hợp lệ. |
+| TC-US17-004 | Boundary | U1 ở dưới, đúng và trên ngưỡng | Chạy đánh giá từng mức | Dưới ngưỡng không cấp; đúng/trên ngưỡng cấp đúng theo rule. |
+| TC-US17-005 | Multiple/order | U1 có nhiều huy hiệu hiệu lực | Cấp/đạt thêm huy hiệu, mở UI | Số lượng và thứ tự hiển thị đúng cấu hình; không duplicate. |
+| TC-US17-006 | Admin config | Admin có quyền | Tạo/sửa tên, icon, mô tả, điều kiện; bật/tắt loại | Cấu hình được validate, áp dụng đúng từ thời điểm hiệu lực và có audit. |
+| TC-US17-007 | Manual grant | Admin được cấp thủ công | Cấp huy hiệu Chuyên gia cho U1 | Huy hiệu xuất hiện đúng, ghi actor/lý do/thời gian; role không đủ quyền bị chặn. |
+| TC-US17-008 | Revoke | U1 có huy hiệu | Admin thu hồi do vi phạm/cấp sai | Huy hiệu không còn hiệu lực theo policy; comment của U1 không bị xóa. |
+| TC-US17-009 | Toggle behavior | Loại huy hiệu có người đang sở hữu | Tắt rồi bật lại loại huy hiệu | Ngừng cấp mới; huy hiệu cũ ẩn/giữ đúng cấu hình; bật lại không cấp trùng. |
+| TC-US17-010 | Report rule | U1 có Report chưa xác minh | Tạo Report rồi chạy đánh giá | Không tự động thu hồi huy hiệu chỉ dựa trên Report chưa có kết luận. |
+| TC-US17-011 | Audit | Cấp tự động/thủ công, cấu hình, thu hồi | Tra cứu audit | Mỗi thay đổi có actor/nguồn, thời gian, lý do và trạng thái trước/sau. |
+| TC-US17-012 | Data integrity | U1 có huy hiệu và nhiều comment | Thu hồi huy hiệu, refresh hồ sơ/comment | Chỉ trạng thái huy hiệu thay đổi; comment, Like và lịch sử không bị mất. |
+
+### Điểm cần PO chốt
+
+- Ngưỡng/chu kỳ đánh giá, số huy hiệu tối đa và thông báo cấp/thu hồi.
+- Chính sách giữ hay ẩn huy hiệu cũ khi tắt loại huy hiệu.

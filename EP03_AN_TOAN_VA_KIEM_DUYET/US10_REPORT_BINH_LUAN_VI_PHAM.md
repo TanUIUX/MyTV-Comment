@@ -58,3 +58,38 @@
 
 ---
 
+## Phân tích kiểm thử
+
+### Mục tiêu
+
+Kiểm tra người dùng gửi Report đúng lý do cho comment/reply, dữ liệu được lưu và chuyển CMS, nhưng Report không tự động thay đổi trạng thái hiển thị.
+
+### Rủi ro chính
+
+- Thiếu lý do hoặc mất liên kết người báo cáo/phiên bản nội dung.
+- Một tài khoản spam Report để làm sai tín hiệu.
+- Tự động ẩn/xóa khi nhiều Report trái với quyết định nghiệp vụ.
+
+### Dữ liệu kiểm thử
+
+U1/U2 đăng nhập, phiên khách; C1/R1 công khai; đủ 6 lý do; mô tả “Khác” rỗng/quá dài/hợp lệ; Report trùng và Report số lượng lớn.
+
+## Test Cases
+
+| ID | Loại | Tiền điều kiện / dữ liệu | Bước kiểm thử | Kết quả mong đợi |
+|---|---|---|---|---|
+| TC-US10-001 | Functional | U1 đăng nhập; C1 và R1 công khai | Mở menu Report trên C1 rồi R1 | Cả comment gốc và reply đều có thể mở luồng Report. |
+| TC-US10-002 | Completeness | Có danh sách lý do chuẩn | Mở form Report | Hiển thị đủ Spoiler, Spam/quảng cáo, Xúc phạm, Không phù hợp, Sai thông tin, Khác. |
+| TC-US10-003 | Validation | Chọn “Khác” | Gửi với mô tả rỗng, đúng giới hạn và vượt giới hạn | Mô tả hợp lệ được nhận; dữ liệu rỗng/quá dài bị chặn theo rule cấu hình. |
+| TC-US10-004 | Negative | Chưa chọn lý do | Bấm Gửi | Hệ thống yêu cầu chọn lý do; không tạo Report. |
+| TC-US10-005 | Data integrity | U1 Report C1 phiên bản V1 | Gửi Report thành công, kiểm tra CMS/database | Có account ID người báo, comment/reply ID, version ID, lý do, thời gian và trạng thái xử lý. |
+| TC-US10-006 | Integration | CMS có quyền xử lý Report | Gửi Report rồi mở hàng chờ CMS | Report xuất hiện đúng nội dung, lý do và phiên bản; có thể chuyển cho US14 xử lý. |
+| TC-US10-007 | Visibility | C1 đang Hiển thị | Gửi một hoặc nhiều Report | C1 vẫn hiển thị và không thay đổi trạng thái chỉ vì nhận Report. |
+| TC-US10-008 | Deduplication | U1 đã Report C1 và chưa có chính sách báo lại | Gửi lại cùng Report | Request trùng bị chặn/thông báo phù hợp; không tạo bản ghi duplicate. |
+| TC-US10-009 | Privacy | U1/U2 cùng xem C1 | U2 mở C1 sau khi U1 Report | Không hiển thị danh tính hoặc số lượng Report cho người xem. |
+| TC-US10-010 | Authentication/rate limit | Phiên khách hoặc U1 vượt ngưỡng | Chọn Report/gửi liên tiếp qua UI/API | Khách được chuyển đăng nhập; request vượt rate limit bị chặn và không làm sai dữ liệu. |
+
+### Điểm cần PO chốt
+
+- Quy tắc báo lại sau khi CMS bỏ qua Report và thông báo kết quả cho người báo.
+- Ngưỡng rate limit theo tài khoản/IP/thời gian.
