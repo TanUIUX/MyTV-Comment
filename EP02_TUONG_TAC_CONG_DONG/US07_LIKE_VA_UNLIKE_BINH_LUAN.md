@@ -3,89 +3,51 @@
 > Thuộc EP02 — Tương tác cộng đồng
 > [← Quay lại README của Epic](README.md) · [← Backlog MyTV](../README.md)
 
-
 ### User Story
 
-**Là người dùng đã đăng nhập**, tôi muốn Like hoặc Unlike một bình luận, để thể hiện sự đồng tình hoặc yêu thích đối với ý kiến đó.
-
-### Giá trị
-
-- Cung cấp hình thức tương tác nhanh, ít rào cản.
-- Tạo tín hiệu cho sắp xếp “Được yêu thích” và bình luận nổi bật.
-- Tạo dữ liệu phục vụ huy hiệu và phân tích cộng đồng.
+**Là người dùng đã đăng nhập**, tôi muốn Like hoặc Unlike một bình luận/reply, để thể hiện sự đồng tình hoặc yêu thích đối với ý kiến đó.
 
 ### Ưu tiên
 
 **Must**
 
-### Điều kiện tiên quyết
-
-- Người dùng đã đăng nhập và còn quyền tương tác.
-- Bình luận đang ở trạng thái công khai và cho phép tương tác.
-
 ### Acceptance Criteria
 
-1. Người dùng đã đăng nhập có thể Like một bình luận hoặc reply đang hiển thị.
-2. Mỗi tài khoản chỉ có một trạng thái Like hiện hành trên mỗi bình luận/reply.
-3. Khi đã Like, người dùng có thể Unlike để hủy Like của mình.
-4. Nút Like hiển thị đúng trạng thái hiện tại của người dùng.
-5. Số Like được cập nhật gần thời gian thực sau thao tác thành công.
-6. Hệ thống không tăng/giảm trùng số Like khi người dùng bấm nhiều lần, mạng chậm hoặc gửi lại request.
-7. Người chưa đăng nhập chọn Like được chuyển sang luồng đăng nhập.
-8. Bình luận bị ẩn, xóa hoặc không còn quyền xem không thể nhận Like mới.
-9. Khi thao tác thất bại, giao diện hoàn lại trạng thái đúng và thông báo cho người dùng.
-10. Số Like mới được phản ánh trong chế độ sắp xếp Được yêu thích theo độ trễ được thống nhất.
+1. User đăng nhập có thể Like/Unlike comment hoặc reply đang Hiển thị, kể cả **comment/reply của chính mình**.
+2. Mỗi tài khoản chỉ có một trạng thái Like hiện hành trên mỗi comment/reply.
+3. UI áp dụng **optimistic update ngay lập tức** sau thao tác Like/Unlike.
+4. Client gom các thay đổi Like/Unlike và đồng bộ xuống BE theo batch sau tối đa **5 giây** thay vì gửi từng thao tác riêng lẻ ngay lập tức.
+5. Nếu user rời màn hình hoặc app chuyển background trước 5 giây, client **flush batch sớm**.
+6. BE là nguồn trạng thái cuối cùng; nếu kết quả server khác optimistic state, client reconcile về trạng thái BE.
+7. Double-click/retry không làm tăng/giảm trùng Like.
+8. Guest chọn Like được chuyển sang login; không tạo Like trước xác thực.
+9. Comment bị Ẩn/Xóa hoặc user không còn quyền xem không thể nhận Like mới.
+10. Net Like hiện tại được dùng cho sort Được yêu thích/Featured Score; lịch sử thao tác Like/Unlike có thể được tracking riêng cho US19.
 
 ### Quy tắc nghiệp vụ
 
-- Một tài khoản, một Like trên một bình luận/reply.
-- Like không tạo thread hoặc nội dung mới.
-- Khi bình luận bị xóa mềm, dữ liệu Like được giữ theo chính sách audit nhưng không hiển thị công khai.
-
-### Phụ thuộc
-
-- US02 — Sắp xếp bình luận.
-- US17 — Huy hiệu người dùng.
-- US19 — Thống kê hoạt động bình luận.
+- Self-like là hợp lệ và được tính như Like khác.
+- Một account, một Like hiện hành trên một comment/reply.
+- Optimistic UI không thay đổi nguyên tắc BE là source of truth.
+- Batch window 5 giây là rule client; phải hỗ trợ idempotency/dedup ở BE.
 
 ### Điểm cần PO chốt
 
-- Có cho phép tác giả Like bình luận của chính mình hay không.
-- Độ trễ tối đa chấp nhận được cho cập nhật số Like và bảng xếp hạng.
+- Không còn blocker PO cho Like/Unlike trong scope hiện tại.
 
 ---
-
-## Phân tích kiểm thử
-
-### Mục tiêu
-
-Xác nhận Like/Unlike hoạt động đúng trên comment gốc và reply, chỉ có một trạng thái trên mỗi tài khoản, cập nhật gần thời gian thực và không bị nhân đôi khi retry.
-
-### Rủi ro chính
-
-- Đếm Like sai do double-click, request retry hoặc cập nhật đồng thời.
-- Cho Like nội dung đã Ẩn/Xóa hoặc nội dung người dùng không còn quyền xem.
-- UI hiển thị trạng thái khác với dữ liệu server.
-
-### Dữ liệu kiểm thử
-
-U1/U2 đã đăng nhập, phiên khách, comment gốc C1, reply R1, comment công khai/Ẩn/Xóa, dữ liệu Like bằng 0/1/nhiều và mạng chậm.
 
 ## Test Cases
 
 | ID | Loại | Tiền điều kiện / dữ liệu | Bước kiểm thử | Kết quả mong đợi |
 |---|---|---|---|---|
-| TC-US07-001 | Functional | U1 đăng nhập; C1 và R1 công khai | Like C1 rồi Like R1 | Mỗi đối tượng nhận đúng một Like; số Like và trạng thái nút cập nhật. |
-| TC-US07-002 | State transition | U1 đã Like C1 | Chọn Unlike | Like của U1 bị hủy, số Like giảm đúng một và nút trở về trạng thái chưa Like. |
-| TC-US07-003 | Idempotency | U1 chưa Like; mạng chậm | Double-click Like hoặc gửi lại cùng request | Chỉ tạo một trạng thái Like; không tăng số đếm nhiều lần. |
-| TC-US07-004 | Multi-user | U1/U2 cùng mở C1 | U1 Like/Unlike trong khi U2 refresh | Số Like cuối cùng phản ánh server; UI không ghi đè sai trạng thái của tài khoản khác. |
-| TC-US07-005 | Authentication | Phiên khách | Chọn Like trên C1 | Yêu cầu đăng nhập; không tạo Like trước xác thực. |
-| TC-US07-006 | Authorization | C1 bị Ẩn/Xóa hoặc U1 mất quyền xem | Thử Like bằng UI và API | Thao tác bị từ chối; số Like công khai không đổi. |
-| TC-US07-007 | Error handling | Mock API timeout/500 sau khi bấm Like | Theo dõi UI và tải lại trang | UI hoàn về trạng thái đúng server, hiển thị lỗi và cho phép thử lại. |
-| TC-US07-008 | Data integrity | C1 có số Like ban đầu | Like, Unlike, refresh và đối chiếu dữ liệu | Không có bản ghi Like trùng; dữ liệu giữ đúng một trạng thái/tài khoản/comment. |
-| TC-US07-009 | Integration | C1 có số Like mới | Mở chế độ Được yêu thích ở US02 sau khi Like | Thứ tự/điểm Like phản ánh thay đổi trong độ trễ đã thống nhất. |
-
-### Điểm cần PO chốt
-
-- Có cho phép tác giả Like comment của chính mình hay không.
-- SLA cập nhật số Like và thời điểm dữ liệu được dùng cho sắp xếp.
+| TC-US07-001 | Functional | U1 đăng nhập; C1/R1 public | Like C1/R1 | UI đổi trạng thái ngay, mỗi target có đúng một Like của U1. |
+| TC-US07-002 | Self-like | U1 là tác giả C1 | U1 Like C1 | Được phép; Net Like tăng như bình thường. |
+| TC-US07-003 | Unlike | U1 đã Like C1 | Unlike | UI giảm ngay; state cuối BE không còn Like U1. |
+| TC-US07-004 | Batch timing | Thực hiện nhiều Like/Unlike | Theo dõi request trong 5 giây | UI phản hồi ngay nhưng client gom request và sync batch tối đa sau 5 giây. |
+| TC-US07-005 | Early flush | Có batch chưa gửi | Rời màn hình/chuyển background trước 5 giây | Batch được flush sớm, không mất state. |
+| TC-US07-006 | Reconcile | Mock BE từ chối/mismatch | Like optimistic rồi nhận response | UI reconcile theo BE và thông báo lỗi phù hợp. |
+| TC-US07-007 | Idempotency | Double-click/retry | Gửi thao tác lặp | Không nhân đôi Like/event hợp lệ. |
+| TC-US07-008 | Authentication | Guest | Chọn Like | Yêu cầu login, không tạo Like trước auth. |
+| TC-US07-009 | Invalid target | C1 Ẩn/Xóa | Like qua UI/API | Bị chặn; Net Like public không đổi. |
+| TC-US07-010 | Integration | Net Like thay đổi | Mở sort Được yêu thích/Nổi bật | Ranking dùng Net Like hiện hành sau reconcile. |
