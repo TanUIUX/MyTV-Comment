@@ -32,7 +32,7 @@
 6. Hệ thống cung cấp ba chế độ: **Nổi bật, Mới nhất, Được yêu thích**; Nổi bật là mặc định.
 7. Ở chế độ Nổi bật, bình luận được Admin ghim hiển thị trước và có **hard max 3 bình luận ghim** cho mỗi scope.
 8. Sau nhóm ghim, các comment được xếp theo `FeaturedScore = 0.5×ln(1+Like) + 0.3×ln(1+Reply) + 0.2×e^(-AgeHours/72)`.
-9. Nếu hai comment có Featured Score bằng nhau, comment mới hơn đứng trước; nếu vẫn bằng nhau dùng `comment_id` làm tie-break ổ định.
+9. Nếu hai comment có Featured Score bằng nhau, comment mới hơn đứng trước; nếu vẫn bằng nhau dùng `comment_id` làm tie-break ổn định.
 10. Ở chế độ Mới nhất, bình luận chính được sắp từ mới đến cũ.
 11. Ở chế độ Được yêu thích, bình luận chính được sắp theo **Net Like công khai hiện tại** giảm dần; nếu bằng nhau thì bình luận mới hơn đứng trước.
 12. Lần tải đầu lấy **10 comment gốc**; khi cuộn xuống hệ thống lazy load **10 comment gốc/lần** cho tới hết.
