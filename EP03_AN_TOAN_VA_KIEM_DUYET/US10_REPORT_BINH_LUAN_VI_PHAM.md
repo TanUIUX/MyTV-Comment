@@ -3,93 +3,61 @@
 > Thuộc EP03 — An toàn và kiểm duyệt
 > [← Quay lại README của Epic](README.md) · [← Backlog MyTV](../README.md)
 
-
 ### User Story
 
-**Là người dùng đã đăng nhập**, tôi muốn báo cáo một bình luận không phù hợp theo lý do cụ thể, để Admin xem xét và bảo vệ môi trường cộng đồng.
-
-### Giá trị
-
-- Bổ sung tín hiệu cộng đồng cho quá trình kiểm duyệt.
-- Giúp phát hiện các nội dung AI bỏ sót.
-- Tạo cơ chế phản hồi minh bạch cho người dùng.
+**Là người dùng đã đăng nhập**, tôi muốn Report một comment/reply không phù hợp theo lý do cụ thể, để Admin xem xét và bảo vệ môi trường cộng đồng.
 
 ### Ưu tiên
 
 **Must**
 
-### Điều kiện tiên quyết
+### Taxonomy chung
 
-- Người dùng đã đăng nhập và còn quyền tương tác.
-- Bình luận/reply đang tồn tại và người dùng có quyền xem.
+Report/AI/CMS dùng chung taxonomy nghiệp vụ:
+- Spoiler
+- Spam/quảng cáo
+- Xúc phạm/ngôn từ công kích
+- Nội dung không phù hợp
+- Sai thông tin
+- Vi phạm khác (UI có thể hiển thị “Khác”)
 
 ### Acceptance Criteria
 
-1. Người dùng có thể chọn Report trên một bình luận hoặc reply đang hiển thị.
-2. Hệ thống hiển thị các lý do: Spoiler, Spam/quảng cáo, Xúc phạm, Nội dung không phù hợp, Sai thông tin và Khác.
-3. Khi chọn “Khác”, hệ thống cho phép nhập mô tả bổ sung theo giới hạn được cấu hình.
-4. Người dùng phải chọn ít nhất một lý do hợp lệ trước khi gửi.
-5. Sau khi gửi thành công, hệ thống xác nhận đã tiếp nhận Report.
-6. Report được liên kết với người báo cáo, bình luận, phiên bản nội dung, lý do và thời gian gửi.
-7. Report được chuyển vào CMS để Admin xử lý.
-8. Bình luận vẫn hiển thị sau khi nhận Report cho đến khi CMS hoặc cơ chế kiểm duyệt đưa ra quyết định khác.
-9. Số lượng Report lớn không tự động ẩn/xóa bình luận theo quyết định hiện tại.
-10. Hệ thống ngăn một tài khoản gửi lặp lại cùng một Report cho cùng một bình luận nếu chưa có chính sách cho phép báo cáo lại.
-11. Người dùng không nhìn thấy danh tính người đã Report một bình luận.
-12. Người chưa đăng nhập chọn Report được chuyển sang luồng đăng nhập.
+1. User đăng nhập có thể Report comment/reply đang Hiển thị mà mình có quyền xem.
+2. User **không được Report comment/reply của chính mình**.
+3. Phải chọn một reason taxonomy hợp lệ; khi chọn **Khác/Vi phạm khác**, description là **bắt buộc** và phải qua validation độ dài cấu hình.
+4. Report lưu reporter account ID, target ID, version ID, reason, description khi có, thời gian và trạng thái xử lý.
+5. Report được chuyển vào CMS; số lượng Report không public trên app.
+6. Một hoặc nhiều Report **không tự động Ẩn/Xóa** comment; nội dung tiếp tục Hiển thị cho tới khi CMS/moderation có quyết định khác.
+7. Cùng một user chỉ được Report lại cùng target sau **24 giờ kể từ lần Report trước**, miễn target vẫn Hiển thị.
+8. Mỗi user tối đa **10 Report trong 1 giờ** trên toàn hệ thống.
+9. Sau khi Admin xử lý Report, reporter nhận **in-app notification** xác nhận Report đã được xử lý; không gửi push và không tiết lộ chi tiết chế tài của user bị Report.
+10. Guest chọn Report được chuyển sang login; không tạo Report trước xác thực.
+11. Danh tính reporter không hiển thị cho cộng đồng.
 
 ### Quy tắc nghiệp vụ
 
-- Report là tín hiệu để Admin đánh giá, không phải kết luận vi phạm.
-- Không công khai số Report trên giao diện người xem.
-- Dữ liệu Report phải được giữ cùng lịch sử xử lý để audit.
-- Cần có rate limit để tránh lạm dụng chức năng Report.
-
-### Phụ thuộc
-
-- US14 — Xử lý nội dung trên CMS.
-- US16 — Quản lý người dùng vi phạm và audit log.
+- Report là tín hiệu, không phải kết luận vi phạm.
+- “Bỏ qua Report” tại US14 là action đóng Report khi Admin xác định nội dung không vi phạm; không có action “Duyệt giữ nguyên” riêng.
+- Rate limit 10 Report/giờ và cooldown 24h/cùng target áp dụng đồng thời.
 
 ### Điểm cần PO chốt
 
-- Có thông báo kết quả xử lý cho người Report hay không.
-- Thời gian cho phép báo cáo lại sau khi Admin bỏ qua Report.
-- Có cho phép Report bình luận của chính mình hay không.
+- Không còn blocker PO cho Report trong scope hiện tại.
 
 ---
-
-## Phân tích kiểm thử
-
-### Mục tiêu
-
-Kiểm tra người dùng gửi Report đúng lý do cho comment/reply, dữ liệu được lưu và chuyển CMS, nhưng Report không tự động thay đổi trạng thái hiển thị.
-
-### Rủi ro chính
-
-- Thiếu lý do hoặc mất liên kết người báo cáo/phiên bản nội dung.
-- Một tài khoản spam Report để làm sai tín hiệu.
-- Tự động ẩn/xóa khi nhiều Report trái với quyết định nghiệp vụ.
-
-### Dữ liệu kiểm thử
-
-U1/U2 đăng nhập, phiên khách; C1/R1 công khai; đủ 6 lý do; mô tả “Khác” rỗng/quá dài/hợp lệ; Report trùng và Report số lượng lớn.
 
 ## Test Cases
 
 | ID | Loại | Tiền điều kiện / dữ liệu | Bước kiểm thử | Kết quả mong đợi |
 |---|---|---|---|---|
-| TC-US10-001 | Functional | U1 đăng nhập; C1 và R1 công khai | Mở menu Report trên C1 rồi R1 | Cả comment gốc và reply đều có thể mở luồng Report. |
-| TC-US10-002 | Completeness | Có danh sách lý do chuẩn | Mở form Report | Hiển thị đủ Spoiler, Spam/quảng cáo, Xúc phạm, Không phù hợp, Sai thông tin, Khác. |
-| TC-US10-003 | Validation | Chọn “Khác” | Gửi với mô tả rỗng, đúng giới hạn và vượt giới hạn | Mô tả hợp lệ được nhận; dữ liệu rỗng/quá dài bị chặn theo rule cấu hình. |
-| TC-US10-004 | Negative | Chưa chọn lý do | Bấm Gửi | Hệ thống yêu cầu chọn lý do; không tạo Report. |
-| TC-US10-005 | Data integrity | U1 Report C1 phiên bản V1 | Gửi Report thành công, kiểm tra CMS/database | Có account ID người báo, comment/reply ID, version ID, lý do, thời gian và trạng thái xử lý. |
-| TC-US10-006 | Integration | CMS có quyền xử lý Report | Gửi Report rồi mở hàng chờ CMS | Report xuất hiện đúng nội dung, lý do và phiên bản; có thể chuyển cho US14 xử lý. |
-| TC-US10-007 | Visibility | C1 đang Hiển thị | Gửi một hoặc nhiều Report | C1 vẫn hiển thị và không thay đổi trạng thái chỉ vì nhận Report. |
-| TC-US10-008 | Deduplication | U1 đã Report C1 và chưa có chính sách báo lại | Gửi lại cùng Report | Request trùng bị chặn/thông báo phù hợp; không tạo bản ghi duplicate. |
-| TC-US10-009 | Privacy | U1/U2 cùng xem C1 | U2 mở C1 sau khi U1 Report | Không hiển thị danh tính hoặc số lượng Report cho người xem. |
-| TC-US10-010 | Authentication/rate limit | Phiên khách hoặc U1 vượt ngưỡng | Chọn Report/gửi liên tiếp qua UI/API | Khách được chuyển đăng nhập; request vượt rate limit bị chặn và không làm sai dữ liệu. |
-
-### Điểm cần PO chốt
-
-- Quy tắc báo lại sau khi CMS bỏ qua Report và thông báo kết quả cho người báo.
-- Ngưỡng rate limit theo tài khoản/IP/thời gian.
+| TC-US10-001 | Functional | U1 login; C1/R1 public | Report C1/R1 | Form mở và Report hợp lệ vào CMS. |
+| TC-US10-002 | Taxonomy | Mở form | Kiểm tra reason | Có đủ 6 nhóm taxonomy chung. |
+| TC-US10-003 | Other validation | Chọn Khác | Gửi description rỗng/hợp lệ/quá dài | Rỗng/quá dài bị chặn; hợp lệ được nhận. |
+| TC-US10-004 | Self-report | U1 là tác giả C1 | Thử Report | UI/API chặn, không tạo Report. |
+| TC-US10-005 | Data integrity | U1 Report C1 V1 | Kiểm tra CMS | Có reporter/target/version/reason/time đầy đủ. |
+| TC-US10-006 | Visibility | C1 nhận nhiều Report | Refresh public app | C1 không tự đổi state chỉ vì Report count. |
+| TC-US10-007 | Cooldown | U1 vừa Report C1 | Report lại trước/sau 24h | Trước 24h bị chặn; từ 24h trở đi được phép nếu C1 vẫn public. |
+| TC-US10-008 | Rate limit | U1 gửi Report nhiều target | Gửi 10 rồi Report thứ 11 trong 1 giờ | Report thứ 11 bị chặn; không làm sai dữ liệu. |
+| TC-US10-009 | Reporter notification | Admin xử lý Report | Mở notification của reporter | Có in-app notification kết quả xử lý, không có push/chi tiết sanction. |
+| TC-US10-010 | Privacy/auth | Guest hoặc U2 xem C1 đã bị U1 Report | Kiểm tra UI/API public | Guest phải login để Report; không lộ danh tính/số Report. |
