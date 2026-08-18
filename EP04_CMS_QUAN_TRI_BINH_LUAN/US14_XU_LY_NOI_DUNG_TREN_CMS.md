@@ -5,117 +5,91 @@
 
 ### User Story
 
-**Là Admin kiểm duyệt**, tôi muốn duyệt, từ chối, ẩn, xóa, xử lý Report/Flag và điều chỉnh Spoiler, để thực thi chính sách cộng đồng một cách nhất quán.
-
-### Giá trị
-
-- Cho phép xử lý toàn bộ vòng đời kiểm duyệt tại một nơi.
-- Giảm rủi ro nội dung vi phạm tiếp tục hiển thị.
-- Giữ lại bằng chứng và lý do cho việc kiểm tra sau này.
+**Là Admin/Moderator kiểm duyệt**, tôi muốn duyệt, từ chối, ẩn, xóa và xử lý Report/Flag/Spoiler, để thực thi chính sách cộng đồng nhất quán và có audit.
 
 ### Ưu tiên
 
 **Must**
 
-### Điều kiện tiên quyết
+### Reason taxonomy chuẩn
 
-- Admin có quyền kiểm duyệt tương ứng.
-- Bình luận/reply tồn tại và chưa bị xóa vĩnh viễn.
+Các action bắt buộc reason dùng chung taxonomy AI/Report/CMS:
+- Spoiler
+- Spam/quảng cáo
+- Xúc phạm/ngôn từ công kích
+- Nội dung không phù hợp
+- Sai thông tin
+- Vi phạm khác
 
-### Acceptance Criteria — Hành động kiểm duyệt
+### Acceptance Criteria — Moderation action
 
-1. Admin có thể Duyệt nội dung đang Chờ duyệt để chuyển sang Hiển thị.
-2. Admin có thể Từ chối nội dung đang Chờ duyệt để nội dung không được công khai.
-3. Admin có thể Ẩn nội dung đang Hiển thị mà không xóa dữ liệu audit.
-4. Admin có thể Xóa mềm bình luận/reply vi phạm sau bước xác nhận.
-5. Khi Admin xóa bình luận gốc, toàn bộ thread không còn hiển thị công khai.
-6. Hành động **Duyệt không bắt buộc nhập lý do**. Các hành động xử lý làm hạn chế/loại bỏ nội dung như Từ chối, Ẩn, Xóa và các hành động chế tài liên quan phải nhập lý do trước khi xác nhận.
-7. CMS kiểm tra lại trạng thái hiện tại trước khi lưu để tránh hai Admin ghi đè quyết định của nhau mà không cảnh báo.
-8. CMS hỗ trợ thao tác hàng loạt cho các hành động phù hợp trong MVP, tối đa **100 bình luận/reply trong một lần xử lý**; hệ thống phải kiểm tra quyền và trạng thái từng bản ghi trước khi áp dụng.
-9. Với thao tác hàng loạt, hệ thống hiển thị kết quả thành công/thất bại theo từng bản ghi hoặc tổng hợp đủ để Admin biết bản ghi nào chưa được xử lý; không được âm thầm bỏ qua lỗi.
+1. Admin có thể Duyệt nội dung Chờ duyệt → Hiển thị.
+2. Admin có thể Từ chối nội dung Chờ duyệt, Ẩn nội dung đang Hiển thị và Xóa mềm comment/reply sau xác nhận.
+3. **Duyệt không cần reason**.
+4. **Chỉ Từ chối / Ẩn / Xóa bắt buộc reason**: Admin phải chọn một reason chuẩn; có ô ghi chú tùy chọn.
+5. **Bỏ qua Report / gắn-bỏ Flag / thêm-bỏ Spoiler không bắt buộc reason**.
+6. Từ chối/Ẩn/Xóa phải làm tác giả thấy reason trong app và nhận **push + in-app notification**; notification này không bị tắt bởi community notification setting.
+7. Xóa root comment làm toàn bộ thread không public; Xóa tại CMS là soft-delete 90 ngày.
+8. CMS kiểm tra state hiện tại trước khi lưu để tránh ghi đè im lặng giữa nhiều Admin.
 
 ### Acceptance Criteria — Report
 
-1. Admin xem được danh sách Report, người gửi, lý do, thời gian và phiên bản nội dung bị báo cáo.
-2. Admin có thể chọn Bỏ qua Report nếu bình luận không vi phạm.
-3. Admin có thể Duyệt giữ nguyên, Ẩn hoặc Xóa nội dung tùy kết luận.
-4. Hệ thống lưu lịch sử từng Report và kết quả xử lý.
-5. Nhiều Report không tự động thay đổi trạng thái hiển thị trước quyết định CMS.
+1. Admin xem reporter, reason, description, time và version target.
+2. Chỉ có một action giữ nội dung hợp lệ là **“Bỏ qua Report”**: đóng Report và giữ comment ở trạng thái Hiển thị nếu không có moderation action khác.
+3. Không dùng action “Duyệt giữ nguyên” riêng để tránh trùng semantics.
+4. Nếu kết luận vi phạm, Admin dùng Ẩn/Xóa hoặc action moderation phù hợp.
+5. Nhiều Report không tự đổi state trước quyết định CMS.
+6. Lịch sử xử lý từng Report được lưu và reporter nhận in-app notification theo US10.
 
-### Acceptance Criteria — Flag
+### Acceptance Criteria — Bulk moderation
 
-1. Admin có thể gắn cờ nội bộ với các lý do: Spoiler, Spam/quảng cáo, Ngôn từ xúc phạm, Nội dung không phù hợp và Vi phạm khác.
-2. Admin có thể cập nhật trạng thái theo dõi và bỏ cờ khi hoàn tất.
-3. Flag chỉ phục vụ vận hành nội bộ và không hiển thị cho người dùng.
-4. Hệ thống lưu người gắn cờ, thời gian, lý do và người hoàn tất xử lý.
+1. Hỗ trợ bulk cho action phù hợp, tối đa **100 comment/reply/lần**.
+2. Hệ thống validate quyền/state từng item trước khi xử lý.
+3. Bulk dùng **partial success**: item hợp lệ vẫn thành công; item lỗi báo rõ; không rollback item đã thành công.
+4. Với bulk Từ chối/Ẩn/Xóa, Admin chọn **một reason chung cho batch** và có thể **override reason riêng từng item**.
+5. Không được báo “thành công toàn bộ” nếu có item thất bại.
 
-### Acceptance Criteria — Spoiler
+### Acceptance Criteria — Undo
 
-1. Admin có thể thêm trạng thái Spoiler cho bình luận chưa được tác giả đánh dấu.
-2. Admin có thể bỏ trạng thái Spoiler nếu xác định không cần thiết.
-3. Thay đổi được phản ánh trên ứng dụng người xem và lưu audit.
-4. Nội dung bị Admin đánh dấu Spoiler được che theo cùng trải nghiệm với Spoiler do người dùng chọn.
+1. CMS hỗ trợ Undo **Từ chối / Ẩn / Xóa mềm** khi dữ liệu còn trong thời gian lưu trữ.
+2. Mọi Admin/Moderator có quyền moderation tương ứng đều được Undo, không cần là người thực hiện action ban đầu.
+3. **Undo không bắt buộc nhập reason**.
+4. Undo tạo audit event mới với actor/time/action/before-after; không xóa/sửa audit cũ.
+
+### Acceptance Criteria — SLA moderation
+
+1. Item Chờ duyệt có SLA **24 giờ** kể từ lúc vào moderation queue.
+2. CMS hiển thị thời gian chờ, cảnh báo item sắp/quá SLA.
+3. Quá 24 giờ vẫn giữ **Chờ duyệt**, đánh dấu **Quá SLA** và ưu tiên lên đầu trong cùng nhóm risk.
+4. Không tự Duyệt/Từ chối chỉ vì quá SLA.
 
 ### Quy tắc nghiệp vụ
 
-- Admin xử lý theo chính sách cộng đồng, không dựa trên quan điểm cá nhân.
-- Ý kiến trái chiều nhưng hợp lệ không bị xóa chỉ vì tiêu cực.
-- Hành động phải được phân quyền và lưu audit.
-- Duyệt là hành động xác nhận nội dung đủ điều kiện hiển thị nên không bắt buộc lý do; các hành động từ chối/ẩn/xóa cần lý do để phục vụ audit.
-- Bulk tối đa 100 bản ghi/lần, nhưng không được bỏ qua kiểm tra trạng thái và quyền trên từng bản ghi.
-- Xóa tại CMS là xóa mềm trong thời hạn lưu trữ 90 ngày, trừ quy trình xóa vĩnh viễn được phê duyệt riêng.
-
-### Phụ thuộc
-
-- US10 — Report bình luận.
-- US11 và US12 — AI và trạng thái.
-- US16 — Audit log và xử lý tài khoản.
+- Duyệt no reason; Từ chối/Ẩn/Xóa = reason chuẩn bắt buộc + note optional.
+- Flag/Spoiler/Bỏ qua Report không bắt buộc reason.
+- Bulk max 100, partial success.
+- Undo là action sửa sai độc lập và phải audit.
 
 ### Điểm cần PO chốt
 
-- Danh mục lý do chuẩn cho từng hành động bắt buộc nhập lý do.
-- Có thông báo cho tác giả khi nội dung bị từ chối/ẩn/xóa hay không.
-- Quy trình hoàn tác một quyết định sai.
+- Không còn blocker PO cho moderation CMS trong scope hiện tại.
 
 ---
-
-## Phân tích kiểm thử
-
-### Mục tiêu
-
-Kiểm tra các hành động kiểm duyệt, Report, Flag và Spoiler được phân quyền, áp dụng đúng rule nhập lý do, hỗ trợ bulk tối đa 100, cập nhật trạng thái đúng, không mất audit và xử lý xung đột đồng thời.
-
-### Rủi ro chính
-
-- Admin thao tác sai state hoặc hai Admin ghi đè nhau.
-- Duyệt bị chặn do yêu cầu lý do trái nghiệp vụ hoặc hành động từ chối/ẩn/xóa thiếu lý do.
-- Bulk vượt 100, bỏ qua bản ghi lỗi hoặc áp dụng sai quyền/state từng bản ghi.
-- Xóa comment gốc không cascade thread; Report/Flag lộ ra người dùng.
-
-### Dữ liệu kiểm thử
-
-Comment/reply Chờ duyệt, Hiển thị, Report, Flag, Spoiler; C1 có R1/R2; Admin kiểm duyệt đủ quyền, role chỉ đọc, hai Admin thao tác đồng thời; tập dữ liệu bulk 99/100/101 bản ghi.
 
 ## Test Cases
 
 | ID | Loại | Tiền điều kiện / dữ liệu | Bước kiểm thử | Kết quả mong đợi |
 |---|---|---|---|---|
-| TC-US14-001 | Moderation | Comment Chờ duyệt | Admin chọn Duyệt và xác nhận không nhập lý do | State chuyển Hiển thị; app cập nhật; audit lưu actor/thời gian/trạng thái trước-sau; không bắt buộc lý do. |
-| TC-US14-002 | Moderation | Comment Chờ duyệt | Admin chọn Từ chối, nhập lý do hợp lệ | State không công khai; tác giả nhận trạng thái theo UX; audit đầy đủ lý do. |
-| TC-US14-003 | Moderation | Comment Hiển thị | Admin chọn Ẩn rồi Xóa mềm với lý do | Ẩn không xóa dữ liệu; Xóa yêu cầu xác nhận, loại khỏi công khai và giữ audit. |
-| TC-US14-004 | Cascade | C1 có R1/R2 | Admin xóa C1 | C1 và toàn bộ thread biến mất khỏi UI/API công khai; không xóa nhầm thread khác. |
-| TC-US14-005 | Reason validation | Thao tác Từ chối/Ẩn/Xóa | Bỏ trống lý do rồi xác nhận | Không cho lưu; hiển thị validation và không đổi state. Duyệt không áp dụng validation này. |
-| TC-US14-006 | Concurrency | Hai Admin cùng mở C1 | Admin A xử lý trước, Admin B lưu state cũ | Admin B nhận cảnh báo xung đột; không ghi đè im lặng quyết định mới. |
-| TC-US14-007 | Report queue | C1 có nhiều Report | Mở Report, chọn Bỏ qua/Duyệt/Ẩn/Xóa | Hiển thị người gửi/lý do/version; hành động đúng kết luận và lưu lịch sử từng Report. |
-| TC-US14-008 | Report rule | C1 nhận nhiều Report | Tạo thêm Report rồi kiểm tra ngay | State không tự đổi chỉ vì số lượng; Admin là người quyết định. |
-| TC-US14-009 | Flag | C1 đang Hiển thị | Gắn từng lý do Flag, cập nhật đang xử lý/hoàn tất, bỏ cờ | Flag chỉ hiển thị nội bộ; trạng thái, người thao tác, thời gian, lý do được lưu. |
-| TC-US14-010 | Spoiler | C1 chưa/đã có Spoiler | Admin thêm rồi bỏ Spoiler | App che/bỏ che theo state mới; thay đổi không làm mất text và có audit. |
-| TC-US14-011 | Authorization | Role chỉ xem hoặc không có quyền xóa | Gọi UI/API từng hành động | Hành động không được cấp bị ẩn/chặn; không bypass qua API. |
-| TC-US14-012 | Data retention | Comment bị Xóa mềm | Kiểm tra CMS/audit sau thao tác | Dữ liệu không hiển thị công khai nhưng còn record phục vụ audit 90 ngày theo policy. |
-| TC-US14-013 | Bulk/boundary | Có 99, 100 và 101 record đủ điều kiện | Chọn xử lý hàng loạt từng tập dữ liệu | 99/100 được phép; 101 bị chặn hoặc yêu cầu giảm lựa chọn về tối đa 100; không xử lý quá giới hạn. |
-| TC-US14-014 | Bulk/partial failure | 100 record gồm một số record đổi state/mất quyền trước khi xác nhận | Thực hiện bulk | Hệ thống kiểm tra từng record, xử lý các record hợp lệ theo policy và báo rõ record thất bại; không báo thành công toàn bộ sai thực tế. |
-
-### Điểm cần PO chốt
-
-- Danh mục lý do chuẩn, thông báo tác giả và cơ chế hoàn tác quyết định sai.
-- Quyền được phép hoàn tác theo từng role Admin.
+| TC-US14-001 | Approve | C1 Chờ duyệt | Duyệt không nhập reason | C1 Hiển thị; audit before-after; không validation reason. |
+| TC-US14-002 | Reason required | Từ chối/Ẩn/Xóa | Bỏ reason rồi xác nhận | Không cho lưu. Chọn taxonomy hợp lệ thì xử lý được; note là optional. |
+| TC-US14-003 | No-reason actions | Bỏ qua Report/Flag/Spoiler | Thực hiện không nhập reason | Action được phép và có audit. |
+| TC-US14-004 | Author notification | Admin Từ chối/Ẩn/Xóa C1 | U1 kiểm tra app/push | U1 thấy reason và nhận push + in-app bắt buộc. |
+| TC-US14-005 | Delete cascade | C1 có R1/R2 | Xóa mềm C1 | Toàn thread biến mất public; dữ liệu còn retention 90 ngày. |
+| TC-US14-006 | Concurrency | A/B cùng mở C1 | A xử lý trước, B lưu state cũ | B nhận conflict; không ghi đè im lặng. |
+| TC-US14-007 | Report semantics | C1 có Report nhưng không vi phạm | Chọn “Bỏ qua Report” | Report đóng; C1 tiếp tục Hiển thị; không có “Duyệt giữ nguyên” riêng. |
+| TC-US14-008 | Bulk boundary | 99/100/101 item | Thực hiện bulk | 99/100 được phép; 101 bị chặn/yêu cầu giảm selection. |
+| TC-US14-009 | Partial success | 100 item có một số stale/unauthorized | Bulk | Item hợp lệ xử lý thành công; item lỗi báo riêng; không rollback. |
+| TC-US14-010 | Bulk reason | Bulk Từ chối/Ẩn/Xóa | Chọn reason chung và override một vài item | Mỗi item thành công lưu đúng reason cuối cùng của nó. |
+| TC-US14-011 | Undo | C1 bị Từ chối/Ẩn/Xóa mềm | Moderator khác có quyền chọn Undo không nhập reason | Khôi phục state phù hợp; không bắt reason; audit event mới được tạo. |
+| TC-US14-012 | SLA | Item pending 23h/24h/>24h | Mở queue | Hiển thị thời gian/badge; >24h = Quá SLA và ưu tiên trong cùng risk, state vẫn pending. |
+| TC-US14-013 | Authorization | Role chỉ đọc | Thử moderation/Undo/bulk | UI/API chặn action không được cấp. |
