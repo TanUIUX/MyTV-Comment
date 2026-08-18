@@ -24,6 +24,8 @@
 9. Guest chọn Like được chuyển sang login; không tạo Like trước xác thực.
 10. Comment bị Ẩn/Xóa hoặc user không còn quyền xem không thể nhận Like mới.
 11. Net Like hiện tại được dùng cho sort Được yêu thích/Featured Score; lịch sử thao tác Like/Unlike có thể được tracking riêng cho US19.
+12. Nếu account đã tạo Like sau đó bị **Khóa tài khoản**, Like record **không bị xóa**, nhưng trong thời gian khóa Like đó tạm bị loại khỏi **Net Like công khai, Featured Score/ranking và Engagement Score**. Khi account được mở khóa, Like được tính lại nếu record và target vẫn hợp lệ.
+13. Việc một liker bị Account Lock **không làm thay đổi Fan trung thành eligibility của người đã nhận Like đó**; badge dùng semantics riêng tại US17 để tránh badge của recipient dao động theo lock/unlock của past liker.
 
 ### Quy tắc nghiệp vụ
 
@@ -32,6 +34,8 @@
 - Optimistic UI không thay đổi nguyên tắc BE là source of truth.
 - Batch window 5 giây là rule client; phải hỗ trợ idempotency/dedup ở BE.
 - Coalescing không ngăn analytics ghi nhận lịch sử thao tác UI nếu data dictionary US19 cần; Net Like cuối cùng vẫn dựa trên state hiện hành ở BE.
+- **Public Net Like** loại Like của account đang Account Lock; đây là rule cho public aggregate/ranking/Engagement, không phải xóa Like record.
+- Badge eligibility của recipient là một data semantic riêng theo US17 và cố ý không dao động theo trạng thái khóa của liker.
 
 ### Điểm cần PO chốt
 
@@ -53,4 +57,6 @@
 | TC-US07-008 | Idempotency | Double-click/retry | Gửi thao tác lặp | Không nhân đôi Like/event hợp lệ. |
 | TC-US07-009 | Authentication | Guest | Chọn Like | Yêu cầu login, không tạo Like trước auth. |
 | TC-US07-010 | Invalid target | C1 Ẩn/Xóa | Like qua UI/API | Bị chặn; Net Like public không đổi. |
-| TC-US07-011 | Integration | Net Like thay đổi | Mở sort Được yêu thích/Nổi bật | Ranking dùng Net Like hiện hành sau reconcile. |
+| TC-US07-011 | Integration | Net Like thay đổi | Mở sort Được yêu thích/Nổi bật | Ranking dùng Net Like công khai hiện hành sau reconcile. |
+| TC-US07-012 | Account Lock aggregate | U1 đã Like C1, sau đó U1 bị Account Lock | Kiểm tra Like record, Net Like/ranking/Engagement rồi mở khóa | Record vẫn tồn tại; khi khóa Like U1 bị loại public aggregate; mở khóa được tính lại nếu hợp lệ. |
+| TC-US07-013 | Badge exception | U1 đã Like content của U2 rồi U1 bị Account Lock | Chạy badge job của U2 | Like vẫn được tính vào Fan trung thành eligibility của U2 theo US17 dù tạm không nằm trong public Net Like. |
