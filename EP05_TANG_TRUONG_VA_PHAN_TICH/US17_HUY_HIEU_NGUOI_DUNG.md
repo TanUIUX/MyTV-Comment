@@ -40,7 +40,7 @@
 1. Hệ thống đánh giá badge tự động **mỗi ngày 1 lần**.
 2. Nếu user không còn đạt điều kiện Fan tích cực/Fan trung thành, áp dụng **grace period 7 ngày**; hết 7 ngày vẫn không đạt mới tự thu hồi.
 3. Mỗi user chỉ hiển thị tối đa **1 badge** cạnh tên.
-4. Với các badge đã được xếp cấp, thứ tự ưu tiên đã chốt: **Admin cấp/Chuyên gia > Fan trung thành > Fan tích cực**.
+4. Thứ tự ưu tiên hiển thị đã chốt: **Admin cấp/Chuyên gia > Bình luận nổi bật > Fan trung thành > Fan tích cực**.
 5. Khi user được cấp hoặc bị thu hồi badge, gửi **push + in-app notification** nếu notification cộng đồng đang bật theo US09.
 6. Khi Admin tắt một loại badge, badge đó **ẩn khỏi UI ngay** nhưng lịch sử sở hữu/cấp/thu hồi vẫn được giữ cho audit; bật lại không tạo duplicate.
 7. Comment/reply Ẩn/Xóa/Từ chối/spam không được dùng để tích lũy điều kiện badge tự động.
@@ -52,10 +52,11 @@
 - “Ngày hoạt động” sử dụng định nghĩa activity hợp lệ trong hệ thống tracking; phải nhất quán trong data dictionary US19.
 - Like của chính tác giả là Like hợp lệ theo US07 và tham gia các count nếu chưa có rule loại trừ riêng.
 - Grace period 7 ngày áp dụng badge hành vi Fan tích cực/Fan trung thành; không áp dụng cho source comment trở thành invalid của badge Bình luận nổi bật.
+- Khi user có nhiều badge hiệu lực, UI luôn chọn **badge có cấp ưu tiên cao nhất** theo thứ tự đã chốt.
 
 ### Điểm cần PO chốt
 
-- Xác định vị trí/cấp ưu tiên của badge **Bình luận nổi bật** so với Admin/Chuyên gia, Fan trung thành và Fan tích cực khi user sở hữu đồng thời nhiều badge nhưng UI chỉ hiển thị 1.
+- Không còn blocker PO cho badge trong scope hiện tại.
 
 ---
 
@@ -71,7 +72,7 @@
 | TC-US17-006 | Featured eligibility | Comment public có ≥20 Like, ≥5 Reply, Top10% FeaturedScore 30d | Chạy job | User đủ điều kiện badge Bình luận nổi bật toàn MyTV. |
 | TC-US17-007 | Featured stability | Badge đã cấp, comment tụt Top10% nhưng vẫn public/hợp lệ | Chạy job | Không thu hồi chỉ do ranking tụt. |
 | TC-US17-008 | Featured invalid | Comment nguồn bị Ẩn/Xóa/Từ chối | Chạy job | Badge bị thu hồi. |
-| TC-US17-009 | Max display | User có nhiều badge | Mở comment | Chỉ hiển thị 1 badge theo cấp ưu tiên được xác định. |
+| TC-US17-009 | Priority display | U1 có đồng thời Admin/Chuyên gia, Bình luận nổi bật, Fan trung thành, Fan tích cực | Mở comment | Chỉ hiển thị 1 badge theo thứ tự Admin/Chuyên gia > Bình luận nổi bật > Fan trung thành > Fan tích cực. |
 | TC-US17-010 | Admin badge expiry | Cấp badge với/không expiry | Kiểm tra trước/sau expiry | Có expiry thì hết hiệu lực đúng mốc; không expiry thì giữ tới thu hồi. |
 | TC-US17-011 | Toggle type | Tắt loại badge đang có owner | Refresh UI | Badge ẩn ngay; history còn; bật lại không duplicate. |
 | TC-US17-012 | Notification | Grant/revoke badge | Kiểm tra push/in-app | Gửi notification cộng đồng theo setting US09. |
