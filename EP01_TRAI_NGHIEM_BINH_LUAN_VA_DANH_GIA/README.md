@@ -13,11 +13,12 @@
 
 ## 2. Kết quả mong đợi
 
-- Người chưa đăng nhập vẫn đọc được các bình luận đang hiển thị.
+- Người chưa đăng nhập vẫn đọc được các bình luận đang Hiển thị.
 - Người dùng hiểu rõ mình đang xem hoặc viết bình luận cho series hay tập nào.
 - Người dùng có thể đánh giá, đăng, sửa và xóa nội dung của chính mình.
 - Số lượng, điểm đánh giá và trạng thái bình luận được cập nhật nhất quán.
-- Nội dung có Spoiler và cảnh phim được hiển thị an toàn, đúng ngữ cảnh.
+- Nội dung Spoiler và **mốc thời gian trong phim** được hiển thị an toàn, đúng ngữ cảnh.
+- MVP không triển khai frame/clip trong bình luận; timestamp là cơ chế ngữ cảnh theo cảnh hiện tại.
 
 ## 3. Chỉ số gợi ý
 
@@ -30,7 +31,6 @@
 
 ---
 
-
 ## Danh sách User Story
 
 | ID | User Story | File |
@@ -40,7 +40,7 @@
 | US03 | Đánh giá series và tập phim | [US03](US03_DANH_GIA_SERIES_VA_TAP_PHIM.md) |
 | US04 | Đăng bình luận | [US04](US04_DANG_BINH_LUAN.md) |
 | US05 | Sửa và xóa bình luận | [US05](US05_SUA_VA_XOA_BINH_LUAN.md) |
-| US06 | Bình luận kèm cảnh phim | [US06](US06_BINH_LUAN_KEM_CANH_PHIM.md) |
+| US06 | Bình luận kèm mốc thời gian | [US06](US06_BINH_LUAN_KEM_CANH_PHIM.md) |
 
 [← Quay lại backlog tổng](../README.md)
 
@@ -51,4 +51,4 @@
 - Dữ liệu series/tập không bị trộn lẫn.
 - Quyền đọc, đăng, sửa và xóa được kiểm tra ở cả giao diện và API.
 - Các sự kiện chính có tracking phục vụ US19.
-- Các quy tắc chưa được PO chốt đã được chuyển thành quyết định chính thức trước khi story liên quan vào sprint.
+- Các quyết định PO đã chốt phải được phản ánh đồng nhất ở US, Acceptance Criteria và Test Cases.
