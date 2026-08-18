@@ -3,7 +3,6 @@
 > Thuộc EP03 — An toàn và kiểm duyệt
 > [← Quay lại README của Epic](README.md) · [← Backlog MyTV](../README.md)
 
-
 ### User Story
 
 **Là Admin vận hành**, tôi muốn hệ thống áp dụng trạng thái và phạm vi hiển thị phù hợp theo cấu hình của từng phim, để kiểm soát chính xác ai được xem bình luận ở từng giai đoạn kiểm duyệt.
@@ -36,7 +35,7 @@
 4. Khi phiên bản mới được duyệt, hệ thống chuyển phiên bản đó thành nội dung công khai hiện hành.
 5. Khi phiên bản mới bị từ chối, phiên bản công khai cũ không bị ảnh hưởng.
 6. Mỗi phim có thể được cấu hình ở một trong ba mức: Chế độ 1, Chế độ 2 hoặc Đóng bình luận.
-7. Khi phim chuyển sang Đóng bình luận, toàn bộ khu vực Bình luận được ẩn với người xem.
+7. Khi phim chuyển sang Đóng bình luận, **toàn bộ khu vực Bình luận bị ẩn khỏi người xem**, bao gồm danh sách bình luận, ô nhập/tương tác và phần điểm đánh giá cộng đồng nếu rating nằm trong khu vực Bình luận.
 8. Khi Đóng bình luận, hệ thống không chấp nhận bình luận, reply, Like, Mention, Report hoặc đánh giá mới qua giao diện/API theo phạm vi cấu hình.
 9. Việc đóng bình luận không xóa dữ liệu lịch sử.
 10. Khi mở lại, dữ liệu công khai trước đó được hiển thị lại theo cấu hình và quyền hiện hành, trừ nội dung đã bị xử lý.
@@ -49,6 +48,7 @@
 - Chế độ mặc định: AI tiền kiểm, nội dung an toàn hiển thị ngay, Admin hậu kiểm.
 - Chế độ đặc biệt: AI kiểm tra, Admin duyệt trước khi công khai.
 - Mức 3: đóng hoàn toàn khu vực bình luận.
+- Khi Đóng, không hiển thị riêng rating như một thành phần tách rời nếu rating thuộc khu vực Bình luận.
 - Không xóa dữ liệu chỉ vì chuyển chế độ hoặc đóng bình luận.
 
 ### Phụ thuộc
@@ -59,7 +59,6 @@
 
 ### Điểm cần PO chốt
 
-- Khi đóng bình luận có tiếp tục hiển thị điểm đánh giá hay không; quyết định hiện tại “ẩn toàn bộ khu vực” có thể bao gồm cả rating nếu rating nằm trong khu vực này.
 - Xử lý nội dung đang Chờ duyệt khi chuyển từ Chế độ 2 sang Chế độ 1.
 - Ý nghĩa chính xác của cấu hình “sau X giờ”: tính từ giờ phát hành, giờ phát sóng hay một mốc Admin chọn.
 - Có hiển thị lý do từ chối/ẩn cho tác giả hay không.
@@ -77,6 +76,7 @@ Kiểm tra ma trận hiển thị theo trạng thái, version công khai/chờ d
 - Nội dung Chờ duyệt lọt qua API, count, notification hoặc deep link.
 - Bản sửa chờ duyệt ghi đè bản cũ.
 - Đóng bình luận chỉ khóa UI nhưng vẫn nhận request trực tiếp; mở lại làm mất lịch sử.
+- Rating còn hiển thị riêng khi PO đã chốt ẩn toàn bộ khu vực Bình luận.
 
 ### Dữ liệu kiểm thử
 
@@ -91,7 +91,7 @@ Comment công khai C1, bản sửa V2 Chờ duyệt, nội dung Từ chối/Ẩn
 | TC-US12-003 | Rejection | C1 công khai; V2 bị từ chối | Admin từ chối V2 rồi mở lại C1 | C1 không bị ảnh hưởng; V2 không hiển thị cộng đồng theo UX chính sách. |
 | TC-US12-004 | Mode config | Phim cấu hình Chế độ 1 | Gửi nội dung an toàn/nghi ngờ | An toàn Hiển thị; nghi ngờ Chờ duyệt đúng US11. |
 | TC-US12-005 | Mode config | Phim cấu hình Chế độ 2 | Gửi nội dung an toàn về kỹ thuật | Nội dung vẫn Chờ duyệt cho tới khi Admin duyệt. |
-| TC-US12-006 | Closed state/UI | Phim chuyển Đóng | Mở trang chi tiết, app và API đọc | Toàn bộ khu vực bình luận bị ẩn; không trả dữ liệu công khai ngoài chính sách. |
+| TC-US12-006 | Closed state/UI | Phim chuyển Đóng | Mở trang chi tiết/app và kiểm tra cả comment + rating | Toàn bộ khu vực Bình luận bị ẩn, bao gồm rating trong khu vực; không trả dữ liệu công khai ngoài chính sách. |
 | TC-US12-007 | Closed state/API | Phim Đóng | Gửi comment, reply, Like, Mention, Report, Rating qua UI và API | Tất cả thao tác mới bị chặn; không tạo record hoặc event bất hợp lệ. |
 | TC-US12-008 | Reopen/history | Phim Đóng có dữ liệu cũ | Mở lại phim | Dữ liệu công khai đủ điều kiện hiển thị lại; nội dung đã xử lý vẫn bị loại; lịch sử không bị xóa. |
 | TC-US12-009 | Schedule | Có cấu hình “sau X giờ” | Kiểm tra trước, đúng và sau thời điểm hiệu lực | Chuyển state đúng mốc, chỉ áp dụng từ thời điểm hiệu lực và có timezone nhất quán. |
@@ -101,5 +101,5 @@ Comment công khai C1, bản sửa V2 Chờ duyệt, nội dung Từ chối/Ẩn
 
 ### Điểm cần PO chốt
 
-- Rating có bị ẩn cùng khu vực khi Đóng hay không.
 - Cách xử lý queue đang Chờ duyệt khi đổi chế độ và mốc tính “sau X giờ”.
+- Có hiển thị lý do từ chối/ẩn cho tác giả hay không.
