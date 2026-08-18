@@ -22,7 +22,7 @@
 7. Ở Chế độ 2, nội dung không bị chặn vẫn vào Chờ duyệt tới khi Admin duyệt.
 8. Spoiler được che với cảnh báo và chỉ mở khi người xem chủ động chọn.
 9. Nickname phải **unique không phân biệt hoa/thường**, dài **3–30 ký tự**; cho phép chữ, số, khoảng trắng, `_`, `-`; không cho URL, số điện thoại hoặc ký tự điều khiển.
-10. User được đổi nickname không giới hạn số lần; nickname mới/đổi phải qua AI moderation. An toàn dùng ngay; nghi ngờ Chờ duyệt; nặng bị chặn.
+10. User được đổi nickname không giới hạn số lần; nickname mới/đổi phải qua **global AI moderation policy độc lập với Chế độ 1/2 của phim/tập**: Nhẹ/An toàn → dùng ngay; Trung bình/nghi ngờ → Chờ duyệt; Nặng → bị chặn.
 11. Trong khi nickname mới Chờ duyệt, tiếp tục dùng nickname hợp lệ cũ. Nếu chưa có nickname hợp lệ, hiển thị số điện thoại đã mask: giữ `0` đầu + 3 số cuối, toàn bộ số giữa thành `*` theo độ dài thực tế, ví dụ `0912345124 → 0******124`.
 12. Không hiển thị đầy đủ số điện thoại hoặc PII nhạy cảm trên trải nghiệm người xem.
 13. Sau khi gửi thành công, ô nhập được xóa; retry không tạo comment trùng.
@@ -34,6 +34,7 @@
 - Chỉ tài khoản đăng nhập mới được đăng bình luận.
 - Giới hạn 1000 ký tự và rate limit 5 nội dung/phút cũng áp dụng Reply tại US08.
 - URL được validate theo hostname, không theo chuỗi chứa tên miền.
+- **Nickname là identity toàn tài khoản**, không thuộc scope series/episode; vì vậy không kế thừa Mode1/Mode2 hay threshold override theo phim/tập. Nickname dùng global AI policy riêng theo US11.
 - Nickname đang Chờ duyệt không được public trước khi có quyết định hợp lệ.
 - Khi comment bị Từ chối/Ẩn/Xóa bởi Admin, tác giả được xem lý do trong app và nhận notification theo US14/US16.
 
@@ -58,7 +59,7 @@
 | TC-US04-009 | Mode 2 | Nội dung không bị chặn | Gửi | Vào Chờ duyệt; chưa public trước Admin. |
 | TC-US04-010 | Nickname uniqueness | Có `MyTVFan` | User khác thử `mytvfan`/`MYTVFAN` | Bị coi là trùng. |
 | TC-US04-011 | Nickname format | Nickname 2/3/30/31 ký tự; có URL/phone/control char | Lưu nickname | Chỉ dữ liệu đúng 3–30 và charset/rule hợp lệ được nhận. |
-| TC-US04-012 | Nickname moderation | Đổi nickname an toàn/nghi ngờ/nặng | Thực hiện đổi | An toàn dùng ngay; nghi ngờ giữ nickname cũ trong lúc Chờ duyệt; nặng bị chặn. |
+| TC-US04-012 | Nickname global moderation | Series/episode lần lượt ở Mode1/Mode2; đổi nickname Nhẹ/Trung bình/Nặng | Thực hiện đổi ở các scope khác nhau | Kết quả nickname giống nhau ở mọi scope: Nhẹ dùng ngay, Trung bình giữ nickname cũ và Chờ duyệt, Nặng bị chặn; Mode1/2 không làm thay đổi decision. |
 | TC-US04-013 | Fallback identity | U1 chưa có nickname hợp lệ, phone `0912345124` | Mở comment | Hiển thị `0******124`, không lộ số đầy đủ. |
 | TC-US04-014 | Security/idempotency | Logout hoặc retry request | Gửi qua API | Không bypass auth; retry không tạo trùng. |
 | TC-US04-015 | Media restriction | Thử upload ảnh/video cá nhân | UI/API | Không có luồng upload; API từ chối. |
