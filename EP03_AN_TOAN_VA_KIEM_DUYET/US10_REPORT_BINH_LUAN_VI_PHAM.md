@@ -25,7 +25,7 @@ Report/AI/CMS dùng chung taxonomy nghiệp vụ:
 
 1. User đăng nhập có thể Report comment/reply đang Hiển thị mà mình có quyền xem.
 2. User **không được Report comment/reply của chính mình**.
-3. Phải chọn một reason taxonomy hợp lệ; khi chọn **Khác/Vi phạm khác**, description là **bắt buộc** và phải qua validation độ dài cấu hình.
+3. Phải chọn một reason taxonomy hợp lệ; khi chọn **Khác/Vi phạm khác**, description là **bắt buộc**, tối đa **500 ký tự**; whitespace-only không hợp lệ. UI và API dùng cùng giới hạn.
 4. Report lưu reporter account ID, target ID, version ID, reason, description khi có, thời gian và trạng thái xử lý.
 5. Report được chuyển vào CMS; số lượng Report không public trên app.
 6. Một hoặc nhiều Report **không tự động Ẩn/Xóa** comment; nội dung tiếp tục Hiển thị cho tới khi CMS/moderation có quyết định khác.
@@ -39,6 +39,7 @@ Report/AI/CMS dùng chung taxonomy nghiệp vụ:
 
 - Report là tín hiệu, không phải kết luận vi phạm.
 - “Bỏ qua Report” tại US14 là action đóng Report khi Admin xác định nội dung không vi phạm; không có action “Duyệt giữ nguyên” riêng.
+- Description của “Khác/Vi phạm khác”: bắt buộc, **1–500 ký tự hợp lệ** sau khi loại trường hợp chỉ có khoảng trắng.
 - Rate limit 10 Report/giờ và cooldown 24h/cùng target áp dụng đồng thời.
 
 ### Điểm cần PO chốt
@@ -53,7 +54,7 @@ Report/AI/CMS dùng chung taxonomy nghiệp vụ:
 |---|---|---|---|---|
 | TC-US10-001 | Functional | U1 login; C1/R1 public | Report C1/R1 | Form mở và Report hợp lệ vào CMS. |
 | TC-US10-002 | Taxonomy | Mở form | Kiểm tra reason | Có đủ 6 nhóm taxonomy chung. |
-| TC-US10-003 | Other validation | Chọn Khác | Gửi description rỗng/hợp lệ/quá dài | Rỗng/quá dài bị chặn; hợp lệ được nhận. |
+| TC-US10-003 | Other validation | Chọn Khác | Gửi description rỗng/whitespace/1/500/501 ký tự | Rỗng/whitespace/501 bị chặn; 1 và 500 ký tự hợp lệ được nhận nhất quán UI/API. |
 | TC-US10-004 | Self-report | U1 là tác giả C1 | Thử Report | UI/API chặn, không tạo Report. |
 | TC-US10-005 | Data integrity | U1 Report C1 V1 | Kiểm tra CMS | Có reporter/target/version/reason/time đầy đủ. |
 | TC-US10-006 | Visibility | C1 nhận nhiều Report | Refresh public app | C1 không tự đổi state chỉ vì Report count. |
