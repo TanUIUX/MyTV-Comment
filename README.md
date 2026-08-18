@@ -157,7 +157,7 @@ Tài liệu chuyển yêu cầu tính năng Bình luận trên MyTV thành backl
 - Fan tích cực: rolling 30d, ≥7 active days + ≥10 comment/reply hợp lệ.
 - Fan trung thành: rolling 90d, ≥30 active days + ≥30 comment/reply hợp lệ + ≥30 Like nhận.
 - Auto badge evaluation mỗi ngày; không đạt thì grace **7 ngày** trước khi thu hồi Fan badge.
-- UI hiển thị tối đa **1 badge**; thứ tự đã chốt tối thiểu: Admin/Chuyên gia > Fan trung thành > Fan tích cực.
+- UI hiển thị tối đa **1 badge**; thứ tự ưu tiên cuối cùng: **Admin/Chuyên gia > Bình luận nổi bật > Fan trung thành > Fan tích cực**.
 - Bình luận nổi bật: comment public ≥20 Like + ≥5 Reply + Top10% Featured Score toàn MyTV trong 30 ngày tại thời điểm xét; đã cấp thì không thu hồi chỉ do ranking tụt, nhưng thu hồi nếu source comment không còn hợp lệ.
 - Badge Admin/Chuyên gia có expiry tùy chọn.
 - Grant/revoke gửi push + in-app theo notification cộng đồng.
@@ -189,9 +189,9 @@ Tài liệu chuyển yêu cầu tính năng Bình luận trên MyTV thành backl
 
 ## 6. Điểm PO còn lại sau vòng refinement
 
-- **US17:** xác định cấp ưu tiên của badge **“Bình luận nổi bật”** so với Admin/Chuyên gia, Fan trung thành và Fan tích cực khi user sở hữu đồng thời nhiều badge nhưng UI chỉ hiển thị 1.
+- **Không còn blocker PO đang mở trong 20 User Story theo vòng refinement hiện tại.**
 
-Các nội dung còn lại trong refinement nên là thiết kế UI, data dictionary/technical implementation hoặc policy vận hành chi tiết dựa trên các business rule đã khóa, không phải blocker PO mới nếu không thay đổi hành vi sản phẩm.
+Các nội dung tiếp theo nên là thiết kế UI, data dictionary, technical implementation hoặc policy vận hành chi tiết dựa trên các business rule đã khóa; chỉ mở lại quyết định PO nếu phát hiện hành vi sản phẩm mới hoặc mâu thuẫn mới trong refinement/implementation.
 
 ## 7. Nguyên tắc refinement
 
