@@ -3,109 +3,75 @@
 > Thuộc EP05 — Tăng trưởng và phân tích
 > [← Quay lại README của Epic](README.md) · [← Backlog MyTV](../README.md)
 
-
 ### User Story
 
-**Là người dùng tích cực**, tôi muốn được ghi nhận bằng huy hiệu phù hợp và thấy huy hiệu bên cạnh tên của mình, để có động lực tiếp tục đóng góp nội dung chất lượng.
-
-### Giá trị
-
-- Ghi nhận đóng góp và tạo động lực cộng đồng.
-- Giúp người xem nhận biết thành viên tích cực hoặc có chuyên môn.
-- Tạo công cụ vận hành chiến dịch tương tác dài hạn.
+**Là người dùng tích cực**, tôi muốn được ghi nhận bằng huy hiệu phù hợp, để có động lực tiếp tục đóng góp nội dung chất lượng.
 
 ### Ưu tiên
 
 **Could**
 
-### Các loại huy hiệu ban đầu
+### Các loại và tiêu chí đã chốt
 
-| Huy hiệu | Cơ chế đề xuất |
-|---|---|
-| Fan tích cực/trung thành | Tự động theo số lượng đóng góp hợp lệ và tiêu chí cấu hình |
-| Bình luận nổi bật | Tự động theo lượng Like/chất lượng bình luận và tiêu chí cấu hình |
-| Người yêu phim/Chuyên gia phim ảnh | Admin cấp thủ công dựa trên chất lượng và hiểu biết |
+#### Fan tích cực
+- Xét rolling **30 ngày gần nhất**.
+- Hoạt động ít nhất **7 ngày**.
+- Có ít nhất **10 comment/reply hợp lệ**.
+- Không yêu cầu Like nhận được.
 
-### Điều kiện tiên quyết
+#### Fan trung thành
+- Xét rolling **90 ngày gần nhất**.
+- Hoạt động ít nhất **30 ngày**.
+- Có ít nhất **30 comment/reply hợp lệ**.
+- Nhận ít nhất **30 Like** trong 90 ngày.
 
-- Người dùng có tài khoản hợp lệ.
-- Dữ liệu bình luận, Like và vi phạm đủ để đánh giá tiêu chí.
-- Danh mục huy hiệu được Admin bật.
+#### Bình luận nổi bật
+- Là huy hiệu **toàn MyTV**, không gắn riêng theo phim/tập trên UI badge.
+- User đủ điều kiện nếu có ít nhất một comment đang Hiển thị đạt **≥20 Like + ≥5 Reply** và thuộc **Top 10% Featured Score cao nhất trên toàn MyTV trong 30 ngày gần nhất** tại thời điểm xét.
+- Sau khi được cấp, việc comment tụt khỏi Top 10% do ranking biến động **không tự thu hồi badge**.
+- Badge bị thu hồi nếu comment nguồn bị Ẩn/Xóa/Từ chối hoặc không còn hợp lệ.
 
-### Acceptance Criteria — Hiển thị và tự động cấp
+#### Admin cấp / Chuyên gia
+- Admin cấp thủ công cho user phù hợp.
+- Có thể đặt ngày hết hạn hoặc không; nếu không đặt thì giữ tới khi Admin thu hồi/tắt loại badge.
 
-1. Huy hiệu đang hiệu lực được hiển thị cạnh tên tài khoản trong bình luận và reply.
-2. Hệ thống tự đánh giá điều kiện theo lịch hoặc sự kiện được thiết kế.
-3. Khi người dùng đạt tiêu chí tự động, hệ thống cấp đúng huy hiệu và lưu thời điểm/tiêu chí đạt.
-4. Một người dùng có thể sở hữu nhiều huy hiệu nếu cấu hình cho phép.
-5. Khi có nhiều huy hiệu, giao diện tuân theo số lượng và thứ tự hiển thị được cấu hình.
-6. Nội dung bị xóa/ẩn hoặc xác định là spam không được dùng để tăng thành tích nếu chính sách loại trừ.
+### Acceptance Criteria
 
-### Acceptance Criteria — Quản trị huy hiệu
-
-1. Admin có thể tạo/cập nhật tên, icon, mô tả và điều kiện của huy hiệu.
-2. Admin có thể bật/tắt từng loại theo từng giai đoạn.
-3. Admin có thể cấp thủ công huy hiệu Chuyên gia cho tài khoản phù hợp.
-4. Admin có thể thu hồi huy hiệu khi tài khoản vi phạm nghiêm trọng hoặc được cấp sai.
-5. Tắt một loại huy hiệu phải có hành vi rõ ràng: ngừng cấp mới và ẩn/giữ huy hiệu cũ theo cấu hình.
-6. Mọi thao tác cấp thủ công, cấu hình và thu hồi được lưu audit.
+1. Hệ thống đánh giá badge tự động **mỗi ngày 1 lần**.
+2. Nếu user không còn đạt điều kiện Fan tích cực/Fan trung thành, áp dụng **grace period 7 ngày**; hết 7 ngày vẫn không đạt mới tự thu hồi.
+3. Mỗi user chỉ hiển thị tối đa **1 badge** cạnh tên.
+4. Với các badge đã được xếp cấp, thứ tự ưu tiên đã chốt: **Admin cấp/Chuyên gia > Fan trung thành > Fan tích cực**.
+5. Khi user được cấp hoặc bị thu hồi badge, gửi **push + in-app notification** nếu notification cộng đồng đang bật theo US09.
+6. Khi Admin tắt một loại badge, badge đó **ẩn khỏi UI ngay** nhưng lịch sử sở hữu/cấp/thu hồi vẫn được giữ cho audit; bật lại không tạo duplicate.
+7. Comment/reply Ẩn/Xóa/Từ chối/spam không được dùng để tích lũy điều kiện badge tự động.
+8. Report chưa xác minh không tự làm mất badge.
+9. Mọi thay đổi cấu hình/cấp thủ công/thu hồi có audit.
 
 ### Quy tắc nghiệp vụ
 
-- Không nên dùng số lượng bình luận thuần túy làm tiêu chí duy nhất vì có thể khuyến khích spam.
-- Tiêu chí nên chỉ tính nội dung hợp lệ, đã hiển thị và chưa bị xử lý vi phạm.
-- Report chưa được xác minh không tự động làm mất huy hiệu.
-- Thu hồi huy hiệu không xóa bình luận của người dùng.
-
-### Phụ thuộc
-
-- US07 — Like/Unlike.
-- US16 — Lịch sử vi phạm và audit.
-- US19 — Dữ liệu thống kê.
+- “Ngày hoạt động” sử dụng định nghĩa activity hợp lệ trong hệ thống tracking; phải nhất quán trong data dictionary US19.
+- Like của chính tác giả là Like hợp lệ theo US07 và tham gia các count nếu chưa có rule loại trừ riêng.
+- Grace period 7 ngày áp dụng badge hành vi Fan tích cực/Fan trung thành; không áp dụng cho source comment trở thành invalid của badge Bình luận nổi bật.
 
 ### Điểm cần PO chốt
 
-- Ngưỡng ban đầu cho từng huy hiệu.
-- Thời gian đánh giá: toàn thời gian hay theo chu kỳ.
-- Số huy hiệu tối đa hiển thị cạnh tên.
-- Người dùng có nhận thông báo khi được cấp/thu hồi hay không.
+- Xác định vị trí/cấp ưu tiên của badge **Bình luận nổi bật** so với Admin/Chuyên gia, Fan trung thành và Fan tích cực khi user sở hữu đồng thời nhiều badge nhưng UI chỉ hiển thị 1.
 
 ---
-
-## Phân tích kiểm thử
-
-### Mục tiêu
-
-Kiểm tra cấp/hiển thị/thu hồi huy hiệu theo tiêu chí, loại trừ nội dung không hợp lệ, hỗ trợ nhiều huy hiệu và bảo đảm cấu hình Admin có audit.
-
-### Rủi ro chính
-
-- Huy hiệu cấp dựa trên spam, nội dung Ẩn/Xóa hoặc Report chưa xác minh.
-- Cấu hình tắt/bật làm ẩn sai huy hiệu cũ hoặc cấp trùng.
-- Huy hiệu hiển thị sai thứ tự/số lượng hoặc thu hồi làm mất comment.
-
-### Dữ liệu kiểm thử
-
-U1 đạt/chưa đạt tiêu chí; comment công khai, Ẩn, Xóa, Spam; Like; nhiều loại huy hiệu; Admin cấu hình, cấp thủ công, thu hồi và role chỉ đọc.
 
 ## Test Cases
 
 | ID | Loại | Tiền điều kiện / dữ liệu | Bước kiểm thử | Kết quả mong đợi |
 |---|---|---|---|---|
-| TC-US17-001 | Display | U1 có huy hiệu đang hiệu lực | Mở comment/reply của U1 trên web/mobile | Huy hiệu hiển thị cạnh tên đúng icon/tên theo cấu hình. |
-| TC-US17-002 | Eligibility | U1 vừa đạt ngưỡng tiêu chí hợp lệ | Chạy job/sự kiện đánh giá | Huy hiệu được cấp đúng loại, lưu thời điểm và tiêu chí đạt. |
-| TC-US17-003 | Negative | U1 chỉ có comment Ẩn/Xóa/Spam | Chạy đánh giá huy hiệu | Nội dung bị loại không làm tăng thành tích; U1 không được cấp nhờ dữ liệu không hợp lệ. |
-| TC-US17-004 | Boundary | U1 ở dưới, đúng và trên ngưỡng | Chạy đánh giá từng mức | Dưới ngưỡng không cấp; đúng/trên ngưỡng cấp đúng theo rule. |
-| TC-US17-005 | Multiple/order | U1 có nhiều huy hiệu hiệu lực | Cấp/đạt thêm huy hiệu, mở UI | Số lượng và thứ tự hiển thị đúng cấu hình; không duplicate. |
-| TC-US17-006 | Admin config | Admin có quyền | Tạo/sửa tên, icon, mô tả, điều kiện; bật/tắt loại | Cấu hình được validate, áp dụng đúng từ thời điểm hiệu lực và có audit. |
-| TC-US17-007 | Manual grant | Admin được cấp thủ công | Cấp huy hiệu Chuyên gia cho U1 | Huy hiệu xuất hiện đúng, ghi actor/lý do/thời gian; role không đủ quyền bị chặn. |
-| TC-US17-008 | Revoke | U1 có huy hiệu | Admin thu hồi do vi phạm/cấp sai | Huy hiệu không còn hiệu lực theo policy; comment của U1 không bị xóa. |
-| TC-US17-009 | Toggle behavior | Loại huy hiệu có người đang sở hữu | Tắt rồi bật lại loại huy hiệu | Ngừng cấp mới; huy hiệu cũ ẩn/giữ đúng cấu hình; bật lại không cấp trùng. |
-| TC-US17-010 | Report rule | U1 có Report chưa xác minh | Tạo Report rồi chạy đánh giá | Không tự động thu hồi huy hiệu chỉ dựa trên Report chưa có kết luận. |
-| TC-US17-011 | Audit | Cấp tự động/thủ công, cấu hình, thu hồi | Tra cứu audit | Mỗi thay đổi có actor/nguồn, thời gian, lý do và trạng thái trước/sau. |
-| TC-US17-012 | Data integrity | U1 có huy hiệu và nhiều comment | Thu hồi huy hiệu, refresh hồ sơ/comment | Chỉ trạng thái huy hiệu thay đổi; comment, Like và lịch sử không bị mất. |
-
-### Điểm cần PO chốt
-
-- Ngưỡng/chu kỳ đánh giá, số huy hiệu tối đa và thông báo cấp/thu hồi.
-- Chính sách giữ hay ẩn huy hiệu cũ khi tắt loại huy hiệu.
+| TC-US17-001 | Fan active | 30d: U1 active 7 ngày, 10 comment/reply hợp lệ | Chạy daily job | Cấp Fan tích cực. |
+| TC-US17-002 | Fan active boundary | 6 ngày hoặc 9 comment/reply | Chạy job | Không cấp. |
+| TC-US17-003 | Loyal | 90d: 30 active days, 30 comment/reply, 30 Like nhận | Chạy job | Cấp Fan trung thành. |
+| TC-US17-004 | Loyal boundary | Thiếu một trong ba ngưỡng | Chạy job | Không cấp. |
+| TC-US17-005 | Daily/grace | User vừa không còn đạt badge Fan | Chạy daily job 7 ngày | Badge giữ trong grace; sau ngày thứ 7 vẫn không đạt thì thu hồi. |
+| TC-US17-006 | Featured eligibility | Comment public có ≥20 Like, ≥5 Reply, Top10% FeaturedScore 30d | Chạy job | User đủ điều kiện badge Bình luận nổi bật toàn MyTV. |
+| TC-US17-007 | Featured stability | Badge đã cấp, comment tụt Top10% nhưng vẫn public/hợp lệ | Chạy job | Không thu hồi chỉ do ranking tụt. |
+| TC-US17-008 | Featured invalid | Comment nguồn bị Ẩn/Xóa/Từ chối | Chạy job | Badge bị thu hồi. |
+| TC-US17-009 | Max display | User có nhiều badge | Mở comment | Chỉ hiển thị 1 badge theo cấp ưu tiên được xác định. |
+| TC-US17-010 | Admin badge expiry | Cấp badge với/không expiry | Kiểm tra trước/sau expiry | Có expiry thì hết hiệu lực đúng mốc; không expiry thì giữ tới thu hồi. |
+| TC-US17-011 | Toggle type | Tắt loại badge đang có owner | Refresh UI | Badge ẩn ngay; history còn; bật lại không duplicate. |
+| TC-US17-012 | Notification | Grant/revoke badge | Kiểm tra push/in-app | Gửi notification cộng đồng theo setting US09. |
