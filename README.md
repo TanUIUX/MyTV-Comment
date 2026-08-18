@@ -62,6 +62,7 @@ Tài liệu chuyển yêu cầu tính năng Bình luận trên MyTV thành backl
 ### 5.1. Quyền truy cập và cấu trúc thảo luận
 
 - Guest đọc được comment public nhưng không tạo Comment, Reply, Like, Mention, Report, Rating, Share hoặc interaction event.
+- Khi guest chọn interaction rồi login thành công, hệ thống chỉ đưa user về **đúng phim/tập/thread/comment**; **không tự thực hiện action cũ**, user phải chủ động thao tác lại sau login.
 - Rating có cả cấp series và episode.
 - Reply chỉ sâu một cấp.
 - Xóa root comment làm toàn bộ thread biến mất khỏi public UX; xóa reply riêng lẻ không để placeholder.
@@ -88,13 +89,15 @@ Tài liệu chuyển yêu cầu tính năng Bình luận trên MyTV thành backl
 
 - Một rating hiện hành/account/scope; đổi rating không tăng tổng lượt; user được xóa rating.
 - Average hiển thị **1 chữ số thập phân và luôn làm tròn lên** đến 0.1.
-- Khóa bình luận không loại rating; khóa toàn account loại rating khỏi aggregate và mở khóa thì tự tính lại nếu record còn.
+- Khóa bình luận không loại rating.
+- Khóa toàn account loại rating khỏi **cả điểm trung bình và tổng số lượt rating công khai**; mở khóa tự tính lại cả hai nếu record còn.
 
 ### 5.5. Edit/Delete và timestamp
 
 - User sửa comment/reply bất kỳ lúc nào; bản cũ vẫn public khi bản mới pending.
 - Bản sửa được duyệt có nhãn **“Đã chỉnh sửa”**; user không xem version history, CMS/Audit xem được.
 - User tự xóa không cần reason và không tự restore; Admin có thể Undo khi dữ liệu còn retention.
+- Undo Xóa root khôi phục **root + toàn bộ reply còn retention bị mất chỉ do cascade**; mỗi reply quay lại state riêng trước cascade, không ghi đè moderation state riêng đã có.
 - MVP không có frame/clip. US06 chỉ gắn tối đa **1 timestamp/comment hoặc reply**; user lấy current time hoặc chỉnh tay.
 - Bấm timestamp → player seek tới mốc và tiếp tục phát; share deep link không tự seek.
 
@@ -102,6 +105,7 @@ Tài liệu chuyển yêu cầu tính năng Bình luận trên MyTV thành backl
 
 - User được Like content của chính mình.
 - Like/Unlike dùng optimistic UI; client gom batch tối đa **5 giây** rồi sync BE, flush sớm khi rời màn hình/background; BE là source of truth.
+- Nhiều Like/Unlike liên tiếp trên cùng target trong một batch được coalesce về **state cuối cùng** để không làm sai Net Like.
 - Mention suggestion ưu tiên user trong thread, sau đó user đã tham gia phim/tập.
 - Một switch chung bật/tắt notification tương tác cộng đồng; in-app retention **90 ngày**.
 - Notification moderation/chế tài/appeal/kết quả Report là bắt buộc và không bị switch cộng đồng tắt.
@@ -109,7 +113,7 @@ Tài liệu chuyển yêu cầu tính năng Bình luận trên MyTV thành backl
 ### 5.7. Report
 
 - Taxonomy chung: Spoiler; Spam/quảng cáo; Xúc phạm/ngôn từ công kích; Nội dung không phù hợp; Sai thông tin; Vi phạm khác.
-- Chọn “Khác” bắt buộc description.
+- Chọn “Khác” bắt buộc description **1–500 ký tự hợp lệ**, không chấp nhận chỉ khoảng trắng.
 - Không được Report content của chính mình.
 - Cùng target được Report lại sau **24 giờ**; rate limit **10 Report/1 giờ/user**.
 - Report không tự Ẩn/Xóa content dù số lượng lớn.
@@ -137,15 +141,18 @@ Tài liệu chuyển yêu cầu tính năng Bình luận trên MyTV thành backl
 - Duyệt không cần reason. Chỉ **Từ chối/Ẩn/Xóa** bắt buộc reason taxonomy chuẩn + note optional.
 - Bỏ qua Report/Flag/Spoiler không bắt buộc reason.
 - Từ chối/Ẩn/Xóa → tác giả thấy reason trong app + nhận push/in-app notification.
-- Bulk moderation hard max **100**, partial success; reason chung cho batch và có thể override từng item.
-- Undo Từ chối/Ẩn/Xóa mềm khi còn retention; mọi Moderator có quyền tương ứng được Undo; Undo không bắt reason nhưng tạo audit event mới.
+- Bulk moderation chỉ hỗ trợ **Duyệt / Từ chối / Ẩn / Xóa mềm**, hard max **100**, partial success; Report/Flag/Spoiler không bulk trong MVP.
+- Bulk Duyệt không cần reason; bulk Từ chối/Ẩn/Xóa dùng reason chung và có thể override từng item.
+- Undo khi còn retention: **Từ chối→Chờ duyệt; Ẩn→Hiển thị; Xóa mềm→state ngay trước Xóa**; mọi Moderator có quyền tương ứng được Undo, không bắt reason nhưng tạo audit event mới.
+- Undo Xóa root khôi phục thread theo state từng reply trước cascade, không tự public reply đã có moderation state riêng.
 - Moderation pending SLA **24 giờ**; quá SLA vẫn pending, đánh dấu Quá SLA và ưu tiên queue, không auto-approve/reject.
 
 ### 5.10. Sanction/Appeal/Audit
 
 - Nhẹ → Cảnh báo; Trung bình → Khóa bình luận tạm; Nặng → Admin chọn Khóa bình luận hoặc Khóa tài khoản theo bối cảnh.
+- Cảnh báo/Khóa bình luận/Khóa tài khoản dùng **cùng taxonomy vi phạm chung** của Report/AI/CMS; reason bắt buộc, note nội bộ optional.
 - Khóa bình luận chặn Comment+Reply+Mention; vẫn cho Like/Report/Rating/Share. Không có khóa bình luận vĩnh viễn.
-- Preset khóa bình luận: 10 phút, 1 giờ, 1 ngày, 3 ngày, 7 ngày, 1 tháng hoặc custom.
+- Preset khóa bình luận: 10 phút, 1 giờ, 1 ngày, 3 ngày, 7 ngày, 1 tháng hoặc custom; sanction tạm bắt buộc có duration.
 - Khóa tài khoản chỉ cho vi phạm chính sách nghiêm trọng; mọi Admin/Moderator có quyền moderation đều được thực hiện.
 - Khóa account có temporary cùng preset/custom hoặc Permanent.
 - Khóa account tự Ẩn toàn bộ comment/reply public của user; mở khóa tự public lại item chỉ bị Ẩn do account lock nếu content vẫn hợp lệ.
@@ -154,8 +161,10 @@ Tài liệu chuyển yêu cầu tính năng Bình luận trên MyTV thành backl
 
 ### 5.11. Huy hiệu
 
+- **Active day**: user đã đăng nhập chỉ cần mở/đọc khu vực Bình luận ít nhất 1 lần trong ngày; tối đa 1 active day/account/ngày dù mở nhiều phim/tập. Guest không tích lũy active day.
 - Fan tích cực: rolling 30d, ≥7 active days + ≥10 comment/reply hợp lệ.
 - Fan trung thành: rolling 90d, ≥30 active days + ≥30 comment/reply hợp lệ + ≥30 Like nhận.
+- Active day và số comment/reply là hai điều kiện độc lập; chỉ đọc không làm tăng count comment/reply.
 - Auto badge evaluation mỗi ngày; không đạt thì grace **7 ngày** trước khi thu hồi Fan badge.
 - UI hiển thị tối đa **1 badge**; thứ tự ưu tiên cuối cùng: **Admin/Chuyên gia > Bình luận nổi bật > Fan trung thành > Fan tích cực**.
 - Bình luận nổi bật: comment public ≥20 Like + ≥5 Reply + Top10% Featured Score toàn MyTV trong 30 ngày tại thời điểm xét; đã cấp thì không thu hồi chỉ do ranking tụt, nhưng thu hồi nếu source comment không còn hợp lệ.
@@ -172,10 +181,13 @@ Tài liệu chuyển yêu cầu tính năng Bình luận trên MyTV thành backl
 - Deep link không hết hạn; chưa cài app → mở MyTV Web đúng context.
 - Target Ẩn/Xóa → fallback phim/tập + thông báo **“Bình luận không còn khả dụng”**.
 - Comment có timestamp: share mở đúng comment nhưng không auto-seek player.
+- **Share event được tính khi user bấm Share và OS share sheet mở thành công**; không cần xác nhận đã gửi sang app đích, cancel sau đó không hoàn tác event; retry/lỗi kỹ thuật phải dedup.
 
 ### 5.13. Analytics và AI Ops
 
 - Engagement Score: `Comment×2 + Reply×2 + Net Like×1 + Rating×1 + Share×2`.
+- `Rating` trong Engagement = **số rating hợp lệ hiện hành** trong scope/thời gian; mỗi account rating hợp lệ = +1 bất kể 1★ hay 5★.
+- `Share` trong Engagement = số **share sheet mở thành công** theo US18.
 - Nội dung Ẩn/Từ chối/Xóa do vi phạm không được tính vào Engagement chính thức.
 - Dashboard freshness tối đa **5 phút**; daily reconciliation tự sửa aggregate lệch và ghi log.
 - Unique commenters: 1 account/1 scope filter/1 khoảng thời gian.
@@ -183,7 +195,8 @@ Tài liệu chuyển yêu cầu tính năng Bình luận trên MyTV thành backl
 - Export dashboard/report CSV + XLSX.
 - KPI MVP giữ cả interaction + confirmed Report rate + hidden/deleted/rejected + AI auto-display rate + queue processing time.
 - AI Ops chỉ chạy khi Admin bấm **“AI đề xuất”**; input chỉ từ phim/tập hiện tại.
-- AI candidate ưu tiên quality + relevance + Like + Reply; loại risk nghiêm trọng.
+- AI candidate ưu tiên quality + relevance + Like + Reply.
+- Candidate bị loại vì mức nghiêm trọng khi **AI risk = Nặng** hoặc **CMS gắn Flag nghiêm trọng**; nhiều Report chưa xác minh **không tự loại candidate chỉ vì Report count**.
 - AI không tự ghim/đăng; Admin có thể chỉnh câu hỏi → duyệt → đăng, không cần reviewer thứ hai.
 - KPI AI: tỷ lệ accept / edit / discard; KPI thấp không tự disable feature.
 
