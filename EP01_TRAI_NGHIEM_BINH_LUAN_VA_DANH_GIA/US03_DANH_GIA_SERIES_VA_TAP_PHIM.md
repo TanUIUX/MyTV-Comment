@@ -19,14 +19,15 @@
 4. Người dùng có thể đổi rating 1–5 sao; đổi rating không làm tăng tổng lượt đánh giá.
 5. Người dùng có thể xóa rating của chính mình; khi xóa, tổng lượt và điểm trung bình được tính lại.
 6. Điểm trung bình hiển thị **1 chữ số thập phân và luôn làm tròn lên** đến 0.1 gần nhất, ví dụ `4.21 → 4.3`, `4.20 → 4.2`.
-7. Rating của tài khoản chỉ bị loại khỏi điểm trung bình khi tài khoản bị **khóa toàn bộ tài khoản MyTV**; khóa bình luận không loại rating.
-8. Khi tài khoản được mở khóa lại, rating cũ tự động được tính lại nếu bản ghi rating vẫn tồn tại.
+7. Khi tài khoản bị **khóa toàn bộ tài khoản MyTV**, rating của tài khoản đó tạm thời bị loại khỏi **cả điểm trung bình và tổng số lượt đánh giá công khai**; khóa bình luận không loại rating.
+8. Khi tài khoản được mở khóa lại, rating cũ tự động được tính lại vào **cả điểm trung bình và tổng lượt** nếu bản ghi rating vẫn tồn tại.
 9. Nếu gửi/đổi/xóa rating thất bại, hệ thống giữ trạng thái hợp lệ trước đó và không tạo dữ liệu nửa chừng.
 
 ### Quy tắc nghiệp vụ
 
 - Giá trị hợp lệ: số nguyên 1–5 sao.
 - Một tài khoản chỉ đóng góp tối đa một rating hiện hành cho một scope.
+- Tập rating dùng để tính **average** và **total count công khai** phải nhất quán: rating của account đang bị khóa toàn bộ không tham gia cả hai chỉ số.
 - Việc khóa/mở khóa tài khoản ảnh hưởng khả năng tính rating nhưng không tự xóa bản ghi rating.
 - Rating nằm trong khu vực Bình luận và bị ẩn khi phim/tập Đóng bình luận theo US12.
 
@@ -46,7 +47,7 @@
 | TC-US03-004 | Update | U1 có 3★ | Đổi 5★ | Tổng lượt không tăng; điểm trung bình tính lại. |
 | TC-US03-005 | Delete | U1 có rating | Xóa rating | Rating U1 bị loại; tổng lượt giảm 1 và điểm trung bình tính lại. |
 | TC-US03-006 | Rounding | Average lần lượt 4.20, 4.21, 4.29 | Hiển thị UI/API public | Kết quả lần lượt 4.2, 4.3, 4.3. |
-| TC-US03-007 | Comment restriction | U1 bị khóa bình luận nhưng không khóa account | Đối chiếu aggregate | Rating U1 vẫn được tính. |
-| TC-US03-008 | Account lock | U1 bị khóa toàn bộ account | Đối chiếu aggregate | Rating U1 bị loại khỏi điểm/tổng công khai mà không xóa record. |
-| TC-US03-009 | Unlock | U1 được mở khóa | Recalculate | Rating cũ tự được tính lại nếu còn tồn tại. |
+| TC-US03-007 | Comment restriction | U1 bị khóa bình luận nhưng không khóa account | Đối chiếu aggregate | Rating U1 vẫn được tính trong average và total count. |
+| TC-US03-008 | Account lock | U1 bị khóa toàn bộ account | Đối chiếu aggregate | Rating U1 bị loại khỏi **cả average và total count công khai** mà không xóa record. |
+| TC-US03-009 | Unlock | U1 được mở khóa | Recalculate | Rating cũ tự được tính lại vào **cả average và total count** nếu còn tồn tại. |
 | TC-US03-010 | Idempotency/error | Retry hoặc API lỗi | Gửi/đổi/xóa nhiều lần | Chỉ có một state hợp lệ; lỗi không làm sai tổng lượt. |
