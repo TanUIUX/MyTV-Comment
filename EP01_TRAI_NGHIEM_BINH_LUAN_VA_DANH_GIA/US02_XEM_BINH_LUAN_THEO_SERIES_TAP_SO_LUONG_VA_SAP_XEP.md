@@ -3,7 +3,6 @@
 > Thuộc EP01 — Trải nghiệm bình luận và đánh giá
 > [← Quay lại README của Epic](README.md) · [← Backlog MyTV](../README.md)
 
-
 ### User Story
 
 **Là người xem**, tôi muốn xem đúng bình luận của series hoặc tập phim và sắp xếp theo nhu cầu, để theo dõi thảo luận phù hợp với nội dung mình đang xem.
@@ -30,30 +29,32 @@
 3. Bình luận của một tập không xuất hiện trong phạm vi của tập khác hoặc phạm vi series.
 4. Tiêu đề Bình luận hiển thị tổng số bình luận chính và reply thuộc phạm vi hiện tại.
 5. Số lượng công khai được cập nhật khi có bình luận/reply mới được hiển thị hoặc khi nội dung bị xóa/ẩn.
-6. Hệ thống cung cấp ba chế độ: Nổi bật, Mới nhất và Được yêu thích.
-7. Nổi bật là chế độ mặc định.
-8. Ở chế độ Nổi bật, các bình luận được Admin ghim hiển thị trước; giới hạn mặc định tối đa ba bình luận.
-9. Ở chế độ Mới nhất, bình luận chính được sắp xếp từ mới đến cũ.
-10. Ở chế độ Được yêu thích, bình luận chính được sắp theo số Like giảm dần; nếu bằng nhau thì bình luận mới hơn đứng trước.
-11. Lựa chọn sắp xếp chỉ áp dụng cho phạm vi series/tập hiện tại.
-12. Khi danh sách dài, hệ thống hỗ trợ tải thêm hoặc phân trang mà không lặp hoặc bỏ sót bình luận.
+6. Hệ thống cung cấp ba chế độ: **Nổi bật, Mới nhất, Được yêu thích**; Nổi bật là mặc định.
+7. Ở chế độ Nổi bật, bình luận được Admin ghim hiển thị trước và có **hard max 3 bình luận ghim** cho mỗi scope.
+8. Sau nhóm ghim, các comment được xếp theo `FeaturedScore = 0.5×ln(1+Like) + 0.3×ln(1+Reply) + 0.2×e^(-AgeHours/72)`.
+9. Nếu hai comment có Featured Score bằng nhau, comment mới hơn đứng trước; nếu vẫn bằng nhau dùng `comment_id` làm tie-break ổn định.
+10. Ở chế độ Mới nhất, bình luận chính được sắp từ mới đến cũ.
+11. Ở chế độ Được yêu thích, bình luận chính được sắp theo Net Like giảm dần; nếu bằng nhau thì bình luận mới hơn đứng trước.
+12. Lần tải đầu lấy **10 comment gốc**; khi cuộn xuống hệ thống lazy load **10 comment gốc/lần** cho tới hết.
+13. Lazy load không được lặp hoặc bỏ sót comment và chỉ áp dụng trong scope series/tập hiện tại.
 
 ### Quy tắc nghiệp vụ
 
 - Reply được tính vào tổng số bình luận nhưng không được trộn thành bình luận gốc trong danh sách.
-- Bình luận đang chờ duyệt, bị ẩn hoặc xóa không được tính vào tổng số công khai.
-- Công thức xếp hạng phần còn lại của chế độ Nổi bật cần được PO chốt trước refinement.
+- Bình luận Chờ duyệt, Từ chối, Ẩn hoặc Xóa không được tính vào tổng số công khai và không tham gia Featured Score.
+- Like của chính tác giả là Like hợp lệ và được tính vào Featured Score theo US07.
+- Hard max comment ghim là 3, không cho cấu hình vượt mức này.
+- `AgeHours` tính từ thời điểm comment được đăng; hệ số decay freshness là 72 giờ.
 
 ### Phụ thuộc
 
 - US07 — Like và Unlike bình luận.
+- US08 — Trả lời bình luận.
 - US15 — Quản lý bình luận nổi bật và cấu hình theo phim.
 
 ### Điểm cần PO chốt
 
-- Số bình luận tải lần đầu và mỗi lần “Xem thêm”.
-- Số reply hiển thị ban đầu.
-- Công thức xếp hạng Nổi bật bên dưới các bình luận được ghim.
+- Không còn điểm PO blocker cho phạm vi sắp xếp/pagination hiện tại.
 
 ---
 
@@ -61,33 +62,27 @@
 
 ### Mục tiêu
 
-Kiểm tra cách hệ thống phân tách dữ liệu series/tập, tính tổng số công khai và áp dụng đúng ba chế độ sắp xếp mà không lặp hoặc bỏ sót dữ liệu.
+Kiểm tra phân tách dữ liệu series/tập, tổng số công khai, hard max ghim, Featured Score và lazy load 10 item không lặp/bỏ sót.
 
 ### Rủi ro chính
 
 - Trộn bình luận giữa series và tập khi chuyển ngữ cảnh.
-- Tính cả Chờ duyệt/Ẩn/Xóa vào tổng số công khai.
-- Sai tie-break khi số Like bằng nhau hoặc phân trang làm lặp bản ghi.
-
-### Dữ liệu kiểm thử
-
-Series S1 có tập E1/E2; tạo bình luận gốc, reply, bình luận ghim, bình luận có số Like bằng nhau và nội dung không công khai ở từng phạm vi.
+- Tính nội dung không công khai vào count/ranking.
+- Vượt hard max 3 comment ghim.
+- Featured Score/tie-break sai hoặc lazy load tạo bản ghi trùng.
 
 ## Test Cases
 
 | ID | Loại | Tiền điều kiện / dữ liệu | Bước kiểm thử | Kết quả mong đợi |
 |---|---|---|---|---|
-| TC-US02-001 | Functional | S1 có bình luận series và E1/E2 | Mở lần lượt phạm vi series, E1 và E2 | Mỗi phạm vi chỉ trả đúng bình luận được gắn với scope tương ứng. |
-| TC-US02-002 | Navigation | Đang xem E1 rồi chuyển sang E2 | Chuyển tập liên tục và tải lại danh sách | Dữ liệu E2 được tải mới; không giữ lại bình luận E1 hoặc dữ liệu cũ từ cache sai scope. |
-| TC-US02-003 | Data integrity | Scope có 2 comment gốc và 3 reply; thêm nội dung Chờ duyệt/Ẩn/Xóa | Đối chiếu tổng số trên UI với dữ liệu công khai | Tổng số gồm comment gốc + reply công khai; loại trừ trạng thái không công khai. |
-| TC-US02-004 | Functional | Có dữ liệu đủ cho ba thứ tự | Mở danh sách lần đầu, kiểm tra bộ chọn sắp xếp và đổi từng lựa chọn | Nổi bật là mặc định; có đúng Nổi bật, Mới nhất, Được yêu thích. |
-| TC-US02-005 | Sorting | Có 4 bình luận ghim và cấu hình giới hạn 3 | Chọn Nổi bật | Tối đa 3 bình luận ghim được ưu tiên; phần còn lại tuân theo công thức đã chốt. |
-| TC-US02-006 | Sorting | Có comment ở nhiều thời điểm | Chọn Mới nhất | Comment gốc được sắp từ mới đến cũ; reply không bị trộn thành item gốc. |
-| TC-US02-007 | Sorting/Boundary | Có comment A/B cùng số Like, A mới hơn B | Chọn Được yêu thích | Comment có Like cao hơn đứng trước; khi bằng Like, comment mới hơn đứng trước. |
-| TC-US02-008 | Scope isolation | Đã chọn E1 và một chế độ sắp xếp | Chuyển trang, refresh hoặc tải thêm | Chế độ và dữ liệu chỉ áp dụng cho scope hiện tại; không ảnh hưởng scope khác ngoài thiết kế. |
-| TC-US02-009 | Pagination | Có danh sách lớn hơn kích thước trang, ID ổn định | Tải thêm/phân trang nhiều lần đến cuối danh sách | Không trùng, không bỏ sót và không tạo vòng lặp; tổng số khớp dữ liệu công khai. |
-
-### Điểm cần PO chốt trước khi khóa expected result
-
-- Kích thước trang/số item tải lần đầu.
-- Công thức Nổi bật bên dưới các comment ghim và cách làm tròn thời gian nếu có.
+| TC-US02-001 | Functional | S1 có comment series và E1/E2 | Mở lần lượt series, E1, E2 | Mỗi scope chỉ trả đúng comment gắn với scope tương ứng. |
+| TC-US02-002 | Navigation | Đang xem E1 rồi chuyển E2 | Chuyển tập và refresh | Không giữ comment E1 trong E2 hoặc cache sai scope. |
+| TC-US02-003 | Counter | Scope có comment/reply công khai và Chờ duyệt/Ẩn/Xóa | Đối chiếu tổng số | Chỉ comment + reply công khai được tính. |
+| TC-US02-004 | Sorting | Có dữ liệu đủ ba chế độ | Mở lần đầu và đổi sort | Nổi bật là mặc định; có đúng ba lựa chọn. |
+| TC-US02-005 | Pin boundary | Đã có 3 comment ghim | Thử ghim comment thứ 4 | Không thể có quá 3 comment ghim trong cùng scope. |
+| TC-US02-006 | Featured formula | Có comment khác nhau về Like/Reply/AgeHours | Tính score và mở Nổi bật | Thứ tự khớp công thức 50% Like, 30% Reply, 20% freshness với decay 72h. |
+| TC-US02-007 | Featured tie | Hai comment cùng score | Mở Nổi bật | Comment mới hơn đứng trước; nếu vẫn bằng thì `comment_id` tạo thứ tự ổn định. |
+| TC-US02-008 | Latest | Có comment ở nhiều thời điểm | Chọn Mới nhất | Comment gốc mới → cũ; reply không bị trộn thành item gốc. |
+| TC-US02-009 | Most liked | Có Net Like khác nhau và trường hợp bằng nhau | Chọn Được yêu thích | Net Like cao hơn đứng trước; bằng nhau thì comment mới hơn trước. |
+| TC-US02-010 | Initial load | Scope có >10 comment | Mở khu vực bình luận | Lần đầu trả đúng 10 comment gốc. |
+| TC-US02-011 | Lazy load | Còn >20 comment sau lần đầu | Cuộn liên tục | Mỗi batch thêm tối đa 10 comment; không trùng/bỏ sót và dừng đúng cuối danh sách. |
