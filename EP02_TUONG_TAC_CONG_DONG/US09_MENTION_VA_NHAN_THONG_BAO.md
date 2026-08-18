@@ -3,97 +3,52 @@
 > Thuộc EP02 — Tương tác cộng đồng
 > [← Quay lại README của Epic](README.md) · [← Backlog MyTV](../README.md)
 
-
 ### User Story
 
-**Là người dùng đã đăng nhập**, tôi muốn mention một tài khoản hợp lệ và nhận thông báo khi có người reply hoặc mention mình, để tiếp tục cuộc trò chuyện liên quan.
-
-### Giá trị
-
-- Tăng khả năng người dùng quay lại MyTV.
-- Giúp cuộc hội thoại có đối tượng rõ ràng.
-- Tạo vòng lặp tương tác giữa người xem.
+**Là người dùng đã đăng nhập**, tôi muốn mention tài khoản phù hợp và nhận thông báo khi có người reply/mention mình, để tiếp tục cuộc trò chuyện liên quan.
 
 ### Ưu tiên
 
 **Should**
 
-### Điều kiện tiên quyết
-
-- Người gửi và người nhận là tài khoản hợp lệ.
-- Người gửi có quyền bình luận.
-- Hệ thống thông báo MyTV hoạt động.
-
 ### Acceptance Criteria
 
-1. Người dùng có thể nhập ký tự `@` trong bình luận hoặc reply để bắt đầu chọn tài khoản hợp lệ.
-2. Hệ thống chỉ tạo mention khi người dùng chọn hoặc xác định được một tài khoản hợp lệ trong hệ thống.
-3. Giao diện không làm lộ số điện thoại đầy đủ hoặc dữ liệu cá nhân nhạy cảm trong kết quả tìm mention.
-4. Mention được lưu theo định danh tài khoản, không chỉ theo chuỗi nickname hiển thị.
-5. Khi bình luận/reply chứa mention được phép hiển thị, người được mention nhận thông báo trong ứng dụng.
-6. Khi có người reply bình luận của mình, tác giả bình luận nhận thông báo trong ứng dụng.
-7. Hai trường hợp reply và mention đều tạo push notification nếu người nhận cho phép push.
-8. Nếu cùng một sự kiện vừa là reply vừa mention cùng một người, hệ thống tránh gửi thông báo trùng không cần thiết.
-9. Bấm thông báo mở đúng phim, tập và thread/bình luận liên quan.
-10. Nếu bình luận đã bị xóa, ẩn hoặc người nhận không còn quyền xem phim, hệ thống hiển thị trạng thái phù hợp thay vì mở nội dung không có quyền.
-11. Người dùng không nhận thông báo cho hành động của chính mình.
-12. Thông báo chỉ được gửi khi nội dung đủ điều kiện hiển thị; nội dung đang chờ duyệt không thông báo cho người khác.
+1. User nhập `@` để chọn tài khoản hợp lệ; mention được lưu theo account ID, không chỉ chuỗi nickname.
+2. Danh sách gợi ý ưu tiên **user đã tham gia thread hiện tại**, sau đó mở rộng sang user đã tham gia **phim/tập hiện tại**; không mặc định tìm toàn bộ user MyTV.
+3. Gợi ý mention không làm lộ full phone/PII; dùng nickname hoặc identity hiển thị hợp lệ.
+4. Khi reply/mention đã đủ điều kiện Hiển thị, người nhận nhận **push + in-app notification** nếu công tắc Thông báo cộng đồng đang bật và hệ điều hành cho phép push.
+5. Nếu cùng sự kiện vừa Reply vừa Mention cùng một user, chỉ tạo một notification phù hợp.
+6. Không gửi notification cho hành động của chính user.
+7. Nội dung Chờ duyệt không tạo notification cho người khác trước khi được Hiển thị.
+8. User có **một công tắc chung trong Cài đặt** để bật/tắt toàn bộ thông báo tương tác cộng đồng; không có switch riêng Reply/Mention.
+9. Công tắc cộng đồng chỉ ảnh hưởng Reply, Mention, huy hiệu và thông báo tương tác tương tự. Các thông báo bắt buộc về **Từ chối/Ẩn/Xóa, khóa bình luận/khóa tài khoản, appeal và kết quả Report** không bị tắt bởi setting này.
+10. In-app notification cộng đồng được lưu **90 ngày**.
+11. Bấm notification mở đúng phim/tập/thread/comment; nếu target không còn hợp lệ, không lộ dữ liệu và dùng fallback phù hợp.
+12. Payload push không lộ Spoiler hoặc PII nhạy cảm trên màn hình khóa.
 
 ### Quy tắc nghiệp vụ
 
-- Chỉ mention tài khoản hợp lệ.
-- Gửi cả push và thông báo trong ứng dụng cho reply/mention.
-- Quyền nhận push phụ thuộc cài đặt hệ điều hành và tùy chọn người dùng.
-- Nội dung thông báo không được làm lộ Spoiler hoặc dữ liệu nhạy cảm trên màn hình khóa.
-
-### Phụ thuộc
-
-- Hệ thống tài khoản/nickname MyTV.
-- Dịch vụ push notification và thông báo trong ứng dụng.
-- Deep link đến phim/tập/comment.
-- US11 và US12 về trạng thái kiểm duyệt.
+- Một switch chung cho notification cộng đồng.
+- Notification moderation/chế tài là thông báo nghiệp vụ bắt buộc và độc lập với switch cộng đồng.
+- Retention in-app: 90 ngày.
 
 ### Điểm cần PO chốt
 
-- Phạm vi tài khoản được gợi ý khi nhập `@`.
-- Người dùng có được tắt riêng thông báo reply/mention hay không.
-- Thời gian lưu thông báo trong ứng dụng.
+- Không còn blocker PO cho mention/notification trong scope hiện tại.
 
 ---
-
-## Phân tích kiểm thử
-
-### Mục tiêu
-
-Xác nhận mention chỉ trỏ tới tài khoản hợp lệ, thông báo reply/mention được tạo đúng kênh, không trùng/không tự gửi, deep link và quyền xem được kiểm tra.
-
-### Rủi ro chính
-
-- Mention bằng nickname không tồn tại hoặc lưu sai định danh sau khi nickname đổi.
-- Gửi trùng push/in-app khi một sự kiện vừa reply vừa mention.
-- Deep link làm lộ Spoiler, comment đã xóa hoặc phim người nhận không còn quyền xem.
-
-### Dữ liệu kiểm thử
-
-U1 gửi, U2 nhận; nickname hợp lệ/không hợp lệ; U2 bật/tắt push; comment công khai, Chờ duyệt, đã xóa; sự kiện reply, mention và reply+mention.
 
 ## Test Cases
 
 | ID | Loại | Tiền điều kiện / dữ liệu | Bước kiểm thử | Kết quả mong đợi |
 |---|---|---|---|---|
-| TC-US09-001 | Functional | Có U2 là tài khoản hợp lệ | Nhập `@` và chọn U2 từ gợi ý | Mention được tạo với account ID của U2, hiển thị nickname hợp lệ. |
-| TC-US09-002 | Negative/privacy | Nhập nickname không tồn tại hoặc ký tự gần giống | Gửi comment không chọn tài khoản hợp lệ; kiểm tra kết quả gợi ý | Không tạo mention giả; không trả số thuê bao đầy đủ/PII trong gợi ý hoặc API. |
-| TC-US09-003 | Data integrity | U2 đổi nickname sau khi được mention | Mở comment cũ và kiểm tra notification | Quan hệ vẫn trỏ đúng account ID; hiển thị theo dữ liệu định danh hiện hành được phép. |
-| TC-US09-004 | In-app notification | U1 reply comment của U2 | Gửi reply công khai, mở notification center bằng U2 | U2 nhận một thông báo trong ứng dụng với nội dung/ngữ cảnh phù hợp. |
-| TC-US09-005 | Push notification | U2 cho phép push | Tạo mention và reply công khai | Có push tương ứng; payload không lộ nội dung Spoiler/PII ngoài chính sách. |
-| TC-US09-006 | Preference | U2 tắt push nhưng vẫn bật in-app | Tạo mention/reply | Không gửi push; thông báo trong ứng dụng vẫn được tạo theo thiết kế. |
-| TC-US09-007 | Deduplication | Một reply vừa mention U2 | Gửi và kiểm tra notification/event log | Không tạo hai thông báo trùng cho cùng một sự kiện/người nhận. |
-| TC-US09-008 | Deep link | Có notification hợp lệ | Bấm notification trên web/mobile | Mở đúng phim, tập và thread/comment liên quan; trạng thái đã đọc được cập nhật nếu có. |
-| TC-US09-009 | Access/fallback | Comment bị xóa/ẩn hoặc U2 mất quyền xem phim | Bấm notification cũ | Không lộ nội dung; hiển thị trạng thái thay thế và chuyển tới màn hình hợp lệ nếu chính sách cho phép. |
-| TC-US09-010 | Self-notification | U1 mention/reply chính comment của mình | Gửi thao tác và kiểm tra notification U1 | U1 không nhận thông báo cho hành động của chính mình. |
-| TC-US09-011 | Moderation | Nội dung mention/reply ở trạng thái Chờ duyệt | Gửi và theo dõi event/notification | Không gửi notification cho người khác trước khi nội dung đủ điều kiện hiển thị. |
-
-### Điểm cần PO chốt
-
-- Phạm vi tài khoản được gợi ý khi nhập `@` và thời gian lưu notification.
-- Có cho phép tắt riêng reply/mention hay chỉ tắt push toàn hệ thống.
+| TC-US09-001 | Suggestion | Thread có U2/U3, phim có U4 | Nhập `@` | Ưu tiên U2/U3 trước, sau đó U4; không mở search toàn hệ thống mặc định. |
+| TC-US09-002 | Identity | U2 đổi nickname | Mở mention cũ | Quan hệ vẫn trỏ đúng account ID. |
+| TC-US09-003 | Notification | U1 reply/mention U2, switch bật | Publish nội dung | U2 nhận push + in-app nếu push OS cho phép. |
+| TC-US09-004 | Preference | U2 tắt switch cộng đồng | Tạo Reply/Mention | Không tạo notification tương tác mới cho U2. |
+| TC-US09-005 | Mandatory bypass | U2 tắt switch cộng đồng | Comment U2 bị Từ chối/Ẩn/Xóa hoặc account bị sanction | Notification nghiệp vụ bắt buộc vẫn được gửi theo rule của US14/US16. |
+| TC-US09-006 | Dedup | Một reply vừa mention U2 | Publish | Không gửi hai notification trùng. |
+| TC-US09-007 | Self | U1 reply/mention chính mình | Publish | Không gửi self-notification. |
+| TC-US09-008 | Moderation | Nội dung Chờ duyệt | Theo dõi notification | Không gửi cho người khác trước khi nội dung public. |
+| TC-US09-009 | Retention | Có notification >/<90 ngày | Mở notification center | Chỉ dữ liệu còn trong retention theo policy được giữ. |
+| TC-US09-010 | Deep link/privacy | Target bị Ẩn/Xóa hoặc mất quyền | Bấm notification cũ | Không lộ nội dung; hiển thị fallback hợp lệ. |
