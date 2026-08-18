@@ -13,8 +13,8 @@
 
 ### Phạm vi
 
-- Comment gốc, Reply, phiên bản sửa.
-- Nickname mới/đổi.
+- Comment gốc, Reply, phiên bản sửa: áp dụng moderation theo **Mode1/Mode2 của scope series/episode**.
+- Nickname mới/đổi: áp dụng **global AI moderation policy riêng**, độc lập Mode1/Mode2 và override theo phim/tập.
 - MVP AI language: **Tiếng Việt + Tiếng Anh**. Ngôn ngữ khác hoặc độ tin cậy không đủ → Chờ duyệt Admin.
 
 ### Taxonomy chung
@@ -34,17 +34,19 @@
 
 ### Acceptance Criteria chung
 
-1. Mọi comment/reply/version sửa/nickname mới được AI kiểm tra trước khi trở thành dữ liệu public mới.
+1. Mọi comment/reply/version sửa và nickname mới/đổi được AI kiểm tra trước khi trở thành dữ liệu public mới.
 2. AI lưu taxonomy label, mức Nhẹ/Trung bình/Nặng, reason, model/policy version và thời gian xử lý để CMS tra cứu.
-3. Ngưỡng phân loại có **default toàn hệ thống** do Admin cấu hình trên CMS; series có thể override default và episode có thể override series.
-4. Mọi thay đổi threshold/policy có audit và chỉ áp dụng từ thời điểm hiệu lực.
-5. AI có timeout tối đa **5 giây**. Timeout/5xx/không khả dụng → nội dung được nhận ở trạng thái **Chờ duyệt Admin**, không tự công khai.
-6. Nội dung ngoài tiếng Việt/Anh hoặc AI không đủ confidence → Chờ duyệt Admin.
-7. CMS có action **“AI phân loại sai”** để Admin ghi kết quả đúng; lưu AI result ban đầu, kết quả sửa, actor/time nhằm đo false positive/false negative.
-8. Retry AI/client không tạo comment/version/queue item trùng.
+3. Với **Comment/Reply/Edit**, ngưỡng phân loại có default toàn hệ thống do Admin cấu hình trên CMS; series có thể override default và episode có thể override series.
+4. Với **Nickname**, hệ thống dùng **global nickname AI policy**; nickname không kế thừa Mode1/Mode2 hoặc threshold override series/episode.
+5. Mọi thay đổi threshold/policy có audit và chỉ áp dụng từ thời điểm hiệu lực.
+6. AI có timeout tối đa **5 giây**. Timeout/5xx/không khả dụng → dữ liệu được nhận ở trạng thái **Chờ duyệt Admin**, không tự công khai.
+7. Nội dung ngoài tiếng Việt/Anh hoặc AI không đủ confidence → Chờ duyệt Admin.
+8. CMS có action **“AI phân loại sai”** để Admin ghi kết quả đúng; lưu AI result ban đầu, kết quả sửa, actor/time nhằm đo false positive/false negative.
+9. Retry AI/client không tạo comment/version/nickname queue item trùng.
 
 ### Chế độ 1 — AI tiền kiểm, Admin hậu kiểm
 
+Áp dụng **Comment/Reply/Edit** trong scope đang Mode1:
 1. Mức Nhẹ/An toàn → Hiển thị ngay, giữ nguyên text.
 2. Mức Trung bình → Chờ duyệt, chỉ tác giả thấy.
 3. Mức Nặng → chặn không cho gửi/public version mới.
@@ -52,14 +54,23 @@
 
 ### Chế độ 2 — Admin duyệt trước
 
+Áp dụng **Comment/Reply/Edit** trong scope đang Mode2:
 1. Mức Nặng → chặn.
 2. Mức Nhẹ hoặc Trung bình không tự public; đều vào Chờ duyệt Admin.
 3. Chỉ Admin Duyệt mới chuyển Hiển thị.
 
+### Global policy — Nickname
+
+1. Nickname mức **Nhẹ/An toàn** → dùng ngay.
+2. Nickname mức **Trung bình/nghi ngờ** → Chờ duyệt; tiếp tục dùng nickname hợp lệ cũ, hoặc fallback identity nếu chưa có nickname hợp lệ theo US04.
+3. Nickname mức **Nặng** → bị chặn.
+4. Kết quả này **không thay đổi** theo Mode1/Mode2 của phim/tập nơi user đang thao tác.
+
 ### Quy tắc nghiệp vụ
 
-- Chế độ 1 là mặc định.
+- Chế độ 1 là mặc định cho **content scope**.
 - Không còn hành vi tự che `***` cho mức Nhẹ trong policy hiện tại.
+- Nickname là identity toàn account nên dùng global policy riêng; không lấy episode/series mode làm đầu vào quyết định nickname.
 - AI hỗ trợ quyết định; Admin có quyền override theo policy và feedback phải được lưu.
 - Fallback AI lỗi luôn fail-safe về queue, không fail-open.
 
@@ -74,13 +85,14 @@
 | ID | Loại | Tiền điều kiện / dữ liệu | Bước kiểm thử | Kết quả mong đợi |
 |---|---|---|---|---|
 | TC-US11-001 | Coverage | Comment/reply/edit/nickname | Gửi từng loại | Mọi dữ liệu public mới đi AI trước. |
-| TC-US11-002 | Mode1/light | Mode1, AI Nhẹ | Gửi | Nội dung giữ nguyên text và Hiển thị. |
-| TC-US11-003 | Mode1/medium | Mode1, AI Trung bình | Gửi | Chờ duyệt; chỉ tác giả thấy. |
-| TC-US11-004 | Heavy | Mode1/2, AI Nặng | Gửi | Bị chặn; không tạo nội dung public mới. |
-| TC-US11-005 | Mode2 | AI Nhẹ/Trung bình | Gửi | Cả hai vào queue; chỉ Admin duyệt mới public. |
-| TC-US11-006 | Timeout | AI >5s/5xx/down | Gửi | Nội dung vào Chờ duyệt; không fail-open. |
-| TC-US11-007 | Language | VI/EN/ngôn ngữ khác | Gửi | VI/EN xử lý AI; ngôn ngữ ngoài phạm vi hoặc low-confidence vào queue. |
-| TC-US11-008 | Threshold inheritance | Có default, series override, episode override | Gửi cùng mẫu ở các scope | Episode ưu tiên override riêng; nếu không có thì series; nếu không có thì default. |
-| TC-US11-009 | Policy audit | Đổi threshold/policy | Tra audit và request trước/sau effective time | Có actor/time/before-after; mỗi decision gắn đúng policy version. |
-| TC-US11-010 | Feedback | AI phân loại sai | Admin chọn “AI phân loại sai” và kết quả đúng | Lưu AI result + corrected result + actor/time để đo FP/FN. |
-| TC-US11-011 | Idempotency | Client/AI retry | Gửi request lặp | Một comment/version/queue item duy nhất. |
+| TC-US11-002 | Mode1/light | Mode1, AI Nhẹ | Gửi Comment/Reply/Edit | Nội dung giữ nguyên text và Hiển thị. |
+| TC-US11-003 | Mode1/medium | Mode1, AI Trung bình | Gửi Comment/Reply/Edit | Chờ duyệt; chỉ tác giả thấy. |
+| TC-US11-004 | Heavy | Content Mode1/2 hoặc nickname, AI Nặng | Gửi | Bị chặn; không tạo dữ liệu public mới. |
+| TC-US11-005 | Mode2 | AI Nhẹ/Trung bình | Gửi Comment/Reply/Edit | Cả hai vào queue; chỉ Admin duyệt mới public. |
+| TC-US11-006 | Nickname global policy | E1 Mode1, E2 Mode2; cùng mẫu nickname Nhẹ/Trung bình/Nặng | Đổi nickname từ E1/E2 | Kết quả giống nhau ở mọi scope: Nhẹ dùng ngay, Trung bình pending, Nặng chặn; Mode1/2 không ảnh hưởng. |
+| TC-US11-007 | Timeout | AI >5s/5xx/down | Gửi content/nickname | Dữ liệu vào Chờ duyệt; không fail-open. |
+| TC-US11-008 | Language | VI/EN/ngôn ngữ khác | Gửi | VI/EN xử lý AI; ngôn ngữ ngoài phạm vi hoặc low-confidence vào queue. |
+| TC-US11-009 | Threshold inheritance | Có default, series override, episode override | Gửi cùng mẫu Comment/Reply/Edit ở các scope | Episode ưu tiên override riêng; nếu không có thì series; nếu không có thì default. Nickname không dùng inheritance này. |
+| TC-US11-010 | Policy audit | Đổi content threshold/global nickname policy | Tra audit và request trước/sau effective time | Có actor/time/before-after; mỗi decision gắn đúng policy version. |
+| TC-US11-011 | Feedback | AI phân loại sai | Admin chọn “AI phân loại sai” và kết quả đúng | Lưu AI result + corrected result + actor/time để đo FP/FN. |
+| TC-US11-012 | Idempotency | Client/AI retry | Gửi request lặp | Một comment/version/nickname queue item duy nhất. |
