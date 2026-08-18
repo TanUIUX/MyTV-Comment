@@ -32,17 +32,19 @@
 6. Hệ thống cung cấp ba chế độ: **Nổi bật, Mới nhất, Được yêu thích**; Nổi bật là mặc định.
 7. Ở chế độ Nổi bật, bình luận được Admin ghim hiển thị trước và có **hard max 3 bình luận ghim** cho mỗi scope.
 8. Sau nhóm ghim, các comment được xếp theo `FeaturedScore = 0.5×ln(1+Like) + 0.3×ln(1+Reply) + 0.2×e^(-AgeHours/72)`.
-9. Nếu hai comment có Featured Score bằng nhau, comment mới hơn đứng trước; nếu vẫn bằng nhau dùng `comment_id` làm tie-break ổn định.
+9. Nếu hai comment có Featured Score bằng nhau, comment mới hơn đứng trước; nếu vẫn bằng nhau dùng `comment_id` làm tie-break ổ định.
 10. Ở chế độ Mới nhất, bình luận chính được sắp từ mới đến cũ.
-11. Ở chế độ Được yêu thích, bình luận chính được sắp theo Net Like giảm dần; nếu bằng nhau thì bình luận mới hơn đứng trước.
+11. Ở chế độ Được yêu thích, bình luận chính được sắp theo **Net Like công khai hiện tại** giảm dần; nếu bằng nhau thì bình luận mới hơn đứng trước.
 12. Lần tải đầu lấy **10 comment gốc**; khi cuộn xuống hệ thống lazy load **10 comment gốc/lần** cho tới hết.
 13. Lazy load không được lặp hoặc bỏ sót comment và chỉ áp dụng trong scope series/tập hiện tại.
+14. Like do account đang **Khóa tài khoản** tạo trước đó vẫn giữ record nhưng **tạm không được tính vào Net Like công khai, Featured Score và ranking** trong thời gian khóa; khi account được mở khóa, Like được tính lại nếu Like record và target vẫn hợp lệ.
 
 ### Quy tắc nghiệp vụ
 
 - Reply được tính vào tổng số bình luận nhưng không được trộn thành bình luận gốc trong danh sách.
 - Bình luận Chờ duyệt, Từ chối, Ẩn hoặc Xóa không được tính vào tổng số công khai và không tham gia Featured Score.
-- Like của chính tác giả là Like hợp lệ và được tính vào Featured Score theo US07.
+- Like của chính tác giả là Like hợp lệ và được tính vào Featured Score theo US07, trừ khi account tạo Like đang bị Khóa tài khoản theo rule visibility/KPI của US07/US16.
+- `Like` trong công thức Featured Score là **Net Like công khai hiện tại**, không phải tổng Like record bất kể trạng thái account của liker.
 - Hard max comment ghim là 3, không cho cấu hình vượt mức này.
 - `AgeHours` tính từ thời điểm comment được đăng; hệ số decay freshness là 72 giờ.
 
@@ -51,6 +53,7 @@
 - US07 — Like và Unlike bình luận.
 - US08 — Trả lời bình luận.
 - US15 — Quản lý bình luận nổi bật và cấu hình theo phim.
+- US16 — Quản lý người dùng vi phạm và Account Lock.
 
 ### Điểm cần PO chốt
 
@@ -68,6 +71,7 @@ Kiểm tra phân tách dữ liệu series/tập, tổng số công khai, hard ma
 
 - Trộn bình luận giữa series và tập khi chuyển ngữ cảnh.
 - Tính nội dung không công khai vào count/ranking.
+- Tính Like của account đang bị Account Lock vào Net Like/ranking công khai.
 - Vượt hard max 3 comment ghim.
 - Featured Score/tie-break sai hoặc lazy load tạo bản ghi trùng.
 
@@ -83,6 +87,7 @@ Kiểm tra phân tách dữ liệu series/tập, tổng số công khai, hard ma
 | TC-US02-006 | Featured formula | Có comment khác nhau về Like/Reply/AgeHours | Tính score và mở Nổi bật | Thứ tự khớp công thức 50% Like, 30% Reply, 20% freshness với decay 72h. |
 | TC-US02-007 | Featured tie | Hai comment cùng score | Mở Nổi bật | Comment mới hơn đứng trước; nếu vẫn bằng thì `comment_id` tạo thứ tự ổn định. |
 | TC-US02-008 | Latest | Có comment ở nhiều thời điểm | Chọn Mới nhất | Comment gốc mới → cũ; reply không bị trộn thành item gốc. |
-| TC-US02-009 | Most liked | Có Net Like khác nhau và trường hợp bằng nhau | Chọn Được yêu thích | Net Like cao hơn đứng trước; bằng nhau thì comment mới hơn trước. |
+| TC-US02-009 | Most liked | Có Net Like khác nhau và trường hợp bằng nhau | Chọn Được yêu thích | Net Like công khai cao hơn đứng trước; bằng nhau thì comment mới hơn trước. |
 | TC-US02-010 | Initial load | Scope có >10 comment | Mở khu vực bình luận | Lần đầu trả đúng 10 comment gốc. |
 | TC-US02-011 | Lazy load | Còn >20 comment sau lần đầu | Cuộn liên tục | Mỗi batch thêm tối đa 10 comment; không trùng/bỏ sót và dừng đúng cuối danh sách. |
+| TC-US02-012 | Locked liker | U1 đã Like C1; sau đó U1 bị Account Lock | Đối chiếu Net Like/Featured Score/ranking trước khóa, khi khóa và sau mở khóa | Khi khóa, Like U1 tạm bị loại khỏi Net Like công khai/ranking nhưng record không mất; mở khóa tính lại nếu record/target còn hợp lệ. |
