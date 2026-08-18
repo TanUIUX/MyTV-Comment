@@ -3,106 +3,93 @@
 > Thuộc EP04 — CMS quản trị bình luận
 > [← Quay lại README của Epic](README.md) · [← Backlog MyTV](../README.md)
 
-
 ### User Story
 
-**Là Admin có thẩm quyền**, tôi muốn xem lịch sử vi phạm, áp dụng chế tài và tra cứu audit log, để xử lý tài khoản nhất quán và có thể kiểm chứng.
-
-### Giá trị
-
-- Hạn chế tái phạm và bảo vệ cộng đồng.
-- Tạo bằng chứng minh bạch cho kiểm tra nội bộ/khiếu nại.
-- Kiểm soát việc sử dụng quyền Admin.
+**Là Admin/Moderator có quyền moderation**, tôi muốn xem lịch sử vi phạm, áp dụng chế tài và xử lý khiếu nại có audit, để bảo vệ cộng đồng và xử lý tài khoản nhất quán.
 
 ### Ưu tiên
 
 **Must**
 
-### Điều kiện tiên quyết
+### Ma trận chế tài mặc định
 
-- Admin đã được cấp quyền xử lý tài khoản hoặc xem audit.
-- Dữ liệu vi phạm và lịch sử kiểm duyệt được liên kết với tài khoản.
+- **Nhẹ** → Cảnh báo.
+- **Trung bình** → Khóa bình luận tạm thời.
+- **Nặng** → Admin quyết định Khóa bình luận hoặc Khóa tài khoản tùy bối cảnh; Khóa tài khoản chỉ dùng khi xác định vi phạm chính sách nghiêm trọng.
 
-### Acceptance Criteria — Lịch sử và chế tài
+### Hai mức khóa riêng
 
-1. Admin xem được lịch sử bình luận bị xử lý, Report liên quan, cảnh báo và chế tài trước đó của tài khoản.
-2. Admin có thể gửi cảnh báo theo mẫu/lý do được cấu hình.
-3. Admin có thể hạn chế quyền bình luận trong một khoảng thời gian xác định.
-4. Admin có thể khóa tạm thời hoặc khóa vĩnh viễn theo quyền được cấp và chính sách phê duyệt.
-5. CMS yêu cầu lý do, thời hạn và bước xác nhận đối với chế tài ảnh hưởng tài khoản.
-6. Khi quyền bình luận bị hạn chế, người dùng không thể đăng, reply, Like, Mention, Report hoặc thực hiện các tương tác bị cấu hình chặn qua giao diện/API.
-7. Khi hết hạn hạn chế tạm thời, quyền được khôi phục tự động nếu không có chế tài khác còn hiệu lực.
-8. Việc thu hồi huy hiệu khi vi phạm nghiêm trọng có thể được thực hiện qua US17.
-9. Các hành động không được làm mất dữ liệu lịch sử cần thiết cho audit.
+#### 1. Khóa bình luận
+
+- Chỉ là chế tài cộng đồng, không khóa toàn bộ tài khoản MyTV.
+- Chặn **Comment + Reply + Mention**.
+- User vẫn được **Like, Report, Rating, Share** nếu các quyền khác hợp lệ.
+- Chỉ có khóa tạm thời, **không có khóa bình luận vĩnh viễn**.
+- Preset thời hạn: **10 phút, 1 giờ, 1 ngày, 3 ngày, 7 ngày, 1 tháng**, hoặc Admin tự nhập thời hạn.
+- Hết hạn tự khôi phục quyền nếu không có sanction khác còn hiệu lực.
+
+#### 2. Khóa tài khoản
+
+- Áp dụng cho vi phạm chính sách nghiêm trọng và khóa toàn bộ tài khoản MyTV theo policy tài khoản.
+- **Mọi Admin/Moderator có quyền moderation đều có thể thực hiện**, không yêu cầu Super Admin hay bước duyệt thứ hai.
+- Có thể khóa tạm thời với cùng preset **10 phút, 1 giờ, 1 ngày, 3 ngày, 7 ngày, 1 tháng hoặc custom**, hoặc **khóa vĩnh viễn**.
+- Khi account bị khóa, toàn bộ comment/reply đang Hiển thị của user **tự động Ẩn khỏi cộng đồng** nhưng không bị xóa mềm chỉ vì account lock.
+- Khi account được mở khóa, comment/reply bị Ẩn **chỉ vì account lock** tự Hiển thị lại nếu bản thân nội dung vẫn hợp lệ và không có moderation action riêng.
+- Rating của account bị loại khỏi aggregate trong thời gian khóa và tự được tính lại khi mở khóa nếu rating record còn tồn tại theo US03.
+
+### Acceptance Criteria — Lịch sử/chế tài
+
+1. CMS hiển thị lịch sử comment bị xử lý, Report, cảnh báo, sanction và appeal của user.
+2. Cảnh báo/sanction yêu cầu reason, thời hạn khi có và confirmation trước khi áp dụng.
+3. UI/API đều enforce đúng phạm vi Khóa bình luận hoặc Khóa tài khoản.
+4. Tác giả nhận reason/trạng thái sanction trong app và notification nghiệp vụ bắt buộc.
+5. Không tự khóa user chỉ vì một/nhiều Report chưa được xác minh.
+
+### Acceptance Criteria — Appeal
+
+1. User bị Khóa bình luận hoặc Khóa tài khoản có thể gửi **khiếu nại trong app**.
+2. Admin xem appeal và quyết định giữ nguyên hoặc gỡ chế tài; quyết định có audit.
+3. SLA xử lý appeal là **48 giờ** kể từ lúc gửi.
+4. Quá 48 giờ, sanction vẫn giữ nguyên; appeal được đánh dấu **Quá SLA** và ưu tiên lên đầu queue.
+5. Không tự động gỡ sanction chỉ vì appeal quá SLA.
 
 ### Acceptance Criteria — Audit log
 
-1. Hệ thống lưu tối thiểu: Admin thực hiện, thời gian, đối tượng, hành động, lý do, trạng thái trước và trạng thái sau.
-2. Audit bao phủ duyệt/từ chối/ẩn/xóa, Report, Flag, Spoiler, ghim, cấu hình phim, cảnh báo và chế tài tài khoản.
-3. Admin được phân quyền có thể tìm kiếm/lọc audit theo thời gian, người thao tác, loại hành động và đối tượng.
-4. Audit log không thể bị sửa/xóa bởi vai trò vận hành thông thường.
-5. Dữ liệu bình luận xóa mềm được giữ 90 ngày theo quyết định hiện tại; audit log tuân theo thời hạn lưu trữ riêng do chính sách dữ liệu quy định.
-6. Việc truy cập dữ liệu nhạy cảm trong audit cũng được kiểm soát và ghi nhận khi cần.
+1. Audit tối thiểu lưu actor, time, target, action, before, after; `reason` bắt buộc/nullable theo rule action tương ứng ở US14/US16.
+2. Audit bao phủ moderation, Report/Flag/Spoiler, pin/config, warning/sanction, appeal, Undo và thay đổi AI policy.
+3. Audit log không thể sửa/xóa bởi role vận hành thông thường.
+4. Audit log được lưu **2 năm**; retention này độc lập với soft-delete comment 90 ngày.
+5. Truy cập/export PII tuân rule US13 và ghi log khi cần.
 
 ### Quy tắc nghiệp vụ
 
-- Chế tài phải tương xứng mức độ vi phạm và theo ma trận chính sách.
-- Admin chỉ sử dụng dữ liệu cho mục đích vận hành được phê duyệt.
-- Cần phân biệt khóa quyền cộng đồng với khóa toàn bộ tài khoản/thuê bao MyTV.
-- Không thu hồi huy hiệu hoặc khóa tài khoản tự động chỉ dựa trên một Report chưa được xác minh.
-
-### Phụ thuộc
-
-- Hệ thống tài khoản và phân quyền MyTV.
-- US10 — Report.
-- US14 — Xử lý nội dung.
-- US17 — Huy hiệu.
+- Sanction phải tương xứng mức vi phạm.
+- Khóa bình luận không chặn Report để user vẫn có thể báo nội dung vi phạm.
+- Khóa tài khoản là action nặng, chỉ dùng khi vi phạm nghiêm trọng dù mọi Admin/Moderator có quyền đều có thể thực hiện.
+- Appeal là cơ chế review sanction; không làm mất audit cũ.
 
 ### Điểm cần PO chốt
 
-- Ma trận vi phạm → chế tài.
-- Phạm vi “khóa tài khoản”: quyền bình luận hay toàn bộ tài khoản MyTV.
-- Thời hạn lưu audit theo yêu cầu pháp lý/nội bộ.
-- Quy trình khiếu nại và hoàn tác chế tài.
+- Không còn blocker PO cho sanction/appeal/audit trong scope hiện tại.
 
 ---
-
-## Phân tích kiểm thử
-
-### Mục tiêu
-
-Kiểm tra lịch sử vi phạm, chế tài, thời hạn khôi phục quyền và audit log đầy đủ/bất biến theo role, đồng thời không khóa nhầm toàn bộ thuê bao khi chỉ hạn chế quyền cộng đồng.
-
-### Rủi ro chính
-
-- Chế tài áp dụng sai phạm vi/thời hạn hoặc không chặn được API.
-- Audit thiếu trạng thái trước/sau, lý do hoặc cho phép chỉnh sửa/xóa.
-- Lộ dữ liệu nhạy cảm hoặc tự động khóa chỉ dựa trên Report chưa xác minh.
-
-### Dữ liệu kiểm thử
-
-U1 có lịch sử Report/Flag/chế tài; chế tài cảnh báo, hạn chế 1 giờ, khóa tạm thời/vĩnh viễn; Admin đủ quyền, Admin chỉ đọc và user thường.
 
 ## Test Cases
 
 | ID | Loại | Tiền điều kiện / dữ liệu | Bước kiểm thử | Kết quả mong đợi |
 |---|---|---|---|---|
-| TC-US16-001 | History | U1 có nhiều comment, Report, chế tài | Mở hồ sơ vi phạm bằng Admin có quyền | Hiển thị đúng lịch sử, đối tượng, thời gian, kết quả; không trộn tài khoản khác. |
-| TC-US16-002 | Warning | Có mẫu cảnh báo hợp lệ | Admin gửi cảnh báo cho U1 | Cảnh báo được lưu/gửi theo thiết kế, có actor/thời gian/lý do và xuất hiện trong history. |
-| TC-US16-003 | Restriction | U1 chưa bị hạn chế | Áp dụng hạn chế quyền bình luận trong 1 giờ | U1 bị chặn các hành động được cấu hình: comment, reply, Like, Mention, Report; UI và API đều chặn. |
-| TC-US16-004 | Expiry | Hạn chế tạm thời sắp hết/hết hạn | Kiểm tra trước và sau mốc hết hạn | Trước mốc bị chặn; sau mốc quyền khôi phục tự động nếu không còn chế tài khác. |
-| TC-US16-005 | Temporary lock | Admin có quyền khóa tạm | Nhập thời hạn, lý do, xác nhận khóa | CMS yêu cầu đủ lý do/thời hạn; khóa đúng phạm vi và hiển thị trạng thái. |
-| TC-US16-006 | Permanent lock | Role được phép khóa vĩnh viễn | Thực hiện khóa vĩnh viễn | Có bước xác nhận/ma trận phê duyệt; quyền bị khóa theo policy, lịch sử không mất. |
-| TC-US16-007 | Scope | Chính sách chỉ khóa quyền cộng đồng | U1 thử đăng nhập/xem nội dung thuê bao và tương tác | Chỉ các quyền cộng đồng bị chặn; không khóa toàn bộ tài khoản nếu policy không yêu cầu. |
-| TC-US16-008 | Authorization | Admin chỉ đọc/user thường | Thử áp dụng chế tài và xem PII | Chỉ role được cấp mới thao tác; dữ liệu nhạy cảm bị masking/deny. |
-| TC-US16-009 | Badge integration | U1 có huy hiệu và vi phạm nghiêm trọng đã xác minh | Thu hồi qua luồng được phép | Huy hiệu bị thu hồi theo policy; comment/history không bị xóa ngoài hành động đã chọn. |
-| TC-US16-010 | Audit completeness | Thực hiện duyệt/từ chối/ẩn/xóa, Report, Flag, Spoiler, ghim, config, warning, sanction | Tra cứu audit theo đối tượng | Tất cả loại hành động có actor, time, target, action, reason, before/after. |
-| TC-US16-011 | Audit immutability | Có audit đã ghi | Dùng role vận hành thường thử sửa/xóa; role có quyền đọc lọc theo thời gian/action | Không sửa/xóa được; tìm kiếm/lọc trả đúng record và quyền. |
-| TC-US16-012 | Retention | Comment xóa mềm và audit liên quan | Kiểm tra trong mốc 90 ngày và sau thời hạn policy | Comment xóa mềm phục vụ audit đúng thời hạn; xử lý sau hạn theo policy, không tự lộ ra công khai. |
-| TC-US16-013 | Privacy audit | Admin truy cập dữ liệu nhạy cảm | Xem hồ sơ/audit rồi kiểm tra log truy cập | Quyền truy cập được kiểm soát và ghi nhận khi policy yêu cầu; không lộ PII cho role không phù hợp. |
-| TC-US16-014 | Safety rule | U1 chỉ có một Report chưa xác minh | Tạo Report rồi kiểm tra chế tài tự động | Không tự khóa/thu hồi huy hiệu chỉ từ Report chưa xác minh. |
-
-### Điểm cần PO chốt
-
-- Ma trận vi phạm → chế tài, phạm vi khóa và thời hạn lưu audit.
-- Quy trình khiếu nại, hoàn tác và quyền phê duyệt khóa vĩnh viễn.
+| TC-US16-001 | History | U1 có moderation/Report/sanction | Mở hồ sơ | Hiển thị đúng timeline, không trộn user khác. |
+| TC-US16-002 | Light sanction | Vi phạm Nhẹ | Gửi cảnh báo | Cảnh báo có reason/actor/time và notification. |
+| TC-US16-003 | Comment lock permissions | U1 bị Khóa bình luận | Thử Comment/Reply/Mention/Like/Report/Rating/Share | 3 action đầu bị chặn; Like/Report/Rating/Share vẫn được phép nếu hợp lệ. |
+| TC-US16-004 | Comment lock durations | Chọn từng preset/custom | Áp dụng | Hỗ trợ 10m/1h/1d/3d/7d/1mo/custom; không có Permanent. |
+| TC-US16-005 | Comment lock expiry | Sanction sắp hết | Kiểm tra sau expiry | Quyền tự phục hồi nếu không còn sanction khác. |
+| TC-US16-006 | Account lock eligibility | Vi phạm nghiêm trọng | Moderator có quyền khóa | Có thể khóa account không cần Super Admin/two-person approval. |
+| TC-US16-007 | Account lock duration | Chọn temp preset/custom/permanent | Áp dụng | Hỗ trợ đúng tất cả lựa chọn và state account. |
+| TC-US16-008 | Hide on account lock | U1 có comment/reply public | Khóa account | Toàn bộ comment/reply U1 Ẩn khỏi cộng đồng, không soft-delete. |
+| TC-US16-009 | Restore on unlock | Có content Ẩn chỉ do account lock và content Ẩn do moderation riêng | Mở khóa | Content chỉ-Ẩn-do-lock tự public lại; content có moderation action riêng vẫn Ẩn. |
+| TC-US16-010 | Rating lock/unlock | U1 có rating | Khóa rồi mở account | Rating bị loại aggregate khi khóa và tự tính lại khi mở. |
+| TC-US16-011 | Appeal | U1 bị sanction | Gửi appeal, Admin giữ/gỡ | Appeal có state, quyết định và audit. |
+| TC-US16-012 | Appeal SLA | Appeal >48h chưa xử lý | Mở queue | Gắn Quá SLA, ưu tiên lên đầu; sanction vẫn hiệu lực. |
+| TC-US16-013 | Audit retention | Có audit cũ | Kiểm tra retention | Audit giữ 2 năm độc lập soft-delete 90 ngày. |
+| TC-US16-014 | Audit immutability | Role vận hành thường | Thử sửa/xóa audit | Bị chặn. |
+| TC-US16-015 | No auto-sanction | C1 chỉ có Report chưa xác minh | Tạo nhiều Report | Không tự cảnh báo/khóa chỉ từ Report count. |
