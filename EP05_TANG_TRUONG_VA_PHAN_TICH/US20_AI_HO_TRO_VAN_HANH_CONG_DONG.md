@@ -3,100 +3,69 @@
 > Thuộc EP05 — Tăng trưởng và phân tích
 > [← Quay lại README của Epic](README.md) · [← Backlog MyTV](../README.md)
 
-
 ### User Story
 
-**Là Admin/biên tập viên nội dung**, tôi muốn AI đề xuất bình luận đáng chú ý và câu hỏi thảo luận phù hợp với phim/tập, để duy trì sức sống cộng đồng mà vẫn kiểm soát được nội dung xuất bản.
-
-### Giá trị
-
-- Giảm thời gian tìm bình luận chất lượng.
-- Hỗ trợ tạo câu hỏi gợi mở theo từng nội dung.
-- Tăng khả năng xuất hiện thảo luận tích cực và có chiều sâu.
+**Là Admin/biên tập viên nội dung**, tôi muốn chủ động yêu cầu AI đề xuất comment đáng chú ý hoặc câu hỏi thảo luận, để giảm thời gian vận hành nhưng vẫn kiểm soát hoàn toàn nội dung được ghim/đăng.
 
 ### Ưu tiên
 
 **Could**
 
-### Điều kiện tiên quyết
+### Acceptance Criteria — Cách gọi AI
 
-- AI có quyền truy cập dữ liệu cần thiết theo chính sách.
-- Phim/tập có metadata hoặc nội dung đầu vào phù hợp.
-- Admin có giao diện xem và quyết định đối với đề xuất.
+1. AI không tự chạy để public nội dung; Admin chủ động bấm **“AI đề xuất”**.
+2. Nút AI đề xuất luôn khả dụng cho role được quyền trong scope sản phẩm hiện tại; **không cần toggle bật/tắt tính năng theo KPI**.
+3. AI chỉ dùng dữ liệu trong **phim/tập hiện tại**: comment, reply, Like, Rating, Report và metadata nội dung liên quan.
+4. Không dùng lịch sử hành vi user trên toàn MyTV hoặc dữ liệu ngoài MyTV làm input cho feature này.
 
-### Acceptance Criteria — Đề xuất bình luận nổi bật
+### Acceptance Criteria — Đề xuất comment nổi bật
 
-1. AI có thể tạo danh sách ứng viên từ các bình luận đang Hiển thị.
-2. Đề xuất có thể xem xét các tín hiệu như Like, Reply, thời gian, chất lượng nội dung và mức độ liên quan.
-3. AI loại trừ nội dung đang Chờ duyệt, bị Report chưa xử lý theo ngưỡng rủi ro, bị Flag nghiêm trọng, Ẩn hoặc Xóa.
-4. Admin xem được lý do/tín hiệu chính khiến bình luận được đề xuất trong phạm vi giải pháp hỗ trợ.
-5. AI không tự động ghim; Admin quyết định ghim qua US15.
-6. Admin có thể bỏ qua đề xuất và hành động đó được ghi nhận để đánh giá chất lượng AI.
+1. AI chỉ xét comment đang Hiển thị.
+2. Tín hiệu ưu tiên: **chất lượng nội dung + mức liên quan tới phim/tập + Like + Reply**.
+3. Loại nội dung Chờ duyệt/Từ chối/Ẩn/Xóa, risk cao, Report nghiêm trọng chưa xử lý hoặc Flag nghiêm trọng theo policy.
+4. AI trả rationale/tín hiệu chính để Admin đánh giá.
+5. AI **không tự ghim**. Admin xem đề xuất rồi quyết định ghim qua US15 hoặc bỏ qua.
+6. Không chỉnh sửa text comment của user khi ghim; nếu cần xử lý nội dung phải đi moderation/edit flow phù hợp.
 
-### Acceptance Criteria — Đề xuất chủ đề/câu hỏi
+### Acceptance Criteria — Đề xuất câu hỏi/chủ đề
 
-1. AI có thể đề xuất câu hỏi gợi mở theo series hoặc tập cụ thể.
-2. Câu hỏi không tiết lộ Spoiler ngoài phạm vi được cho phép.
-3. Nội dung đề xuất phải đi qua kiểm tra an toàn trước khi Admin sử dụng.
-4. Admin có thể chỉnh sửa, chấp nhận hoặc loại bỏ đề xuất.
-5. AI không tự đăng nội dung ra cộng đồng trong phạm vi hiện tại.
-6. Hệ thống ghi nhận đề xuất được sử dụng và kết quả tương tác để đánh giá hiệu quả.
+1. Admin bấm “AI đề xuất” để sinh câu hỏi/chủ đề gắn đúng series/tập.
+2. AI proposal phải qua safety/Spoiler check.
+3. Admin có thể **chỉnh sửa → duyệt → đăng** ngay; **không cần Admin thứ hai phê duyệt**.
+4. Nếu Admin không xác nhận, AI proposal không được public.
+
+### KPI chất lượng AI
+
+- Tỷ lệ Admin **chấp nhận** đề xuất.
+- Tỷ lệ Admin **chỉnh sửa** trước khi đăng.
+- Tỷ lệ Admin **bỏ** đề xuất.
+
+Các KPI dùng để theo dõi chất lượng, không tự động disable tính năng.
 
 ### Quy tắc nghiệp vụ
 
-- Mô hình human-in-the-loop: AI đề xuất, con người quyết định.
-- Không ưu tiên nội dung chỉ vì gây tranh cãi nếu có nguy cơ vi phạm hoặc tạo tương tác tiêu cực.
-- Đề xuất phải tuân thủ chính sách nội dung và quyền dữ liệu của MyTV.
-- Bình luận nổi bật do Admin ghim có ưu tiên hiển thị theo US02/US15.
+- Human-in-the-loop bắt buộc: AI đề xuất, Admin quyết định.
+- Input bị giới hạn theo phim/tập hiện tại để giảm rủi ro privacy/context leakage.
+- AI không tự pin, không tự publish.
+- Mọi accept/edit/discard/pin/post liên quan proposal phải tracking để US19 đo hiệu quả.
 
-### Phụ thuộc
+### Điểm cần PO chốt
 
-- US11 — AI moderation để loại trừ nội dung rủi ro.
-- US15 — Ghim bình luận.
-- US19 — Dữ liệu tương tác và đo hiệu quả.
-
-### Rủi ro và điểm cần PO chốt
-
-- Tiêu chí “hay”, “hấp dẫn” và “tương tác tích cực”.
-- Nguồn dữ liệu AI được phép sử dụng.
-- Có cần biên tập viên duyệt hai lớp trước khi đăng câu hỏi hay không.
-- Cơ chế đo chất lượng và ngừng sử dụng đề xuất không phù hợp.
+- Không còn blocker PO cho workflow AI Ops trong scope hiện tại.
 
 ---
-
-## Phân tích kiểm thử
-
-### Mục tiêu
-
-Kiểm tra AI chỉ đề xuất ứng viên/chủ đề đủ điều kiện, giải thích được tín hiệu, loại trừ nội dung rủi ro và luôn để Admin quyết định ghim/đăng.
-
-### Rủi ro chính
-
-- AI đề xuất Chờ duyệt/Ẩn/Xóa hoặc nội dung có Report/Flag rủi ro.
-- AI tự động ghim/đăng mà không có human-in-the-loop.
-- Câu hỏi chứa Spoiler, thông tin nhạy cảm hoặc ưu tiên nội dung gây tranh cãi.
-
-### Dữ liệu kiểm thử
-
-Comment công khai có Like/Reply cao/thấp; comment Chờ duyệt, Report chưa xử lý, Flag nghiêm trọng, Ẩn, Xóa; metadata series/tập; câu hỏi có/không Spoiler.
 
 ## Test Cases
 
 | ID | Loại | Tiền điều kiện / dữ liệu | Bước kiểm thử | Kết quả mong đợi |
 |---|---|---|---|---|
-| TC-US20-001 | Recommendation | Có nhiều comment công khai | Chạy tạo ứng viên theo series/tập | AI trả danh sách ứng viên từ nội dung Hiển thị, có liên kết đúng phim/tập. |
-| TC-US20-002 | Ranking signal | Comment khác nhau về Like, Reply, thời gian, liên quan | Kiểm tra output và rationale | Đề xuất có thể hiện tín hiệu chính trong phạm vi hỗ trợ; không chỉ dựa số Like nếu policy yêu cầu chất lượng. |
-| TC-US20-003 | Exclusion | Có Chờ duyệt, Report chưa xử lý rủi ro, Flag nghiêm trọng, Ẩn, Xóa | Chạy AI | Các nội dung bị loại không xuất hiện trong ứng viên được đề xuất. |
-| TC-US20-004 | Explainability | Có ứng viên được đề xuất | Admin mở chi tiết | Admin thấy lý do/tín hiệu chính, source và thời điểm dữ liệu đủ để đánh giá. |
-| TC-US20-005 | Human-in-loop/pin | Có ứng viên | Bỏ qua một ứng viên; thử kiểm tra trạng thái ghim | AI không tự ghim; chỉ thao tác Admin qua US15 mới thay đổi trạng thái. |
-| TC-US20-006 | Feedback | Admin bỏ qua/chấp nhận đề xuất | Thực hiện hành động và kiểm tra log | Hành động được ghi nhận để đánh giá chất lượng; không làm thay đổi comment ngoài lựa chọn. |
-| TC-US20-007 | Question generation | Series/tập có metadata hợp lệ | Yêu cầu AI tạo câu hỏi | Câu hỏi gắn đúng scope, phù hợp nội dung và không tự đăng. |
-| TC-US20-008 | Spoiler safety | Metadata/câu hỏi có khả năng tiết lộ tình tiết | Chạy safety check, xem preview | Câu hỏi bị chặn/chỉnh sửa/cảnh báo theo policy; không lộ Spoiler ngoài phạm vi cho phép. |
-| TC-US20-009 | Editing workflow | Có câu hỏi đề xuất | Admin chỉnh sửa, chấp nhận, loại bỏ | Mỗi hành động tạo đúng trạng thái; câu hỏi chỉ được dùng sau bước kiểm soát bắt buộc. |
-| TC-US20-010 | No auto-publish | AI trả đề xuất hợp lệ | Không thao tác Admin, theo dõi cộng đồng | Không có comment/câu hỏi tự xuất hiện trong trải nghiệm người dùng. |
-| TC-US20-011 | Tracking | Đề xuất được sử dụng và có tương tác sau đó | Kiểm tra event/metric | Ghi nhận đề xuất được dùng, kết quả tương tác và liên kết về source; không duplicate do retry. |
-| TC-US20-012 | Privacy/safety | AI không được truy cập dữ liệu ngoài scope | Kiểm tra input/output và role Admin | AI chỉ dùng dữ liệu được phê duyệt; không trả PII hoặc ưu tiên nội dung gây hại/chỉ vì tranh cãi. |
-
-### Điểm cần PO chốt
-
-- Tiêu chí “hay/tích cực”, dữ liệu đầu vào, quy trình duyệt một/hai lớp và metric đánh giá chất lượng AI.
+| TC-US20-001 | Trigger | Admin có quyền | Không bấm AI đề xuất rồi theo dõi | Không có proposal/public action tự phát. |
+| TC-US20-002 | Input scope | E1 có dữ liệu và account có lịch sử ở E2/khác | Bấm AI đề xuất ở E1 | Input/output chỉ dựa dữ liệu E1/phim hiện tại theo scope được phép. |
+| TC-US20-003 | Candidate | Có comment khác nhau quality/relevance/Like/Reply | Bấm AI đề xuất | Ranking proposal phản ánh bốn nhóm tín hiệu và có rationale. |
+| TC-US20-004 | Exclusion | Có pending/rejected/hidden/deleted/high-risk/severe-report | Bấm AI đề xuất | Các item bị loại không xuất hiện trong candidate list. |
+| TC-US20-005 | No auto-pin | Có candidate tốt | Không thao tác Admin | Không thay đổi pin state. |
+| TC-US20-006 | Pin decision | Admin chấp nhận candidate | Ghim qua US15 | Pin chỉ thay đổi sau thao tác Admin; text user không bị rewrite. |
+| TC-US20-007 | Question workflow | Admin bấm AI đề xuất câu hỏi | Edit → Approve → Post | Nội dung chỉ public sau Admin xác nhận; không cần reviewer thứ hai. |
+| TC-US20-008 | Safety | Proposal có Spoiler/risk | Safety check | Proposal bị chặn/cảnh báo/chỉnh theo policy trước khi Admin đăng. |
+| TC-US20-009 | KPI tracking | Accept/edit/discard nhiều proposal | Mở metric | Tính đúng ba tỷ lệ KPI chất lượng. |
+| TC-US20-010 | No disable | KPI discard cao | Kiểm tra CMS | Feature không tự disable và không có toggle quality-based trong scope hiện tại. |
