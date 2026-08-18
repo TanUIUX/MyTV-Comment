@@ -30,13 +30,14 @@
 3. Khu vực Bình luận hiển thị rõ ràng trên cả web và mobile theo thiết kế đã duyệt.
 4. Nội dung bị ẩn, bị xóa hoặc đang chờ duyệt không được hiển thị cho người xem khác.
 5. Người chưa đăng nhập chỉ được đọc; khi chọn Đăng bình luận, Reply, Like/Unlike, Mention, Report, Rating, Chia sẻ hoặc bất kỳ thao tác tương tác nào khác, hệ thống yêu cầu đăng nhập trước khi tạo dữ liệu tương tác.
-6. Sau khi đăng nhập thành công, hệ thống đưa người dùng trở lại đúng phim/tập; nếu khả thi, tiếp tục thao tác mà người dùng vừa chọn.
+6. Sau khi đăng nhập thành công, hệ thống đưa người dùng trở lại **đúng phim/tập/thread/comment** liên quan nhưng **không tự thực hiện action đã chọn trước login**; user phải chủ động thao tác lại sau khi đã xác thực.
 7. Khi phim bị đóng bình luận, toàn bộ khu vực Bình luận không hiển thị. Quy tắc chi tiết được quản lý tại US12 và US15.
 
 ### Quy tắc nghiệp vụ
 
 - Áp dụng nguyên tắc “Mở để đọc — Đăng nhập để tương tác”.
 - Phiên khách không được tạo bình luận, Like, Reply, Mention, Report, Rating, Chia sẻ hoặc bất kỳ bản ghi tương tác cộng đồng nào; việc chỉ đọc không được tính thành một tương tác bình luận.
+- Luồng login chỉ giữ **context điều hướng**; không giữ pending action để tự động tạo interaction sau xác thực.
 - Chỉ hiển thị dữ liệu mà người xem có quyền xem.
 - Việc không đăng nhập không làm thay đổi thứ tự hoặc nội dung bình luận công khai.
 
@@ -63,7 +64,8 @@ Xác nhận người xem chưa đăng nhập đọc được đúng nội dung c
 
 - Lộ bình luận Chờ duyệt, Ẩn hoặc Xóa mềm qua UI, API hoặc cache.
 - Phiên khách tạo được dữ liệu tương tác hoặc bị tính nhầm thành tương tác bình luận.
-- Mất ngữ cảnh phim/tập sau khi đăng nhập.
+- Mất ngữ cảnh phim/tập/thread sau khi đăng nhập.
+- Hệ thống tự thực hiện interaction cũ sau login dù user chưa thao tác lại.
 - Khu vực bình luận vẫn xuất hiện khi phim đã Đóng bình luận.
 
 ### Dữ liệu kiểm thử
@@ -78,11 +80,10 @@ Một phim đang Mở bình luận có bình luận gốc, reply, Chờ duyệt,
 | TC-US01-002 | Authorization | Có bình luận công khai, Chờ duyệt, Ẩn và Xóa mềm | Mở danh sách bằng phiên khách; kiểm tra UI và response API công khai | Chỉ bình luận/reply công khai xuất hiện; các trạng thái còn lại không được trả về hoặc hiển thị. |
 | TC-US01-003 | Compatibility | Có cùng dữ liệu trên web và mobile | Mở cùng phim trên web và mobile | Khu vực, nội dung và quyền đọc nhất quán; không làm lộ dữ liệu ở một nền tảng. |
 | TC-US01-004 | Authentication | Phiên khách; có bình luận công khai | Chọn lần lượt Đăng bình luận, Like, Reply, Mention, Report, Rating và Chia sẻ | Mỗi thao tác yêu cầu đăng nhập; không tạo record/event tương tác cộng đồng trước khi xác thực. |
-| TC-US01-005 | Navigation | Khách đang ở một tập cụ thể và chọn Reply/Like | Đăng nhập thành công từ màn hình yêu cầu đăng nhập | Người dùng quay lại đúng phim/tập và đúng thread; thao tác được tiếp tục nếu sản phẩm hỗ trợ. |
+| TC-US01-005 | Navigation/post-login | Khách đang ở E1/thread T1/comment C1 và chọn Like/Reply | Đăng nhập thành công từ màn hình yêu cầu login | Quay lại đúng E1/T1/C1; Like/Reply **chưa được thực hiện**; user phải bấm lại action sau login. |
 | TC-US01-006 | State/Negative | Phim ở trạng thái Đóng bình luận | Mở trang chi tiết, gọi API đọc và thử mở deep link bình luận | Toàn bộ khu vực bình luận bị ẩn; API/deep link không trả dữ liệu công khai ngoài phạm vi chính sách. |
 | TC-US01-007 | Security | Có ID bình luận Chờ duyệt/Ẩn | Gọi trực tiếp API bằng phiên khách với ID nội dung không công khai | API từ chối hoặc trả dữ liệu rỗng theo chuẩn bảo mật; không suy ra nội dung qua mã lỗi/metadata. |
 
 ### Điểm cần xác nhận khi chạy test
 
 - Thiết kế breakpoint và vị trí khu vực Bình luận trên từng nền tảng.
-- Hành vi tiếp tục thao tác sau đăng nhập nếu SSO không hỗ trợ giữ pending action.
