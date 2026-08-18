@@ -17,6 +17,18 @@
 - **Trung bình** → Khóa bình luận tạm thời.
 - **Nặng** → Admin quyết định Khóa bình luận hoặc Khóa tài khoản tùy bối cảnh; Khóa tài khoản chỉ dùng khi xác định vi phạm chính sách nghiêm trọng.
 
+### Reason taxonomy cho chế tài
+
+Cảnh báo / Khóa bình luận / Khóa tài khoản dùng cùng taxonomy vi phạm chung của Report/AI/CMS:
+- Spoiler
+- Spam/quảng cáo
+- Xúc phạm/ngôn từ công kích
+- Nội dung không phù hợp
+- Sai thông tin
+- Vi phạm khác
+
+Admin bắt buộc chọn một reason chuẩn khi áp dụng cảnh báo/sanction; có thể nhập **note nội bộ tùy chọn**.
+
 ### Hai mức khóa riêng
 
 #### 1. Khóa bình luận
@@ -35,15 +47,16 @@
 - Có thể khóa tạm thời với cùng preset **10 phút, 1 giờ, 1 ngày, 3 ngày, 7 ngày, 1 tháng hoặc custom**, hoặc **khóa vĩnh viễn**.
 - Khi account bị khóa, toàn bộ comment/reply đang Hiển thị của user **tự động Ẩn khỏi cộng đồng** nhưng không bị xóa mềm chỉ vì account lock.
 - Khi account được mở khóa, comment/reply bị Ẩn **chỉ vì account lock** tự Hiển thị lại nếu bản thân nội dung vẫn hợp lệ và không có moderation action riêng.
-- Rating của account bị loại khỏi aggregate trong thời gian khóa và tự được tính lại khi mở khóa nếu rating record còn tồn tại theo US03.
+- Rating của account bị loại khỏi **cả điểm trung bình và tổng số lượt đánh giá công khai** trong thời gian khóa; khi mở khóa tự tính lại cả hai nếu rating record còn tồn tại theo US03.
 
 ### Acceptance Criteria — Lịch sử/chế tài
 
 1. CMS hiển thị lịch sử comment bị xử lý, Report, cảnh báo, sanction và appeal của user.
-2. Cảnh báo/sanction yêu cầu reason, thời hạn khi có và confirmation trước khi áp dụng.
-3. UI/API đều enforce đúng phạm vi Khóa bình luận hoặc Khóa tài khoản.
-4. Tác giả nhận reason/trạng thái sanction trong app và notification nghiệp vụ bắt buộc.
-5. Không tự khóa user chỉ vì một/nhiều Report chưa được xác minh.
+2. Cảnh báo/sanction bắt buộc chọn **reason từ taxonomy vi phạm chung**; note nội bộ là optional.
+3. Sanction tạm thời bắt buộc có thời hạn hợp lệ; Khóa tài khoản Permanent không yêu cầu expiry; mọi sanction cần confirmation trước khi áp dụng.
+4. UI/API đều enforce đúng phạm vi Khóa bình luận hoặc Khóa tài khoản.
+5. Tác giả nhận reason/trạng thái sanction trong app và notification nghiệp vụ bắt buộc.
+6. Không tự khóa user chỉ vì một/nhiều Report chưa được xác minh.
 
 ### Acceptance Criteria — Appeal
 
@@ -64,6 +77,7 @@
 ### Quy tắc nghiệp vụ
 
 - Sanction phải tương xứng mức vi phạm.
+- Cảnh báo/Khóa bình luận/Khóa tài khoản dùng cùng taxonomy vi phạm chung để thống nhất Report → Moderation → Sanction.
 - Khóa bình luận không chặn Report để user vẫn có thể báo nội dung vi phạm.
 - Khóa tài khoản là action nặng, chỉ dùng khi vi phạm nghiêm trọng dù mọi Admin/Moderator có quyền đều có thể thực hiện.
 - Appeal là cơ chế review sanction; không làm mất audit cũ.
@@ -79,17 +93,18 @@
 | ID | Loại | Tiền điều kiện / dữ liệu | Bước kiểm thử | Kết quả mong đợi |
 |---|---|---|---|---|
 | TC-US16-001 | History | U1 có moderation/Report/sanction | Mở hồ sơ | Hiển thị đúng timeline, không trộn user khác. |
-| TC-US16-002 | Light sanction | Vi phạm Nhẹ | Gửi cảnh báo | Cảnh báo có reason/actor/time và notification. |
-| TC-US16-003 | Comment lock permissions | U1 bị Khóa bình luận | Thử Comment/Reply/Mention/Like/Report/Rating/Share | 3 action đầu bị chặn; Like/Report/Rating/Share vẫn được phép nếu hợp lệ. |
-| TC-US16-004 | Comment lock durations | Chọn từng preset/custom | Áp dụng | Hỗ trợ 10m/1h/1d/3d/7d/1mo/custom; không có Permanent. |
-| TC-US16-005 | Comment lock expiry | Sanction sắp hết | Kiểm tra sau expiry | Quyền tự phục hồi nếu không còn sanction khác. |
-| TC-US16-006 | Account lock eligibility | Vi phạm nghiêm trọng | Moderator có quyền khóa | Có thể khóa account không cần Super Admin/two-person approval. |
-| TC-US16-007 | Account lock duration | Chọn temp preset/custom/permanent | Áp dụng | Hỗ trợ đúng tất cả lựa chọn và state account. |
-| TC-US16-008 | Hide on account lock | U1 có comment/reply public | Khóa account | Toàn bộ comment/reply U1 Ẩn khỏi cộng đồng, không soft-delete. |
-| TC-US16-009 | Restore on unlock | Có content Ẩn chỉ do account lock và content Ẩn do moderation riêng | Mở khóa | Content chỉ-Ẩn-do-lock tự public lại; content có moderation action riêng vẫn Ẩn. |
-| TC-US16-010 | Rating lock/unlock | U1 có rating | Khóa rồi mở account | Rating bị loại aggregate khi khóa và tự tính lại khi mở. |
-| TC-US16-011 | Appeal | U1 bị sanction | Gửi appeal, Admin giữ/gỡ | Appeal có state, quyết định và audit. |
-| TC-US16-012 | Appeal SLA | Appeal >48h chưa xử lý | Mở queue | Gắn Quá SLA, ưu tiên lên đầu; sanction vẫn hiệu lực. |
-| TC-US16-013 | Audit retention | Có audit cũ | Kiểm tra retention | Audit giữ 2 năm độc lập soft-delete 90 ngày. |
-| TC-US16-014 | Audit immutability | Role vận hành thường | Thử sửa/xóa audit | Bị chặn. |
-| TC-US16-015 | No auto-sanction | C1 chỉ có Report chưa xác minh | Tạo nhiều Report | Không tự cảnh báo/khóa chỉ từ Report count. |
+| TC-US16-002 | Light sanction | Vi phạm Nhẹ | Gửi cảnh báo với reason chuẩn | Cảnh báo có reason/actor/time, note optional và notification. |
+| TC-US16-003 | Reason required | Cảnh báo/Khóa bình luận/Khóa tài khoản | Bỏ reason rồi xác nhận | Không cho áp dụng; chọn một reason taxonomy chung thì mới được tiếp tục. |
+| TC-US16-004 | Comment lock permissions | U1 bị Khóa bình luận | Thử Comment/Reply/Mention/Like/Report/Rating/Share | 3 action đầu bị chặn; Like/Report/Rating/Share vẫn được phép nếu hợp lệ. |
+| TC-US16-005 | Comment lock durations | Chọn từng preset/custom và thử bỏ duration | Áp dụng | Hỗ trợ 10m/1h/1d/3d/7d/1mo/custom; không có Permanent; sanction tạm thiếu duration bị chặn. |
+| TC-US16-006 | Comment lock expiry | Sanction sắp hết | Kiểm tra sau expiry | Quyền tự phục hồi nếu không còn sanction khác. |
+| TC-US16-007 | Account lock eligibility | Vi phạm nghiêm trọng | Moderator có quyền khóa | Có thể khóa account không cần Super Admin/two-person approval. |
+| TC-US16-008 | Account lock duration | Chọn temp preset/custom/permanent | Áp dụng | Temporary bắt buộc duration hợp lệ; Permanent không cần expiry; state account đúng lựa chọn. |
+| TC-US16-009 | Hide on account lock | U1 có comment/reply public | Khóa account | Toàn bộ comment/reply U1 Ẩn khỏi cộng đồng, không soft-delete. |
+| TC-US16-010 | Restore on unlock | Có content Ẩn chỉ do account lock và content Ẩn do moderation riêng | Mở khóa | Content chỉ-Ẩn-do-lock tự public lại; content có moderation action riêng vẫn Ẩn. |
+| TC-US16-011 | Rating lock/unlock | U1 có rating | Khóa rồi mở account | Khi khóa, rating bị loại khỏi cả average + total count công khai; mở khóa tính lại cả hai nếu record còn. |
+| TC-US16-012 | Appeal | U1 bị sanction | Gửi appeal, Admin giữ/gỡ | Appeal có state, quyết định và audit. |
+| TC-US16-013 | Appeal SLA | Appeal >48h chưa xử lý | Mở queue | Gắn Quá SLA, ưu tiên lên đầu; sanction vẫn hiệu lực. |
+| TC-US16-014 | Audit retention | Có audit cũ | Kiểm tra retention | Audit giữ 2 năm độc lập soft-delete 90 ngày. |
+| TC-US16-015 | Audit immutability | Role vận hành thường | Thử sửa/xóa audit | Bị chặn. |
+| TC-US16-016 | No auto-sanction | C1 chỉ có Report chưa xác minh | Tạo nhiều Report | Không tự cảnh báo/khóa chỉ từ Report count. |
