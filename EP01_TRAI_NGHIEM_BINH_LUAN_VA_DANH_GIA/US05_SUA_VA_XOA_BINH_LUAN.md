@@ -22,8 +22,9 @@
 7. Xóa comment gốc làm toàn bộ thread biến mất khỏi UI/API công khai; xóa reply riêng lẻ chỉ loại reply đó và **không hiển thị placeholder**.
 8. Nội dung user tự xóa được soft-delete 90 ngày; user **không tự khôi phục** được.
 9. Admin có quyền phù hợp có thể Undo/khôi phục dữ liệu còn trong thời gian lưu trữ theo US14; mọi lần khôi phục ghi audit.
-10. Nếu user xóa comment trong khi có version sửa Chờ duyệt, version chờ bị vô hiệu hóa và không thể public sau đó.
-11. Người khác không thể sửa/xóa nội dung không thuộc sở hữu của họ.
+10. Nếu Undo Xóa mềm một **root comment**, hệ thống khôi phục root và toàn bộ reply còn trong retention đã biến mất **chỉ do cascade từ root delete**; mỗi reply quay về state riêng ngay trước cascade. Reply đã bị Ẩn/Từ chối/Xóa riêng trước đó không tự public lại.
+11. Nếu user xóa comment trong khi có version sửa Chờ duyệt, version chờ bị vô hiệu hóa và không thể public sau đó.
+12. Người khác không thể sửa/xóa nội dung không thuộc sở hữu của họ.
 
 ### Quy tắc nghiệp vụ
 
@@ -31,6 +32,7 @@
 - User delete không yêu cầu reason; audit dùng action/system code để ghi nhận đây là thao tác tác giả tự xóa.
 - Version history phục vụ CMS/Audit, không public cho user.
 - Soft-delete 90 ngày không đồng nghĩa user có quyền restore.
+- Cascade root delete là visibility/lifecycle của thread; Undo root delete không được ghi đè moderation state riêng đã có trước đó của từng reply.
 
 ### Điểm cần PO chốt
 
@@ -51,4 +53,5 @@
 | TC-US05-007 | Delete reply | R1 thuộc U1 | Xóa R1 | R1 biến mất hoàn toàn, không placeholder; C1/R2 giữ nguyên. |
 | TC-US05-008 | Retention | C1/R1 đã xóa | Tra CMS trong 90 ngày | Record soft-delete còn phục vụ audit, có actor/time/action; reason user nhập không bắt buộc. |
 | TC-US05-009 | Restore authorization | C1 soft-delete | U1 thử restore; Admin có quyền Undo | U1 bị chặn; Admin có thể khôi phục theo US14 và có audit. |
-| TC-US05-010 | Race | C1 có V2 Chờ duyệt | U1 xóa C1 rồi Admin duyệt V2 | V2 không được public sau khi root đã bị xóa. |
+| TC-US05-010 | Undo root cascade | C1 trước khi xóa có R1 Hiển thị, R2 Ẩn riêng; root delete làm cả thread biến mất | Admin Undo root delete trong retention | C1 và R1 trở lại state trước cascade; R2 vẫn Ẩn vì có moderation state riêng; không mất audit. |
+| TC-US05-011 | Race | C1 có V2 Chờ duyệt | U1 xóa C1 rồi Admin duyệt V2 | V2 không được public sau khi root đã bị xóa. |
