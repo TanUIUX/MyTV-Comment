@@ -3,86 +3,50 @@
 > Thuộc EP01 — Trải nghiệm bình luận và đánh giá
 > [← Quay lại README của Epic](README.md) · [← Backlog MyTV](../README.md)
 
-
 ### User Story
 
-**Là người dùng đã đăng nhập**, tôi muốn đánh giá series hoặc tập phim bằng thang điểm 5 sao và có thể thay đổi đánh giá, để thể hiện cảm nhận của mình với cộng đồng.
-
-### Giá trị
-
-- Cung cấp tín hiệu chất lượng nội dung cho người xem khác.
-- Tạo thêm hình thức tương tác nhẹ bên cạnh bình luận.
-- Cung cấp dữ liệu phục vụ phân tích và đề xuất nội dung.
+**Là người dùng đã đăng nhập**, tôi muốn đánh giá series hoặc tập phim bằng thang điểm 5 sao và có thể thay đổi/xóa đánh giá, để thể hiện cảm nhận hiện tại của mình với cộng đồng.
 
 ### Ưu tiên
 
 **Must**
 
-### Điều kiện tiên quyết
-
-- Nội dung được phép đánh giá.
-- Người dùng đã đăng nhập khi gửi hoặc thay đổi đánh giá.
-
 ### Acceptance Criteria
 
 1. Đầu khu vực Bình luận hiển thị thang điểm 5 sao, điểm trung bình và tổng số lượt đánh giá.
-2. Người chưa đăng nhập xem được điểm trung bình và tổng lượt đánh giá.
-3. Khi người chưa đăng nhập chọn đánh giá, hệ thống yêu cầu đăng nhập.
-4. Mỗi tài khoản chỉ có một đánh giá hiện hành trên mỗi series và một đánh giá hiện hành trên mỗi tập.
-5. Đánh giá ở cấp series và đánh giá ở cấp tập là hai bản ghi độc lập.
-6. Người dùng có thể thay đổi đánh giá đã gửi mà không tạo thêm lượt đánh giá mới.
-7. Khi có đánh giá mới hoặc thay đổi đánh giá, điểm trung bình và tổng lượt được tính lại tự động.
-8. Sau khi gửi thành công, giao diện hiển thị rõ số sao hiện tại của người dùng.
-9. Nếu gửi thất bại, hệ thống giữ trạng thái cũ và thông báo để người dùng thử lại.
+2. Người chưa đăng nhập xem được điểm trung bình/tổng lượt nhưng phải đăng nhập để đánh giá.
+3. Mỗi tài khoản chỉ có một rating hiện hành trên mỗi series và một rating hiện hành trên mỗi tập; hai scope độc lập.
+4. Người dùng có thể đổi rating 1–5 sao; đổi rating không làm tăng tổng lượt đánh giá.
+5. Người dùng có thể xóa rating của chính mình; khi xóa, tổng lượt và điểm trung bình được tính lại.
+6. Điểm trung bình hiển thị **1 chữ số thập phân và luôn làm tròn lên** đến 0.1 gần nhất, ví dụ `4.21 → 4.3`, `4.20 → 4.2`.
+7. Rating của tài khoản chỉ bị loại khỏi điểm trung bình khi tài khoản bị **khóa toàn bộ tài khoản MyTV**; khóa bình luận không loại rating.
+8. Khi tài khoản được mở khóa lại, rating cũ tự động được tính lại nếu bản ghi rating vẫn tồn tại.
+9. Nếu gửi/đổi/xóa rating thất bại, hệ thống giữ trạng thái hợp lệ trước đó và không tạo dữ liệu nửa chừng.
 
 ### Quy tắc nghiệp vụ
 
-- Giá trị hợp lệ từ 1 đến 5 sao.
-- Hệ thống phải chống gửi trùng do người dùng bấm nhiều lần hoặc lỗi mạng.
-- Quy tắc làm tròn điểm trung bình cần thống nhất trên các nền tảng.
-
-### Phụ thuộc
-
-- Hệ thống tài khoản MyTV.
-- Dịch vụ nội dung định danh series/tập.
+- Giá trị hợp lệ: số nguyên 1–5 sao.
+- Một tài khoản chỉ đóng góp tối đa một rating hiện hành cho một scope.
+- Việc khóa/mở khóa tài khoản ảnh hưởng khả năng tính rating nhưng không tự xóa bản ghi rating.
+- Rating nằm trong khu vực Bình luận và bị ẩn khi phim/tập Đóng bình luận theo US12.
 
 ### Điểm cần PO chốt
 
-- Số chữ số thập phân của điểm trung bình.
-- Có loại trừ đánh giá của tài khoản bị khóa/vi phạm hay không.
+- Không còn blocker PO cho rating trong scope hiện tại.
 
 ---
-
-## Phân tích kiểm thử
-
-### Mục tiêu
-
-Xác nhận điểm trung bình, tổng lượt đánh giá và bản ghi đánh giá của người dùng đúng độc lập ở cấp series/tập, đồng thời thao tác gửi lại có tính idempotent.
-
-### Rủi ro chính
-
-- Gộp nhầm rating series với rating tập.
-- Thay đổi rating làm tăng tổng lượt hoặc tính sai trung bình.
-- Retry/bấm nhiều lần tạo nhiều bản ghi hoặc làm sai điểm.
-
-### Dữ liệu kiểm thử
-
-Series S1, tập E1; hai tài khoản U1/U2; dữ liệu ban đầu có điểm trung bình và tổng lượt; phiên khách, phiên đăng nhập và tình huống API lỗi.
 
 ## Test Cases
 
 | ID | Loại | Tiền điều kiện / dữ liệu | Bước kiểm thử | Kết quả mong đợi |
 |---|---|---|---|---|
-| TC-US03-001 | Functional | Nội dung có rating | Mở khu vực Bình luận bằng phiên khách | Hiển thị thang 5 sao, điểm trung bình và tổng lượt đánh giá hiện tại. |
-| TC-US03-002 | Authentication | Phiên khách | Chọn một mức sao | Hiển thị yêu cầu đăng nhập; không tạo rating mới. |
-| TC-US03-003 | Boundary | U1 đã đăng nhập | Gửi lần lượt 1 sao và 5 sao ở hai bản ghi dữ liệu độc lập | Giá trị biên 1 và 5 được chấp nhận và lưu đúng. |
-| TC-US03-004 | Negative/API | U1 đã đăng nhập | Gửi 0, 6, số âm, số thập phân hoặc giá trị không phải số qua API | Request bị từ chối; không thay đổi điểm/tổng lượt. |
-| TC-US03-005 | Data isolation | S1 và E1 đều cho phép rating | U1 đánh giá S1 rồi E1 | Tạo hai rating độc lập; điểm ở S1 không làm thay đổi điểm của E1. |
-| TC-US03-006 | Update | U1 đã có rating 3 sao | Đổi rating thành 5 sao | Chỉ bản ghi của U1 được cập nhật; tổng lượt không tăng; điểm trung bình tính lại đúng. |
-| TC-US03-007 | Idempotency | Request gửi chậm hoặc retry cùng idempotency key | Bấm gửi nhiều lần/đẩy lại request | Chỉ có một kết quả hợp lệ; UI không nhân đôi lượt hoặc bản ghi. |
-| TC-US03-008 | Error handling | Mock lỗi mạng/500 khi gửi rating | Gửi hoặc đổi rating | Trạng thái cũ được giữ; hiển thị lỗi và cho phép thử lại; không có bản ghi nửa chừng. |
-
-### Điểm cần PO chốt trước khi nghiệm thu số học
-
-- Số chữ số thập phân và quy tắc làm tròn điểm trung bình.
-- Có loại trừ rating của tài khoản bị khóa/vi phạm khỏi dữ liệu công khai hay không.
+| TC-US03-001 | Functional | Nội dung có rating | Mở bằng phiên khách | Thấy 5 sao, điểm trung bình, tổng lượt; chọn sao thì yêu cầu login. |
+| TC-US03-002 | Boundary | U1 đăng nhập | Gửi 1 sao và 5 sao | Hai giá trị biên hợp lệ; 0/6/thập phân bị từ chối. |
+| TC-US03-003 | Scope | S1 và E1 | U1 đánh giá cả hai | Tạo hai rating độc lập. |
+| TC-US03-004 | Update | U1 có 3★ | Đổi 5★ | Tổng lượt không tăng; điểm trung bình tính lại. |
+| TC-US03-005 | Delete | U1 có rating | Xóa rating | Rating U1 bị loại; tổng lượt giảm 1 và điểm trung bình tính lại. |
+| TC-US03-006 | Rounding | Average lần lượt 4.20, 4.21, 4.29 | Hiển thị UI/API public | Kết quả lần lượt 4.2, 4.3, 4.3. |
+| TC-US03-007 | Comment restriction | U1 bị khóa bình luận nhưng không khóa account | Đối chiếu aggregate | Rating U1 vẫn được tính. |
+| TC-US03-008 | Account lock | U1 bị khóa toàn bộ account | Đối chiếu aggregate | Rating U1 bị loại khỏi điểm/tổng công khai mà không xóa record. |
+| TC-US03-009 | Unlock | U1 được mở khóa | Recalculate | Rating cũ tự được tính lại nếu còn tồn tại. |
+| TC-US03-010 | Idempotency/error | Retry hoặc API lỗi | Gửi/đổi/xóa nhiều lần | Chỉ có một state hợp lệ; lỗi không làm sai tổng lượt. |
