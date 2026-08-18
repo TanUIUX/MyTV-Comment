@@ -5,101 +5,63 @@
 
 ### User Story
 
-**Là Admin vận hành**, tôi muốn hệ thống áp dụng trạng thái và phạm vi hiển thị phù hợp theo cấu hình của từng phim, để kiểm soát chính xác ai được xem bình luận ở từng giai đoạn kiểm duyệt.
-
-### Giá trị
-
-- Ngăn nội dung chưa được duyệt xuất hiện sai đối tượng.
-- Cho phép áp dụng cơ chế linh hoạt theo rủi ro từng phim.
-- Đảm bảo trải nghiệm nhất quán giữa ứng dụng và CMS.
+**Là Admin vận hành**, tôi muốn hệ thống áp dụng trạng thái và phạm vi hiển thị theo cấu hình từng phim/tập, để kiểm soát chính xác ai được xem nội dung ở từng giai đoạn moderation.
 
 ### Ưu tiên
 
 **Must**
 
-### Các trạng thái nghiệp vụ tối thiểu
+### Trạng thái nghiệp vụ
 
-| Trạng thái | Hiển thị với tác giả | Hiển thị với cộng đồng | Ý nghĩa |
+| Trạng thái | Tác giả | Cộng đồng | Ý nghĩa |
 |---|---:|---:|---|
-| Chờ duyệt | Có | Không | Đang chờ AI/Admin quyết định |
-| Hiển thị | Có | Có | Được phép công khai |
-| Từ chối | Có theo chính sách UX | Không | Không được duyệt |
-| Ẩn | Có/Không theo chính sách UX | Không | Admin tạm ẩn khỏi cộng đồng |
-| Xóa mềm | Không | Không | Đã xóa, giữ dữ liệu phục vụ audit |
+| Chờ duyệt | Có | Không | Chờ Admin quyết định |
+| Hiển thị | Có | Có | Public |
+| Từ chối | Có + lý do | Không | Không được duyệt |
+| Ẩn | Có + lý do | Không | Admin ẩn khỏi cộng đồng |
+| Xóa mềm | Không trong public UI | Không | Giữ dữ liệu theo retention |
 
 ### Acceptance Criteria
 
-1. Bình luận mới ở trạng thái Chờ duyệt chỉ hiển thị với tác giả.
-2. Người khác không nhận được bình luận Chờ duyệt qua giao diện, API công khai, thông báo hoặc số đếm công khai.
-3. Khi người dùng sửa bình luận đang Hiển thị, phiên bản công khai cũ tiếp tục hiển thị trong lúc phiên bản mới Chờ duyệt.
-4. Khi phiên bản mới được duyệt, hệ thống chuyển phiên bản đó thành nội dung công khai hiện hành.
-5. Khi phiên bản mới bị từ chối, phiên bản công khai cũ không bị ảnh hưởng.
-6. Mỗi phim có thể được cấu hình ở một trong ba mức: Chế độ 1, Chế độ 2 hoặc Đóng bình luận.
-7. Khi phim chuyển sang Đóng bình luận, **toàn bộ khu vực Bình luận bị ẩn khỏi người xem**, bao gồm danh sách bình luận, ô nhập/tương tác và phần điểm đánh giá cộng đồng nếu rating nằm trong khu vực Bình luận.
-8. Khi Đóng bình luận, hệ thống không chấp nhận bình luận, reply, Like, Mention, Report hoặc đánh giá mới qua giao diện/API theo phạm vi cấu hình.
-9. Việc đóng bình luận không xóa dữ liệu lịch sử.
-10. Khi mở lại, dữ liệu công khai trước đó được hiển thị lại theo cấu hình và quyền hiện hành, trừ nội dung đã bị xử lý.
-11. Admin có thể cấu hình thời điểm hoặc khoảng thời gian chuyển sang trạng thái “Chờ duyệt — chỉ tác giả thấy” nếu nghiệp vụ yêu cầu sau X giờ.
-12. Thay đổi cấu hình chỉ áp dụng từ thời điểm hiệu lực; cách xử lý bình luận đang trong luồng phải được xác định nhất quán.
-13. Tất cả chuyển đổi trạng thái và thay đổi cấu hình được lưu audit.
+1. Chờ duyệt chỉ hiển thị với tác giả; không xuất hiện ở public API/count/notification cho người khác.
+2. Bản sửa Chờ duyệt không ghi đè version public cũ; nếu bị Từ chối/chặn, version cũ vẫn Hiển thị.
+3. Phim/tập có ba trạng thái vận hành: Chế độ 1, Chế độ 2, Đóng bình luận.
+4. Khi Đóng, **toàn bộ khu vực Bình luận bị ẩn**, gồm danh sách, ô tương tác và rating nằm trong khu vực; UI/API chặn comment, reply, Like, Mention, Report, Rating mới.
+5. Đóng bình luận không xóa dữ liệu lịch sử.
+6. Khi mở lại, dữ liệu đủ điều kiện được hiển thị lại; nội dung đã Từ chối/Ẩn/Xóa vẫn không public.
+7. Khi chuyển **Chế độ 2 → Chế độ 1**, comment đang Chờ duyệt mà **đã có AI result an toàn/Nhẹ trước đó** tự chuyển Hiển thị; các case Trung bình/không đủ điều kiện tiếp tục Chờ duyệt.
+8. Khi chuyển **Chế độ 1 → Chế độ 2**, nội dung đã Hiển thị trước effective time vẫn giữ Hiển thị; Chế độ 2 áp dụng cho nội dung mới/version mới từ effective time.
+9. Khi chuyển sang **Đóng** trong lúc còn queue, queue được giữ và Admin vẫn xử lý trên CMS; item được Duyệt trong lúc Đóng không public cho tới khi mở lại.
+10. Rule “sau X giờ” hỗ trợ ba loại mốc và **Admin chọn loại mốc khi cấu hình**: giờ phát hành MyTV, giờ phát sóng thực tế, hoặc mốc Admin nhập thủ công.
+11. Thay đổi mode/schedule chỉ áp dụng từ effective time và có timezone nhất quán.
+12. Khi comment bị **Từ chối / Ẩn / Xóa**, tác giả thấy lý do cụ thể trong app và nhận notification nghiệp vụ bắt buộc.
+13. Mọi transition/configuration được lưu audit.
 
 ### Quy tắc nghiệp vụ
 
-- Chế độ mặc định: AI tiền kiểm, nội dung an toàn hiển thị ngay, Admin hậu kiểm.
-- Chế độ đặc biệt: AI kiểm tra, Admin duyệt trước khi công khai.
-- Mức 3: đóng hoàn toàn khu vực bình luận.
-- Khi Đóng, không hiển thị riêng rating như một thành phần tách rời nếu rating thuộc khu vực Bình luận.
-- Không xóa dữ liệu chỉ vì chuyển chế độ hoặc đóng bình luận.
-
-### Phụ thuộc
-
-- US11 — AI kiểm duyệt theo hai chế độ.
-- US15 — Cấu hình theo phim trên CMS.
-- US16 — Audit log.
+- Mode1: Nhẹ Hiển thị, Trung bình queue, Nặng chặn theo US11.
+- Mode2: Nhẹ/Trung bình queue, Nặng chặn.
+- Đóng là lớp visibility/interaction gate; không hủy moderation data.
+- Notification reason cho Từ chối/Ẩn/Xóa không bị tắt bởi switch thông báo cộng đồng US09.
 
 ### Điểm cần PO chốt
 
-- Xử lý nội dung đang Chờ duyệt khi chuyển từ Chế độ 2 sang Chế độ 1.
-- Ý nghĩa chính xác của cấu hình “sau X giờ”: tính từ giờ phát hành, giờ phát sóng hay một mốc Admin chọn.
-- Có hiển thị lý do từ chối/ẩn cho tác giả hay không.
+- Không còn blocker PO về state transition/schedule trong scope hiện tại.
 
 ---
-
-## Phân tích kiểm thử
-
-### Mục tiêu
-
-Kiểm tra ma trận hiển thị theo trạng thái, version công khai/chờ duyệt, cấu hình Mở/Chế độ 1/Chế độ 2/Đóng và hiệu lực chuyển trạng thái.
-
-### Rủi ro chính
-
-- Nội dung Chờ duyệt lọt qua API, count, notification hoặc deep link.
-- Bản sửa chờ duyệt ghi đè bản cũ.
-- Đóng bình luận chỉ khóa UI nhưng vẫn nhận request trực tiếp; mở lại làm mất lịch sử.
-- Rating còn hiển thị riêng khi PO đã chốt ẩn toàn bộ khu vực Bình luận.
-
-### Dữ liệu kiểm thử
-
-Comment công khai C1, bản sửa V2 Chờ duyệt, nội dung Từ chối/Ẩn/Xóa mềm; phim ở Chế độ 1, Chế độ 2, Đóng; cấu hình có mốc X giờ.
 
 ## Test Cases
 
 | ID | Loại | Tiền điều kiện / dữ liệu | Bước kiểm thử | Kết quả mong đợi |
 |---|---|---|---|---|
-| TC-US12-001 | Visibility | Comment mới Chờ duyệt; tác giả U1, người xem U2 | U1 và U2 mở UI/API công khai | U1 thấy comment + trạng thái; U2 không thấy qua UI/API/count/notification. |
-| TC-US12-002 | Versioning | C1 đang Hiển thị; V2 Chờ duyệt | U2 mở trong lúc chờ, sau đó Admin duyệt V2 | Trước duyệt U2 thấy C1; sau duyệt V2 là bản công khai hiện hành. |
-| TC-US12-003 | Rejection | C1 công khai; V2 bị từ chối | Admin từ chối V2 rồi mở lại C1 | C1 không bị ảnh hưởng; V2 không hiển thị cộng đồng theo UX chính sách. |
-| TC-US12-004 | Mode config | Phim cấu hình Chế độ 1 | Gửi nội dung an toàn/nghi ngờ | An toàn Hiển thị; nghi ngờ Chờ duyệt đúng US11. |
-| TC-US12-005 | Mode config | Phim cấu hình Chế độ 2 | Gửi nội dung an toàn về kỹ thuật | Nội dung vẫn Chờ duyệt cho tới khi Admin duyệt. |
-| TC-US12-006 | Closed state/UI | Phim chuyển Đóng | Mở trang chi tiết/app và kiểm tra cả comment + rating | Toàn bộ khu vực Bình luận bị ẩn, bao gồm rating trong khu vực; không trả dữ liệu công khai ngoài chính sách. |
-| TC-US12-007 | Closed state/API | Phim Đóng | Gửi comment, reply, Like, Mention, Report, Rating qua UI và API | Tất cả thao tác mới bị chặn; không tạo record hoặc event bất hợp lệ. |
-| TC-US12-008 | Reopen/history | Phim Đóng có dữ liệu cũ | Mở lại phim | Dữ liệu công khai đủ điều kiện hiển thị lại; nội dung đã xử lý vẫn bị loại; lịch sử không bị xóa. |
-| TC-US12-009 | Schedule | Có cấu hình “sau X giờ” | Kiểm tra trước, đúng và sau thời điểm hiệu lực | Chuyển state đúng mốc, chỉ áp dụng từ thời điểm hiệu lực và có timezone nhất quán. |
-| TC-US12-010 | In-flight | Có comment đang AI/Admin xử lý khi đổi chế độ | Đổi Chế độ 1↔2/Đóng và hoàn tất xử lý | Request đang xử lý theo quy tắc đã chốt; không tạo state trung gian mâu thuẫn. |
-| TC-US12-011 | Audit | Admin thay đổi state/cấu hình | Tra cứu audit | Ghi actor, thời gian, trước/sau, lý do và cấu hình áp dụng. |
-| TC-US12-012 | Authorization | Admin/user khác quyền | Gọi API đổi cấu hình hoặc state | Chỉ vai trò được cấp quyền thực hiện; request trái quyền bị từ chối. |
-
-### Điểm cần PO chốt
-
-- Cách xử lý queue đang Chờ duyệt khi đổi chế độ và mốc tính “sau X giờ”.
-- Có hiển thị lý do từ chối/ẩn cho tác giả hay không.
+| TC-US12-001 | Visibility | C1 Chờ duyệt | U1/U2 mở UI/API | U1 thấy status; U2 không thấy UI/API/count/notification. |
+| TC-US12-002 | Versioning | C1 public, V2 pending | U2 mở trước/sau duyệt V2 | Trước duyệt thấy C1; sau duyệt thấy V2. |
+| TC-US12-003 | Mode2→1 safe | Pending có AI Nhẹ/an toàn | Chuyển Mode2 → Mode1 | Item tự Hiển thị từ effective time, không cần Admin duyệt lại. |
+| TC-US12-004 | Mode2→1 medium | Pending có AI Trung bình | Chuyển Mode2 → Mode1 | Item tiếp tục Chờ duyệt. |
+| TC-US12-005 | Mode1→2 | Có C1 đã public | Chuyển Mode1 → Mode2 | C1 vẫn public; nội dung mới sau effective time vào queue. |
+| TC-US12-006 | Close UI/API | Phim/tập Đóng | Mở UI và gọi interaction APIs | Toàn bộ comment area/rating ẩn; interaction mới bị chặn. |
+| TC-US12-007 | Close with queue | Có pending item | Đóng rồi Admin duyệt item | Queue vẫn xử lý; item đã duyệt không public trong lúc Đóng. |
+| TC-US12-008 | Reopen | Đang Đóng có data cũ/item đã duyệt | Mở lại | Data đủ điều kiện public lại; state xử lý riêng vẫn được tôn trọng. |
+| TC-US12-009 | X-hours | Cấu hình lần lượt 3 loại mốc | Kiểm tra trước/đúng/sau mốc | Transition đúng loại mốc Admin chọn và timezone. |
+| TC-US12-010 | Reason notification | Admin Từ chối/Ẩn/Xóa C1 | U1 mở app/notification | U1 thấy lý do cụ thể và nhận notification bắt buộc. |
+| TC-US12-011 | Audit | Đổi mode/schedule/state | Tra audit | Có actor/time/before-after/effective config. |
