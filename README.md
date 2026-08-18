@@ -46,16 +46,15 @@ Mỗi Epic có một thư mục riêng. README trong thư mục Epic chứa thô
 
 Mỗi file User Story có thêm phần **Phân tích kiểm thử** và **Test Cases**, bao gồm testcase chức năng, biên, lỗi, phân quyền, tích hợp và toàn vẹn dữ liệu khi phù hợp.
 
-| Epic | User Story | Số testcase |
+| Epic | User Story | Số testcase baseline |
 |---|---:|---:|
-| EP01 — Trải nghiệm bình luận và đánh giá | US01–US06 | 56 |
-| EP02 — Tương tác cộng đồng | US07–US09 | 30 |
-| EP03 — An toàn và kiểm duyệt | US10–US12 | 34 |
-| EP04 — CMS quản trị bình luận | US13–US16 | 49 |
-| EP05 — Tăng trưởng và phân tích | US17–US20 | 47 |
-| **Tổng** | **US01–US20** | **216** |
+| EP01 — Trải nghiệm bình luận và đánh giá | US01–US06 | 56+ |
+| EP02 — Tương tác cộng đồng | US07–US09 | 30+ |
+| EP03 — An toàn và kiểm duyệt | US10–US12 | 34+ |
+| EP04 — CMS quản trị bình luận | US13–US16 | 49+ |
+| EP05 — Tăng trưởng và phân tích | US17–US20 | 47+ |
 
-Các testcase hiện là baseline để QA/PO refinement; những expected result phụ thuộc quyết định chưa chốt được đánh dấu ngay trong file User Story tương ứng.
+Số testcase có thể tăng trong quá trình refinement khi PO chốt thêm boundary rule. Các expected result phụ thuộc quyết định chưa chốt được đánh dấu ngay trong file User Story tương ứng.
 
 ## 4. Danh sách 20 User Story
 
@@ -84,17 +83,22 @@ Các testcase hiện là baseline để QA/PO refinement; những expected resul
 
 ## 5. Các quyết định nghiệp vụ đã áp dụng
 
-1. Mọi người có thể đọc bình luận; chỉ người dùng đã đăng nhập mới được tương tác.
+1. Mọi người có thể đọc bình luận; chỉ người dùng đã đăng nhập mới được tương tác. Phiên khách không tạo comment/Like/Reply/Mention/Report/Rating/Share.
 2. Điểm đánh giá tồn tại ở cả cấp series và từng tập.
 3. Chế độ sắp xếp mặc định là Nổi bật.
 4. Reply chỉ sâu một cấp.
 5. Người dùng được sửa bình luận bất kỳ lúc nào.
 6. Trong khi phiên bản sửa đang chờ kiểm duyệt, người khác tiếp tục thấy phiên bản cũ đã được duyệt.
-7. Xóa bình luận gốc sẽ xóa toàn bộ thread.
+7. Xóa bình luận gốc sẽ xóa toàn bộ thread khỏi trải nghiệm công khai.
 8. Dữ liệu xóa mềm được giữ 90 ngày để audit.
 9. Khi bình luận nhận nhiều Report, bình luận vẫn hiển thị và chờ CMS xử lý; không tự động ẩn chỉ vì số lượng Report.
 10. Reply và mention tạo cả push notification và thông báo trong ứng dụng.
-11. Khi đóng bình luận cho một phim, toàn bộ khu vực bình luận được ẩn khỏi người xem.
+11. Khi đóng bình luận cho một phim, toàn bộ khu vực Bình luận được ẩn khỏi người xem; rating nằm trong khu vực này cũng không hiển thị riêng.
+12. Giới hạn nội dung bình luận là tối đa 500 ký tự và phải được enforce nhất quán ở UI/API.
+13. Clip lấy từ phim trong bình luận có thời lượng tối đa 5 giây; không cho upload media cá nhân.
+14. Trong CMS, hành động Duyệt không bắt buộc nhập lý do; các hành động Từ chối/Ẩn/Xóa và xử lý hạn chế nội dung phải có lý do để audit.
+15. CMS hỗ trợ thao tác hàng loạt cho hành động phù hợp, tối đa 100 bình luận/reply trong một lần xử lý.
+16. Nội dung chia sẻ ra ngoài không sao chép nguyên văn comment; dùng CTA của MyTV (ví dụ “Đăng nhập MyTV để xem”) kèm deep link quay về đúng phim/tập/thread khi có thể.
 
 ## 6. Quy ước ưu tiên
 
@@ -104,15 +108,17 @@ Các testcase hiện là baseline để QA/PO refinement; những expected resul
 
 ## 7. Các điểm PO cần chốt trước khi đưa story vào sprint
 
-- Giới hạn ký tự của bình luận/reply và quy tắc xử lý URL.
+- Quy tắc URL, emoji-only và rate limit cho bình luận/reply.
 - Kích thước trang, cơ chế “Tải thêm” và số reply hiển thị ban đầu.
 - Công thức xếp hạng Nổi bật sau các bình luận được Admin ghim.
 - Ngưỡng rủi ro AI và hành động tương ứng: che từ, chặn hay chuyển hàng chờ.
 - Quy tắc nickname: duy nhất hay không, tần suất đổi và kiểm duyệt nickname.
-- Giới hạn tần suất đăng, Like, Reply, Mention và Report để chống spam.
 - Phạm vi khóa tài khoản: chỉ khóa quyền bình luận hay khóa toàn bộ tài khoản MyTV.
 - Quyền sử dụng frame/video khi nội dung hết hạn bản quyền hoặc thay đổi nguồn phát.
 - SLA xử lý hàng chờ kiểm duyệt và quy trình khi người dùng khiếu nại.
+- Danh mục lý do chuẩn cho từng hành động CMS bắt buộc nhập lý do.
+- Cách xử lý bình luận đang trong queue khi đổi chế độ kiểm duyệt và ý nghĩa mốc “sau X giờ”.
+- CTA/preview chính thức, danh sách kênh MVP và chính sách deep link khi người nhận chưa cài app.
 
 ## 8. Nguyên tắc refinement
 
