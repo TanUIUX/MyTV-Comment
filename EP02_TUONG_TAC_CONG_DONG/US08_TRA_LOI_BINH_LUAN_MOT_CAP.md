@@ -3,95 +3,55 @@
 > Thuộc EP02 — Tương tác cộng đồng
 > [← Quay lại README của Epic](README.md) · [← Backlog MyTV](../README.md)
 
-
 ### User Story
 
 **Là người dùng đã đăng nhập**, tôi muốn trả lời trực tiếp một bình luận, để tham gia cuộc trò chuyện mà vẫn giữ cấu trúc hội thoại dễ theo dõi.
-
-### Giá trị
-
-- Tạo thảo luận hai chiều giữa người xem.
-- Giúp nội dung trao đổi gắn đúng với bình luận gốc.
-- Hạn chế độ phức tạp giao diện bằng mô hình reply một cấp.
 
 ### Ưu tiên
 
 **Must**
 
-### Điều kiện tiên quyết
-
-- Người dùng đã đăng nhập và còn quyền bình luận.
-- Bình luận gốc đang hiển thị và cho phép reply.
-- Phim đang mở bình luận.
-
 ### Acceptance Criteria
 
-1. Người dùng có thể chọn Trả lời trên một bình luận gốc.
-2. Reply được liên kết với đúng bình luận gốc, series/tập và nội dung hiện tại.
-3. Hệ thống chỉ hỗ trợ một cấp reply bên dưới bình luận gốc.
-4. Khi người dùng chọn trả lời một reply, nội dung mới vẫn được lưu ở cấp một dưới bình luận gốc; giao diện có thể tự động mention người được trả lời để giữ ngữ cảnh.
-5. Reply hỗ trợ văn bản, emoji và đánh dấu Spoiler theo quy tắc của bình luận.
-6. Reply đi qua cùng cơ chế kiểm duyệt với bình luận gốc.
-7. Reply công khai mới làm tăng tổng số bình luận của phạm vi hiện tại.
-8. Khi số reply vượt giới hạn hiển thị ban đầu, người xem có thể chọn “Xem thêm phản hồi”.
-9. Tác giả có thể sửa hoặc xóa reply của mình theo quy tắc tại US05.
-10. Nếu bình luận gốc bị xóa, toàn bộ reply trong thread không còn hiển thị.
-11. Nếu bình luận gốc bị ẩn hoặc khóa tương tác, hệ thống không cho phép tạo reply mới.
-12. Người chưa đăng nhập chọn Trả lời được chuyển sang luồng đăng nhập.
+1. User có thể Reply một comment gốc đang Hiển thị và cho phép tương tác.
+2. Reply luôn được lưu ở **một cấp** dưới root comment; khi trả lời một reply, dữ liệu mới vẫn thuộc root và UI có thể mention người được trả lời để giữ ngữ cảnh.
+3. Reply hỗ trợ text, emoji, Spoiler và timestamp theo cùng rule content của comment.
+4. Reply tối thiểu **1 ký tự hợp lệ hoặc 1 emoji**, tối đa **1000 ký tự**; emoji-only hợp lệ.
+5. URL trong reply chỉ hợp lệ với `mytv.com.vn` hoặc subdomain hợp lệ; áp dụng cùng hostname validation US04.
+6. Comment + reply dùng chung rate limit **5 nội dung/1 phút/user**.
+7. Reply đi qua cùng moderation theo US11.
+8. Reply công khai làm tăng tổng số bình luận; reply Chờ duyệt/Từ chối/Ẩn/Xóa không làm tăng số công khai.
+9. Mỗi root comment ban đầu hiển thị tối đa **3 reply**.
+10. Khi bấm “Xem thêm phản hồi”, mỗi lần tải **tối đa 10 reply**; nếu phần còn lại <10 thì tải toàn bộ phần còn lại.
+11. Xóa một reply riêng lẻ làm reply biến mất hoàn toàn khỏi UI, **không để placeholder**.
+12. Xóa root comment làm toàn bộ thread biến mất; Ẩn/khóa root comment ngăn tạo reply mới.
+13. Guest chọn Reply được chuyển sang login; không tạo dữ liệu trước xác thực.
 
 ### Quy tắc nghiệp vụ
 
-- Độ sâu tối đa là một cấp.
-- Reply được tính vào tổng số bình luận.
-- Reply không tham gia danh sách bình luận gốc khi sắp xếp.
-- Xóa bình luận gốc làm toàn bộ thread biến mất khỏi trải nghiệm người dùng.
-
-### Phụ thuộc
-
-- US04 — Đăng bình luận.
-- US05 — Sửa và xóa bình luận.
-- US09 — Mention và nhận thông báo.
-- EP03 — An toàn và kiểm duyệt.
+- Reply depth = 1.
+- Reply không tham gia danh sách root comment khi sort.
+- Pagination reply: initial 3, sau đó batch tối đa 10 cho tới hết.
+- Tất cả validation text/emoji/URL/rate limit đồng bộ với US04.
 
 ### Điểm cần PO chốt
 
-- Số reply hiển thị mặc định trước nút “Xem thêm”.
-- Cách hiển thị khi một reply riêng lẻ bị xóa giữa hội thoại.
+- Không còn blocker PO cho Reply trong scope hiện tại.
 
 ---
-
-## Phân tích kiểm thử
-
-### Mục tiêu
-
-Kiểm tra reply được gắn đúng thread/scope, luôn giới hạn một cấp, đi qua kiểm duyệt, cập nhật số lượng và xử lý đúng khi comment gốc bị ẩn/xóa.
-
-### Rủi ro chính
-
-- Tạo reply lồng sâu hơn một cấp hoặc gắn sai comment gốc.
-- Reply Chờ duyệt làm tăng số công khai/hiển thị sai người.
-- Xóa/ẩn comment gốc nhưng vẫn cho reply mới hoặc vẫn lộ thread.
-
-### Dữ liệu kiểm thử
-
-C1 là comment gốc có R1/R2; U1/U2; series/tập khác nhau; phim Mở/Đóng; nội dung text, emoji, Spoiler và kết quả AI khác nhau.
 
 ## Test Cases
 
 | ID | Loại | Tiền điều kiện / dữ liệu | Bước kiểm thử | Kết quả mong đợi |
 |---|---|---|---|---|
-| TC-US08-001 | Functional | U1 đăng nhập; C1 công khai | Chọn Trả lời, nhập text và gửi | Reply được lưu dưới C1, đúng series/tập và xuất hiện theo trạng thái kiểm duyệt. |
-| TC-US08-002 | Scope | C1 ở E1; đang xem E2 | Thử tạo reply với context E2 hoặc sửa request | Hệ thống từ chối mismatch; reply không bị gắn sang scope khác. |
-| TC-US08-003 | Depth | C1 có R1 | Chọn Trả lời trên R1 và gửi | Reply mới vẫn là cấp một dưới C1; không tạo C1→R1→R2. |
-| TC-US08-004 | Context | Reply trên R1 | Kiểm tra UI sau khi gửi | Giao diện giữ ngữ cảnh người được trả lời/mention theo thiết kế nhưng cấu trúc dữ liệu vẫn một cấp. |
-| TC-US08-005 | Content/moderation | Reply text, emoji và Spoiler; Chế độ 1/2 | Gửi từng loại nội dung | Nội dung hợp lệ được xử lý theo cùng cơ chế comment gốc; Spoiler được che; Chờ duyệt không lộ cộng đồng. |
-| TC-US08-006 | Counter | C1 có tổng số hiện tại | Tạo reply công khai rồi refresh/tải thêm | Tổng số tăng đúng một; reply không xuất hiện như comment gốc trong danh sách sắp xếp. |
-| TC-US08-007 | Pagination | C1 có nhiều reply hơn giới hạn ban đầu | Chọn Xem thêm phản hồi nhiều lần | Reply không trùng/bỏ sót và vẫn thuộc đúng C1. |
-| TC-US08-008 | Delete cascade | C1 có R1/R2 | Xóa/ẩn C1 bằng user/Admin rồi mở thread | Khi xóa, toàn bộ thread không còn công khai; khi ẩn/khóa, không cho reply mới theo chính sách. |
-| TC-US08-009 | Ownership | U1 tạo R1; U2 mở R1 | U2 thử sửa/xóa; U1 thử sửa/xóa | U2 bị từ chối; U1 được chuyển theo quy tắc US05. |
-| TC-US08-010 | Authentication | Phiên khách | Chọn Trả lời trên C1 | Yêu cầu đăng nhập; không tạo reply trước xác thực. |
-
-### Điểm cần PO chốt
-
-- Số reply hiển thị trước “Xem thêm”.
-- Hiển thị placeholder khi một reply bị xóa giữa hội thoại.
+| TC-US08-001 | Functional | U1 login; C1 public | Reply C1 | Reply đúng root/scope và đi moderation. |
+| TC-US08-002 | Depth | C1 có R1 | Reply R1 | Reply mới vẫn là cấp 1 dưới C1, không tạo cây sâu. |
+| TC-US08-003 | Boundary | 999/1000/1001 ký tự | Gửi reply | 999/1000 hợp lệ; 1001 bị chặn. |
+| TC-US08-004 | Emoji/minimum | Emoji-only, whitespace, 1 ký tự | Gửi | Emoji-only/1 ký tự hợp lệ; whitespace bị chặn. |
+| TC-US08-005 | URL | MyTV domain/subdomain và domain giả | Gửi | Chỉ hostname MyTV hợp lệ được nhận. |
+| TC-US08-006 | Rate limit | U1 đã tạo tổng 5 comment/reply trong phút | Gửi thêm reply | Bị rate-limit, không tạo record thứ 6. |
+| TC-US08-007 | Initial display | C1 có >3 reply public | Mở C1 | Ban đầu hiển thị 3 reply. |
+| TC-US08-008 | Load more | C1 còn 24 reply sau initial | Bấm Xem thêm nhiều lần | Lần lượt tải tối đa 10/10/phần còn lại; không trùng/bỏ sót. |
+| TC-US08-009 | Delete reply | R1 bị user/Admin xóa | Refresh thread | R1 biến mất hoàn toàn, không placeholder; reply khác giữ nguyên. |
+| TC-US08-010 | Root lifecycle | C1 bị Xóa hoặc Ẩn/khóa | Mở thread/thử reply | Xóa: thread không public; Ẩn/khóa: không tạo reply mới. |
+| TC-US08-011 | Authentication | Guest | Chọn Reply | Yêu cầu login; không tạo reply trước auth. |
