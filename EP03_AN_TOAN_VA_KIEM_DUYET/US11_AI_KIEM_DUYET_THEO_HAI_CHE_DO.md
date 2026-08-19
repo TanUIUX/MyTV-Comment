@@ -79,9 +79,8 @@ Nickname KHÔNG dùng trạng thái Chờ duyệt; chỉ có **2 kết quả**, 
 - Nickname là identity toàn account nên dùng global policy riêng; không lấy episode/series mode làm đầu vào quyết định nickname; nickname KHÔNG có trạng thái Chờ duyệt (chỉ 2 kết quả: dùng ngay hoặc chặn ngay khi submit).
 - AI hỗ trợ quyết định; Admin có quyền override theo policy và feedback phải được lưu.
 - Fallback AI lỗi luôn fail-safe về queue, không fail-open.
-- Edit (version sửa) áp dụng rate limit riêng: tối đa **{5} lần sửa/phút/comment**.
+- Edit (version sửa) áp dụng rate limit riêng: tối đa **5 lần sửa/phút/comment hoặc reply**, tính độc lập theo từng target; request vượt ngưỡng bị chặn trước khi gọi AI/tạo queue item.
 
-> ⚠️ **CẦN PO XÁC NHẬN:** con số {5} lần sửa/phút/comment ở trên là đề xuất lấp khoảng trống — AC1 yêu cầu mọi version sửa đều qua AI nhưng README/US04 hiện chỉ giới hạn rate limit cho Comment/Reply gốc, không có giới hạn riêng cho Edit (một user có thể sửa liên tục cùng một comment hàng trăm lần/phút, tạo hàng trăm lần gọi AI và hàng trăm item vào queue mà không vi phạm rate limit nào hiện có). Đây không nằm trong 4 quyết định đã chốt, cần PO xác nhận ngưỡng cụ thể.
 
 ### Điểm cần PO chốt
 
@@ -105,4 +104,4 @@ Nickname KHÔNG dùng trạng thái Chờ duyệt; chỉ có **2 kết quả**, 
 | TC-US11-010 | Policy audit | Đổi content threshold/global nickname policy | Tra audit và request trước/sau effective time | Có actor/time/before-after; mỗi decision gắn đúng policy version. |
 | TC-US11-011 | Feedback | AI phân loại sai | Admin chọn “AI phân loại sai” và kết quả đúng | Lưu AI result + corrected result + actor/time để đo FP/FN. |
 | TC-US11-012 | Idempotency | Client/AI retry | Gửi request lặp | Một comment/version/nickname queue item duy nhất. |
-| TC-US11-013 | Edit rate limit | U1 có 1 comment C1 | Gửi liên tục nhiều version sửa C1 vượt ngưỡng {5} lần/phút | Các lần sửa vượt ngưỡng bị chặn; không gọi AI/tạo queue item tương ứng. ⚠️ Ngưỡng cụ thể chờ PO xác nhận. |
+| TC-US11-013 | Edit rate limit | U1 có C1/R1 | Gửi 5 version sửa trên cùng target trong 1 phút rồi gửi lần thứ 6 | 5 lần đầu đi qua pipeline moderation bình thường; lần thứ 6 trên cùng target bị chặn trước khi gọi AI/tạo queue item. C1 và R1 có quota độc lập. |

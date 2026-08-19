@@ -65,14 +65,14 @@ Admin bắt buộc chọn một reason chuẩn khi áp dụng cảnh báo/sancti
 3. Sanction tạm thời bắt buộc có thời hạn hợp lệ; Khóa tài khoản Permanent không yêu cầu expiry; mọi sanction cần confirmation trước khi áp dụng.
 4. UI/API đều enforce đúng phạm vi Khóa bình luận hoặc Khóa tài khoản.
 5. Với Khóa bình luận, user vẫn vào app; reason/trạng thái sanction được hiển thị và notification nghiệp vụ bắt buộc hoạt động theo US09.
-6. Với Khóa tài khoản, login phải dừng ở **locked-account screen** hiển thị trạng thái khóa, reason và hướng dẫn **gọi Support/CSKH để appeal**; có thể gửi push nếu device nhận được nhưng không phụ thuộc Notification Center trong app.
+6. Với Khóa tài khoản, login phải dừng ở **locked-account screen** hiển thị trạng thái khóa, reason và hướng dẫn **gọi Tổng đài MyTV 1800 1166 (miễn phí, hỗ trợ 24/7) để appeal**; có thể gửi push nếu device nhận được nhưng không phụ thuộc Notification Center trong app.
 7. Trong thời gian Account Lock, không tạo/gửi **community notification mới** cho Reply/Mention/badge/tương tác; sau unlock không backfill. Chỉ thông tin bắt buộc liên quan sanction/appeal tiếp tục theo US09.
 8. Không tự khóa user chỉ vì một/nhiều Report chưa được xác minh.
 
 ### Acceptance Criteria — Appeal
 
 1. **Khóa bình luận**: user còn vào app nên có thể gửi appeal trong app.
-2. **Khóa tài khoản**: user không thể appeal trong app; user **gọi MyTV Support/CSKH**, Support tiếp nhận và chuyển appeal vào workflow CMS.
+2. **Khóa tài khoản**: user không thể appeal trong app; user **gọi Tổng đài MyTV 1800 1166 (miễn phí, hỗ trợ 24/7)**, Support/CSKH tiếp nhận và chuyển appeal vào workflow CMS.
 3. CMS phải phân biệt/ghi nhận nguồn appeal phù hợp và cho Admin quyết định giữ nguyên hoặc gỡ chế tài; quyết định có audit.
 4. SLA xử lý appeal là **48 giờ** kể từ thời điểm appeal được hệ thống ghi nhận/tiếp nhận vào workflow.
 5. Quá 48 giờ, sanction vẫn giữ nguyên; appeal được đánh dấu **Quá SLA** và ưu tiên lên đầu queue.
@@ -104,7 +104,7 @@ Admin bắt buộc chọn một reason chuẩn khi áp dụng cảnh báo/sancti
 - Sanction chỉ áp dụng từ **effective time**, không hồi tố hủy Comment/Reply/Edit đã gửi hợp lệ trước đó.
 - Account Lock là **access + visibility gate**, không tự biến content thành moderation violation.
 - Permanent Account Lock giữ gate vô thời hạn; xóa content phải là moderation action riêng.
-- Appeal Account Lock đi qua Support/CSKH → CMS vì user không thể vào app; SLA 48h vẫn giữ.
+- Appeal Account Lock đi qua **Tổng đài MyTV 1800 1166 (miễn phí, hỗ trợ 24/7) → Support/CSKH → CMS** vì user không thể vào app; SLA 48h vẫn giữ.
 - Public KPI/Engagement và badge eligibility là hai semantic khác nhau; Account Lock có thể loại contribution khỏi public KPI nhưng không tự invalid contribution badge hợp lệ.
 - Appeal là cơ chế review sanction; không làm mất audit cũ.
 - IDOR ghi cross-scope (Moderator ngoài scope thao tác Cảnh báo/Khóa bình luận/Khóa tài khoản lên user không thuộc scope): xem test case IDOR ghi tại US13 (TC-US13-010), áp dụng tương tự cho các chế tài tại US16.
@@ -131,7 +131,7 @@ Admin bắt buộc chọn một reason chuẩn khi áp dụng cảnh báo/sancti
 | TC-US16-008 | Pending before comment lock | U1 gửi C1 hoặc V2 trước effective time, sau đó bị Khóa bình luận | Admin Duyệt trong thời gian khóa | C1/V2 được xử lý và public bình thường nếu không có gate khác; lock không hồi tố. |
 | TC-US16-009 | Account lock authorization | Vi phạm nghiêm trọng | Moderator có quyền khóa | Có thể khóa account không cần Super Admin/two-person approval. |
 | TC-US16-010 | Account lock duration | Chọn temp preset/custom/permanent | Áp dụng | Temporary bắt buộc duration hợp lệ; Permanent không cần expiry; state account đúng lựa chọn. |
-| TC-US16-011 | Access while locked | U1 đang Account Lock | Thử login/vào app | Không vào app; locked-account screen hiển thị status + reason + hướng dẫn gọi Support/CSKH. |
+| TC-US16-011 | Access while locked | U1 đang Account Lock | Thử login/vào app | Không vào app; locked-account screen hiển thị status + reason + Tổng đài MyTV **1800 1166**, thông tin **miễn phí, hỗ trợ 24/7** và hướng dẫn appeal. |
 | TC-US16-012 | Hide content on account lock | U1 có comment/reply public | Khóa account | Content U1 tạm non-public, không đổi sang moderation Hidden/Deleted. |
 | TC-US16-013 | Locked root cascade | U1 sở hữu root C1; U2/U3 có R1/R2 hợp lệ | Khóa U1 | C1 + toàn thread tạm non-public; R1/R2 giữ moderation state và không bị coi là vi phạm. |
 | TC-US16-014 | Restore on unlock | Có content/thread non-public chỉ do lock và item có moderation riêng | Mở khóa | Lock-only content/thread public lại nếu hợp lệ; item có moderation action/gate riêng vẫn không public. |
@@ -146,7 +146,7 @@ Admin bắt buộc chọn một reason chuẩn khi áp dụng cảnh báo/sancti
 | TC-US16-023 | Active day lock | U1 đã mở comment area trong ngày rồi bị lock | Chạy badge job | Active day đã ghi trước effective time vẫn giữ; sau lock không tạo active day mới. |
 | TC-US16-024 | Community notification suppression | U1 đang Account Lock; phát sinh Reply/Mention/badge event | Theo dõi trong lock và sau unlock | Community notification mới bị suppress và không backfill; sanction/appeal status vẫn là mandatory. |
 | TC-US16-025 | Comment-lock appeal | U1 bị Khóa bình luận | Gửi appeal trong app, Admin giữ/gỡ | Appeal vào CMS, có state, quyết định, audit. |
-| TC-US16-026 | Account-lock appeal | U1 bị Account Lock | Gọi Support/CSKH; Support tạo/chuyển appeal vào CMS | Không cần vào app; CMS nhận appeal đúng user/sanction/source và Admin xử lý. |
+| TC-US16-026 | Account-lock appeal | U1 bị Account Lock | Gọi **1800 1166**; Support/CSKH tạo/chuyển appeal vào CMS | Không cần vào app; hotline hiển thị là **1800 1166 (miễn phí, hỗ trợ 24/7)**; CMS nhận appeal đúng user/sanction/source và Admin xử lý. |
 | TC-US16-027 | Appeal SLA | Appeal >48h chưa xử lý | Mở queue | Gắn Quá SLA, ưu tiên lên đầu; sanction vẫn hiệu lực. |
 | TC-US16-028 | Audit retention | Có audit cũ | Kiểm tra retention | Audit giữ 2 năm độc lập soft-delete 90 ngày. |
 | TC-US16-029 | Audit immutability | Role vận hành thường | Thử sửa/xóa audit | Bị chặn. |
@@ -159,6 +159,5 @@ Admin bắt buộc chọn một reason chuẩn khi áp dụng cảnh báo/sancti
 
 | Trạng thái | Nội dung hiển thị |
 |---|---|
-| Locked-account screen | **Tài khoản của bạn đang bị khóa**<br>Lý do: {reason}. Thời hạn: đến {dd/mm/yyyy hh:mm} (hoặc: Khóa vô thời hạn). Nếu bạn cho rằng đây là nhầm lẫn, hãy gọi tổng đài MyTV {hotline} ({giờ trực}) và cung cấp mã vụ việc: {CASE-ID}. Chúng tôi phản hồi trong vòng 48 giờ kể từ khi tiếp nhận.<br>`[Gọi tổng đài]` `[Sao chép mã vụ việc]` |
+| Locked-account screen | **Tài khoản của bạn đang bị khóa**<br>Lý do: {reason}. Thời hạn: đến {dd/mm/yyyy hh:mm} (hoặc: Khóa vô thời hạn). **Liên hệ Tổng đài MyTV 1800 1166 (miễn phí, hỗ trợ 24/7) để gửi yêu cầu khiếu nại.** Khi liên hệ, cung cấp mã vụ việc: {CASE-ID}. Chúng tôi phản hồi trong vòng 48 giờ kể từ khi tiếp nhận.<br>`[Gọi 1800 1166]` `[Sao chép mã vụ việc]` |
 
-> ⚠️ **CẦN PO XÁC NHẬN:** Số hotline và giờ trực cụ thể của tổng đài MyTV Support/CSKH — chưa có trong tài liệu gốc, cần PO/CSKH cung cấp để điền vào microcopy locked-account screen.

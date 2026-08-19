@@ -91,7 +91,7 @@ Tài liệu chuyển yêu cầu tính năng Bình luận trên MyTV thành backl
 - URL chỉ cho `mytv.com.vn` và subdomain thực của domain này.
 - Rate limit chung Comment+Reply: **5 nội dung/1 phút/user**.
 - Nickname unique không phân biệt hoa/thường, 3–30 ký tự; cho chữ/số/khoảng trắng/`_`/`-`, không URL/phone/control char.
-- Nickname đổi có quota riêng theo Quy tắc nghiệp vụ US04/US11 (đề xuất: tối đa 1 lần/24 giờ). ⚠️ **CẦN PO XÁC NHẬN:** con số cụ thể — xem US04 mục Quy tắc nghiệp vụ.
+- Nickname đổi tối đa **1 lần thành công/24 giờ/account** theo US04; submission bị validation/AI chặn không tiêu quota.
 - **Nickname dùng global AI moderation policy riêng**, độc lập Mode1/Mode2 và threshold override theo series/episode, chỉ còn **2 kết quả**: Nhẹ/An toàn dùng ngay; Trung bình hoặc Nặng đều bị chặn ngay, không tạo hàng chờ duyệt.
 - Nickname bị chặn thì giữ nickname hợp lệ cũ; chưa có nickname hợp lệ thì giữ `0` đầu + 3 số cuối, mask toàn bộ số giữa bằng `*`.
 
@@ -105,7 +105,7 @@ Tài liệu chuyển yêu cầu tính năng Bình luận trên MyTV thành backl
 ### 5.5. Edit/Delete và timestamp
 
 - User sửa comment/reply bất kỳ lúc nào khi còn quyền sửa; bản cũ vẫn public khi bản mới pending.
-- **Khóa bình luận chặn Edit mới** nhưng user vẫn được **self-delete** content của mình.
+- **Khóa bình luận chặn Edit mới** nhưng user vẫn được **self-delete** content của mình. Mỗi comment/reply có **Edit rate limit riêng tối đa 5 lần sửa/phút/target**; vượt ngưỡng bị chặn trước khi tạo version/gọi AI.
 - Comment/Reply/Edit đã gửi hợp lệ trước effective time của Khóa bình luận vẫn được moderation bình thường; Duyệt trong thời gian khóa vẫn có thể public nếu không có gate khác.
 - Bản sửa được duyệt có nhãn **“Đã chỉnh sửa”**; user không xem version history, CMS/Audit xem được.
 - User tự xóa không cần reason; **Admin không được Undo để public lại self-delete**.
@@ -123,7 +123,7 @@ Tài liệu chuyển yêu cầu tính năng Bình luận trên MyTV thành backl
 - Một switch chung bật/tắt notification tương tác cộng đồng; in-app retention **90 ngày**.
 - Notification moderation/chế tài/appeal/kết quả Report là bắt buộc và không bị switch cộng đồng tắt.
 - Khi user đang **Account Lock**, không tạo/gửi community notification mới cho Reply/Mention/badge/tương tác; sau unlock **không backfill**.
-- Account Lock không cho user vào MyTV; login dừng ở màn hình khóa hiển thị **status + reason + hướng dẫn gọi Support/CSKH để appeal**. Có thể push nếu thiết bị nhận được; không phụ thuộc Notification Center trong app.
+- Account Lock không cho user vào MyTV; login dừng ở màn hình khóa hiển thị **status + reason + Tổng đài MyTV 1800 1166 (miễn phí, hỗ trợ 24/7) để appeal**. Có thể push nếu thiết bị nhận được; không phụ thuộc Notification Center trong app.
 
 ### 5.7. Report và reason taxonomy
 
@@ -177,7 +177,7 @@ Tài liệu chuyển yêu cầu tính năng Bình luận trên MyTV thành backl
 - Unlock tự public lại lock-only content/thread nếu từng item còn hợp lệ; **Permanent Account Lock giữ non-public vô thời hạn** và không tự soft-delete content.
 - Pending Comment/Reply/Edit gửi trước Account Lock vẫn được moderation; nếu Duyệt trong lock thì chưa public tới unlock.
 - Khóa bình luận: user có thể appeal trong app.
-- **Account Lock: appeal qua điện thoại Support/CSKH; Support chuyển appeal vào CMS**, vì user không vào được app.
+- **Account Lock: appeal qua Tổng đài MyTV 1800 1166 (miễn phí, hỗ trợ 24/7); Support/CSKH chuyển appeal vào CMS**, vì user không vào được app.
 - SLA appeal **48 giờ**; quá SLA giữ sanction, đánh dấu Quá SLA và ưu tiên queue.
 - Audit log retention **2 năm**, độc lập soft-delete 90 ngày.
 
@@ -185,13 +185,13 @@ Tài liệu chuyển yêu cầu tính năng Bình luận trên MyTV thành backl
 
 - **Active day**: user đã đăng nhập mở/đọc khu vực Bình luận **đang khả dụng** ít nhất 1 lần/ngày; tối đa 1 active day/account/ngày. Guest và scope Đóng không tạo active day.
 - Fan tích cực: rolling 30d, ≥7 active days + ≥10 comment/reply hợp lệ.
-- Fan trung thành: rolling 90d, ≥30 active days + ≥30 comment/reply hợp lệ + ≥30 Like nhận.
+- Fan kỳ cựu: rolling 90d, ≥30 active days + ≥30 comment/reply hợp lệ + ≥30 Like nhận.
 - Rolling window tiếp tục chạy trong Account Lock, không freeze; active day đã ghi trước lock giữ nguyên, sau lock không phát sinh active day mới.
 - Auto badge evaluation mỗi ngày; không đạt thì grace **7 ngày** trước khi thu hồi Fan badge.
-- UI hiển thị tối đa **1 badge**; ưu tiên **Admin/Chuyên gia > Bình luận nổi bật > Fan trung thành > Fan tích cực**.
+- UI hiển thị tối đa **1 badge**; ưu tiên **Admin/Chuyên gia > Bình luận nổi bật > Fan kỳ cựu > Fan tích cực**.
 - Account Lock **không tự invalid Fan contribution hợp lệ** của locked user hoặc reply user khác bị ẩn chỉ do locked root.
 - Like locked user đã nhận vẫn tính Fan badge nếu source chỉ non-public do Account Lock; chỉ loại nếu source bị moderation riêng/lifecycle Delete.
-- Like do một past liker sau đó Account Lock **vẫn tính cho Fan trung thành của recipient**, dù Like đó tạm bị loại public Net Like/ranking/Engagement.
+- Like do một past liker sau đó Account Lock **vẫn tính cho Fan kỳ cựu của recipient**, dù Like đó tạm bị loại public Net Like/ranking/Engagement.
 - Admin Ẩn/Xóa root không làm mất badge contribution của reply user khác nếu reply không bị moderation state riêng.
 - **Self-delete root là ngoại lệ:** toàn reply cascade soft-delete thật nên reply/Like gắn với reply bị loại khỏi badge eligibility.
 - Bình luận nổi bật grant mới: source public có **≥20 public Net Like + ≥5 Reply + Top10% Featured Score toàn MyTV trong 30 ngày** tại thời điểm xét.
@@ -258,8 +258,9 @@ Chi tiết đầy đủ tại US12.
 
 ## 6. Điểm PO còn lại sau vòng refinement
 
-- **Không còn blocker PO đang mở trong 20 User Story sau vòng review và đồng bộ quyết định đến Câu 165.**
+- **Không còn blocker PO đang mở trong 20 User Story sau vòng review và đồng bộ quyết định đến Câu 169.**
 - Các khác biệt có chủ đích đã được ghi rõ giữa **public KPI/visibility** và **badge eligibility**, cũng như giữa **Account Lock/Admin Hide visibility cascade** và **self-delete cascade soft-delete**.
+- Bốn mục mở từ gói rà soát đã chốt: nickname **1 lần/24h**, Edit **5 lần/phút/target**, Account Lock dùng **1800 1166 — miễn phí, 24/7**, và tên badge **Fan kỳ cựu**.
 
 Các nội dung tiếp theo nên là thiết kế UI, data dictionary, technical implementation hoặc policy vận hành chi tiết dựa trên các business rule đã khóa; chỉ mở lại quyết định PO nếu phát hiện hành vi sản phẩm mới hoặc mâu thuẫn mới trong refinement/implementation.
 

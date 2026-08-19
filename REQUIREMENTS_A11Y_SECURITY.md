@@ -23,7 +23,7 @@ Tài liệu này tổng hợp các yêu cầu **cross-cutting** (áp dụng xuy�
 | Rating 5 sao | US03 | Dùng pattern `radiogroup` (mỗi sao là một `radio`), điều hướng chọn giá trị bằng phím mũi tên trái/phải; mỗi sao có nhãn accessible riêng dạng **"{n} sao"**. |
 | Quay lại đúng comment sau login | US01 (AC6) | Sau khi login xong và điều hướng về đúng comment target, phải **chủ động set focus** vào phần tử comment đó (ví dụ bằng `tabindex="-1"` + `.focus()`), không chỉ scroll tới vị trí bằng mắt — nếu không, user dùng screen reader/bàn phím sẽ mất ngữ cảnh. |
 | "Xem thêm phản hồi" | US08 (AC10) | Sau khi tải thêm reply xong, giữ nguyên **focus tại nút "Xem thêm phản hồi"** (hoặc chuyển focus tới reply đầu tiên vừa tải, tuỳ thiết kế), đồng thời announce số lượng reply vừa tải qua vùng `aria-live` (ví dụ "Đã tải thêm 10 phản hồi"). |
-| Badge | US17 | Badge hiển thị bằng icon phải có **text alternative** là tên huy hiệu (`alt`/`aria-label`, ví dụ "Huy hiệu Fan trung thành"), không được truyền đạt chỉ bằng hình ảnh. |
+| Badge | US17 | Badge hiển thị bằng icon phải có **text alternative** là tên huy hiệu (`alt`/`aria-label`, ví dụ "Huy hiệu Fan kỳ cựu"), không được truyền đạt chỉ bằng hình ảnh. |
 | Chip trạng thái (Chờ duyệt/Từ chối/Khóa bình luận...) | Toàn bộ US có trạng thái hiển thị dạng chip trên CMS/app | Bắt buộc kết hợp **icon + text**, không được truyền đạt thông tin chỉ bằng màu sắc đơn thuần (theo WCAG 1.4.1 — Use of Color). |
 
 ## Phần B — Bảo mật

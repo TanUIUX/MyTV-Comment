@@ -26,6 +26,7 @@
 11. Nếu một version sửa đã được gửi hợp lệ **trước effective time của Khóa bình luận**, moderation queue vẫn xử lý bình thường trong thời gian user bị khóa; nếu được Duyệt thì version mới thay bản cũ và public. Khóa bình luận chỉ chặn edit mới từ effective time.
 12. Người khác không thể sửa/xóa nội dung không thuộc sở hữu của họ.
 13. Khi user self-delete root làm reply của user khác bị cascade soft-delete (mang cờ `hidden_by_root_cascade = true`), các reply đó được coi là **đã Xóa mềm** cho eligibility của badge/KPI; không giữ contribution badge chỉ vì tác giả reply không phải người xóa root.
+14. Mỗi comment/reply áp dụng **rate limit Edit riêng tối đa 5 lần sửa/phút/target**; lần sửa vượt ngưỡng bị chặn trước khi tạo version mới hoặc gọi AI moderation.
 
 ### Quy tắc nghiệp vụ
 
@@ -38,6 +39,7 @@
 - Reply cascade theo root **không có retention riêng**, chỉ mang cờ `hidden_by_root_cascade`; retention 90 ngày chỉ áp dụng cho root. Điều kiện Undo dựa trên **ROOT còn retention 90 ngày**, không phải "reply còn retention".
 - Undo root delete tại US14 chỉ đảo action **CMS/Admin soft-delete**, không áp dụng self-delete của user.
 - Pending edit gửi trước sanction không bị hồi tố hủy chỉ vì Khóa bình luận có hiệu lực sau đó.
+- Edit rate limit được tính riêng cho từng comment/reply: tối đa **5 edit/phút/target**; không dùng chung quota Comment+Reply của US04.
 
 ### Phụ thuộc
 
@@ -73,6 +75,7 @@
 | TC-US05-015 | Retention boundary | Root C1 bị CMS/Admin soft-delete lần lượt tại mốc D-89, D-90, D-91 kể từ ngày soft-delete; R1 cascade theo root | Admin thử Undo tại từng mốc; đối chiếu audit log | D-89/D-90: Undo hoạt động, root + R1 khôi phục đúng state trước cascade; D-91: Undo bị từ chối vì root đã hết 90 ngày retention. Ở cả 3 mốc, audit log vẫn giữ đủ record tối thiểu 2 năm, độc lập với retention 90 ngày của nội dung. |
 | TC-US05-016 | Concurrency edit versions | C1 có V2 đang Chờ duyệt | U1 gửi V3 trong khi V2 còn Chờ duyệt (trước khi Admin quyết định) | Hệ thống không cho 2 version pending tranh nhau; V2 bị vô hiệu hóa/thay thế bởi V3 làm version chờ duyệt hiện hành; không có 2 version cùng chờ song song. |
 | TC-US05-017 | Concurrency race edit vs approve | C1 có V2 Chờ duyệt | U1 gửi V3 đúng lúc Admin bấm Duyệt V2 | Chỉ đúng 1 version được public ở thời điểm cuối cùng và có nhãn “Đã chỉnh sửa”; không có 2 version cùng public hoặc xung đột dữ liệu; version history đầy đủ V1→V2→V3 (kể cả version bị vô hiệu hóa do race) vẫn được ghi nhận cho CMS/Audit. |
+| TC-US05-018 | Edit rate limit | U1 sở hữu C1 và R1 | Thực hiện 5 edit hợp lệ trên C1 trong 1 phút rồi gửi edit thứ 6; lặp lại độc lập trên R1 | 5 edit đầu có thể được nhận theo moderation; edit thứ 6 trên cùng target bị chặn trước khi tạo version/gọi AI. Quota của C1 và R1 độc lập. |
 
 ### Microcopy
 
