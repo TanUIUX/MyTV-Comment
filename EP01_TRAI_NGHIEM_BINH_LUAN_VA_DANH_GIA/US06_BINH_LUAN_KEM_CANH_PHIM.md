@@ -43,6 +43,8 @@
 - Không hỗ trợ frame/clip/watermark/DRM media trong scope hiện tại; các nhu cầu đó chuyển Future/Phase sau.
 - Deep link chia sẻ comment có timestamp không tự seek player; người nhận mở đúng comment rồi chủ động bấm timestamp theo US18.
 
+*Xem thêm: [REQUIREMENTS_A11Y_SECURITY.md](../REQUIREMENTS_A11Y_SECURITY.md) — timestamp phải là `<button>` thật, accessible name "Xem từ phút {m} giây {s}".*
+
 ### Điểm cần PO chốt
 
 - Không còn blocker PO cho timestamp MVP hiện tại.
@@ -62,3 +64,13 @@
 | TC-US06-007 | Fallback | Source/timestamp không còn khả dụng | Mở comment | Text/thread vẫn hiển thị; timestamp không gây crash và có trạng thái thay thế. |
 | TC-US06-008 | No media | Kiểm tra UI/API | Tìm chức năng frame/clip/upload | Không có chức năng tạo/share frame/clip hoặc upload media cá nhân trong MVP. |
 | TC-US06-009 | Live scope | Nội dung Live | Kiểm tra timestamp comment | Không cung cấp tính năng timestamp theo US06 trong scope hiện tại. |
+| TC-US06-010 | Spoiler + timestamp cùng lúc | Comment vừa bật Spoiler vừa có timestamp hợp lệ | Gửi và mở bằng U2 | Timestamp không làm thay đổi rule Spoiler/moderation của phần text; text vẫn bị che theo Spoiler cho tới khi U2 chủ động mở, timestamp vẫn hiển thị/hoạt động độc lập với trạng thái che. |
+| TC-US06-011 | Timestamp format sai | Chuỗi "abc", "99:99", "12:60" nhập làm timestamp | Gửi qua UI/API | Toàn bộ giá trị định dạng sai bị chặn, không được lưu thành timestamp hợp lệ. |
+
+### Microcopy
+
+| Trạng thái | Nội dung hiển thị |
+|---|---|
+| Mốc thời gian không còn khả dụng | **Mốc thời gian không còn khả dụng**<br>Nội dung tại mốc này hiện không thể phát.<br>(timestamp hiển thị dạng disable, không bấm được) |
+| Bấm timestamp khi chưa có player đang chạy (đã có quyền xem) | Hệ thống khởi tạo player và phát trực tiếp từ mốc `mm:ss` được gắn. |
+| Bấm timestamp khi chưa có quyền xem tập | **Xem tập phim để nhảy tới mốc {mm:ss}**<br>Bạn cần xem tập phim này để phát từ mốc được nhắc đến.<br>`[Xem ngay]` |

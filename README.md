@@ -19,6 +19,7 @@ Tài liệu chuyển yêu cầu tính năng Bình luận trên MyTV thành backl
 - Live/đang phát trực tiếp ngoài scope timestamp hiện tại.
 - **Không triển khai frame/clip trong MVP**; US06 dùng timestamp.
 - Mở rộng sang thể thao/thiếu nhi/giải trí ngoài scope 20 User Story hiện tại.
+- Yêu cầu Accessibility (WCAG 2.1 AA) và Bảo mật (XSS/IDOR/PII) áp dụng xuyên suốt toàn bộ 20 User Story được tổng hợp tại [REQUIREMENTS_A11Y_SECURITY.md](REQUIREMENTS_A11Y_SECURITY.md).
 
 ## 3. Danh sách Epic
 
@@ -48,7 +49,7 @@ Tài liệu chuyển yêu cầu tính năng Bình luận trên MyTV thành backl
 | US12 | Quản lý trạng thái và phạm vi hiển thị bình luận | EP03 | Must |
 | US13 | Tra cứu bình luận trên CMS | EP04 | Must |
 | US14 | Xử lý nội dung trên CMS | EP04 | Must |
-| US15 | Quản lý bình luận nổi bật và cấu hình theo phim | EP04 | Must |
+| US15 | Quản lý bình luận ghim và cấu hình theo phim | EP04 | Must |
 | US16 | Quản lý người dùng vi phạm và audit log | EP04 | Must |
 | US17 | Huy hiệu người dùng | EP05 | Could |
 | US18 | Chia sẻ bình luận | EP05 | Could |
@@ -90,9 +91,9 @@ Tài liệu chuyển yêu cầu tính năng Bình luận trên MyTV thành backl
 - URL chỉ cho `mytv.com.vn` và subdomain thực của domain này.
 - Rate limit chung Comment+Reply: **5 nội dung/1 phút/user**.
 - Nickname unique không phân biệt hoa/thường, 3–30 ký tự; cho chữ/số/khoảng trắng/`_`/`-`, không URL/phone/control char.
-- Nickname đổi không giới hạn số lần.
-- **Nickname dùng global AI moderation policy riêng**, độc lập Mode1/Mode2 và threshold override theo series/episode: Nhẹ/An toàn dùng ngay; Trung bình Chờ duyệt; Nặng chặn.
-- Nickname pending thì giữ nickname hợp lệ cũ; chưa có nickname hợp lệ thì giữ `0` đầu + 3 số cuối, mask toàn bộ số giữa bằng `*`.
+- Nickname đổi có quota riêng theo Quy tắc nghiệp vụ US04/US11 (đề xuất: tối đa 1 lần/24 giờ). ⚠️ **CẦN PO XÁC NHẬN:** con số cụ thể — xem US04 mục Quy tắc nghiệp vụ.
+- **Nickname dùng global AI moderation policy riêng**, độc lập Mode1/Mode2 và threshold override theo series/episode, chỉ còn **2 kết quả**: Nhẹ/An toàn dùng ngay; Trung bình hoặc Nặng đều bị chặn ngay, không tạo hàng chờ duyệt.
+- Nickname bị chặn thì giữ nickname hợp lệ cũ; chưa có nickname hợp lệ thì giữ `0` đầu + 3 số cuối, mask toàn bộ số giữa bằng `*`.
 
 ### 5.4. Rating
 
@@ -109,7 +110,7 @@ Tài liệu chuyển yêu cầu tính năng Bình luận trên MyTV thành backl
 - Bản sửa được duyệt có nhãn **“Đã chỉnh sửa”**; user không xem version history, CMS/Audit xem được.
 - User tự xóa không cần reason; **Admin không được Undo để public lại self-delete**.
 - User self-delete root → root + toàn bộ reply cascade soft-delete 90 ngày; contribution badge của các reply bị cascade cũng bị loại.
-- Undo Xóa tại CMS chỉ áp dụng **CMS/Admin soft-delete**: root + reply còn retention bị mất chỉ do cascade được khôi phục theo state riêng trước cascade.
+- Undo Xóa tại CMS chỉ áp dụng **CMS/Admin soft-delete**: root + toàn bộ reply bị ẩn do cascade được khôi phục theo state riêng trước cascade, với điều kiện **ROOT còn trong 90 ngày retention**.
 - MVP không có frame/clip. US06 chỉ gắn tối đa **1 timestamp/comment hoặc reply**; user lấy current time hoặc chỉnh tay.
 - Bấm timestamp → player seek tới mốc và tiếp tục phát; share deep link không tự seek.
 
@@ -216,7 +217,7 @@ Tài liệu chuyển yêu cầu tính năng Bình luận trên MyTV thành backl
 - Engagement Score: `Comment×2 + Reply×2 + Net Like×1 + Rating×1 + Share×2`.
 - `Rating` trong Engagement = **số rating hợp lệ hiện hành** trong scope/thời gian; mỗi account rating hợp lệ = +1 bất kể 1★ hay 5★.
 - `Share` trong Engagement = số **share sheet mở thành công** theo US18.
-- Public KPI/Engagement chỉ tính content/thread đang đủ điều kiện public.
+- Public KPI/Engagement Score **KHÔNG bị loại trừ chỉ vì scope Đóng bình luận** — Đóng là gate hiển thị vận hành (chống spoiler/thời điểm nhạy cảm), không phải chế tài nội dung; dữ liệu Like/Reply/Rating/Share/Comment phát sinh trước và trong lúc Đóng vẫn tính đầy đủ. Chỉ đúng 4 nguyên nhân sau mới loại KPI: (1) Ẩn/Từ chối/Xóa do moderation, (2) self-delete cascade, (3) Admin root moderation cascade, (4) Account Lock.
 - Account Lock tạm loại content user khỏi public KPI; nếu locked user là root author thì **toàn thread** tạm bị loại public KPI/Engagement; unlock tính lại item còn hợp lệ.
 - Like của account đang Account Lock tạm bị loại khỏi public Net Like/ranking/Engagement nhưng record vẫn giữ.
 - Admin Hide/Delete root làm toàn thread non-public nên public KPI của thread bị loại; badge eligibility user khác là semantics riêng tại US17.
@@ -230,6 +231,30 @@ Tài liệu chuyển yêu cầu tính năng Bình luận trên MyTV thành backl
 - Candidate bị loại vì mức nghiêm trọng khi **AI risk = Nặng** hoặc **CMS gắn Flag nghiêm trọng**; nhiều Report chưa xác minh không tự loại candidate chỉ vì Report count.
 - AI không tự ghim/đăng; Admin có thể chỉnh câu hỏi → duyệt → đăng, không cần reviewer thứ hai.
 - KPI AI: tỷ lệ accept / edit / discard; KPI thấp không tự disable feature.
+
+### 5.14. Effective Visibility Resolver — thứ tự ưu tiên gate hiển thị
+
+Khi một comment/thread rơi vào từ 2 gate ẩn trở lên cùng lúc, hệ thống chọn thông báo theo gate có **mức ưu tiên cao nhất** (số nhỏ hơn = ưu tiên cao hơn = "vĩnh viễn/nghiêm trọng hơn"). Nếu nhiều gate cùng đúng, dùng thông báo của gate có số ưu tiên nhỏ nhất.
+
+| Ưu tiên | Gate | Thông báo fallback |
+|---|---|---|
+| 1 | Self-delete cascade (user tự xóa root) | *(không hiển thị lại — vĩnh viễn theo lifecycle self-delete)* |
+| 2 | Moderation state riêng (Ẩn/Xóa mềm/Từ chối do CMS/Admin) | **"Bình luận không còn khả dụng"** |
+| 3 | Admin root moderation cascade | **"Bình luận không còn khả dụng"** |
+| 4 | Account Lock (tác giả/root author) | **"Bình luận hiện không khả dụng"** |
+| 5 | Scope Đóng bình luận | **"Khu vực bình luận hiện không khả dụng"** |
+
+Chi tiết đầy đủ tại US12.
+
+### 5.15. Glossary thuật ngữ chuẩn hóa
+
+| Thuật ngữ chuẩn | Dùng cho | KHÔNG dùng lẫn với |
+|---|---|---|
+| **Ghim (Pin)** | Comment được Admin ghim đầu danh sách (US15) | "Nổi bật" |
+| **Sắp xếp Nổi bật** (sort mode) | Chế độ sort mặc định dùng Featured Score (US02) | "Ghim" |
+| **Huy hiệu Bình luận nổi bật** (Featured badge) | Huy hiệu tự động cấp toàn MyTV (US17) | "Ghim", "Sắp xếp Nổi bật" |
+| **Ẩn** | CHỈ dùng cho moderation state chính thức (US12 bảng state) | Không dùng cho trạng thái tạm do Account Lock/scope Đóng |
+| **Non-public tạm thời** | Trạng thái tạm do Account Lock hoặc scope Đóng (không đổi moderation_state) | "Ẩn" |
 
 ## 6. Điểm PO còn lại sau vòng refinement
 

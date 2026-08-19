@@ -31,6 +31,8 @@
 - Việc khóa/mở khóa tài khoản ảnh hưởng khả năng tính rating nhưng không tự xóa bản ghi rating.
 - Rating nằm trong khu vực Bình luận và bị ẩn khi phim/tập Đóng bình luận theo US12.
 
+*Xem thêm: [REQUIREMENTS_A11Y_SECURITY.md](../REQUIREMENTS_A11Y_SECURITY.md) — rating 5 sao dùng `radiogroup`, điều hướng phím mũi tên, nhãn "{n} sao".*
+
 ### Điểm cần PO chốt
 
 - Không còn blocker PO cho rating trong scope hiện tại.
@@ -51,3 +53,9 @@
 | TC-US03-008 | Account lock | U1 bị khóa toàn bộ account | Đối chiếu aggregate | Rating U1 bị loại khỏi **cả average và total count công khai** mà không xóa record. |
 | TC-US03-009 | Unlock | U1 được mở khóa | Recalculate | Rating cũ tự được tính lại vào **cả average và total count** nếu còn tồn tại. |
 | TC-US03-010 | Idempotency/error | Retry hoặc API lỗi | Gửi/đổi/xóa nhiều lần | Chỉ có một state hợp lệ; lỗi không làm sai tổng lượt. |
+
+### Microcopy
+
+| Trạng thái | Nội dung hiển thị |
+|---|---|
+| Guest chạm sao đánh giá | **Đăng nhập để đánh giá tập phim**<br>Đăng nhập để chấm điểm và chia sẻ cảm nhận của bạn.<br>`[Đăng nhập]` |

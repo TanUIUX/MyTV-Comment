@@ -43,7 +43,7 @@
 5. Dashboard hiển thị Net Like và tổng thao tác Like/Unlike; Engagement chỉ dùng **Net Like công khai**.
 6. Trong Engagement, **mỗi rating hợp lệ hiện hành = 1 đơn vị Rating**, không nhân theo số sao; điểm sao/average là KPI chất lượng riêng.
 7. Trong Engagement, **mỗi lần OS share sheet mở thành công = 1 Share**; cancel/đóng sheet sau đó không hoàn tác event đã ghi; retry/lỗi kỹ thuật phải dedup.
-8. Khi comment/reply/thread trở thành non-public do **Ẩn/Từ chối/Xóa, self-delete cascade, Admin root moderation cascade hoặc Account Lock visibility**, score/KPI public được điều chỉnh ở pipeline/đối soát tiếp theo.
+8. Khi comment/reply/thread trở thành non-public do **Ẩn/Từ chối/Xóa, self-delete cascade, Admin root moderation cascade hoặc Account Lock visibility**, score/KPI public được điều chỉnh ở pipeline/đối soát tiếp theo. Danh sách nguyên nhân loại KPI ở trên **KHÔNG bao gồm scope Đóng bình luận**. Scope Đóng bình luận là gate hiển thị vận hành (chống spoiler/thời điểm nhạy cảm), KHÔNG phải chế tài nội dung — KPI/Engagement Score của dữ liệu đã phát sinh trước và trong thời gian Đóng được GIỮ NGUYÊN, không bị loại trừ chỉ vì scope đang Đóng. Khi scope mở lại, không cần tính lại KPI vì KPI chưa từng bị loại.
 9. Nếu **Account Lock** làm content của user tạm non-public, contribution public của content đó tạm bị loại; khi mở khóa, contribution được tính lại nếu source còn hợp lệ.
 10. Nếu user bị Account Lock là **root author**, toàn bộ thread tạm non-public nên Comment/Reply contribution của cả thread, kể cả reply hợp lệ của user khác, tạm bị loại khỏi public KPI/Engagement; reply user khác không bị đổi moderation state.
 11. Like do account đang Account Lock tạo vẫn giữ record nhưng tạm bị loại khỏi **Net Like công khai, Featured Score/ranking và Engagement**; mở khóa tính lại nếu record/target còn hợp lệ.
@@ -96,3 +96,13 @@
 | TC-US19-018 | Export | Có filter/time range | Export CSV/XLSX | File khớp dashboard/data dictionary và filter hiện tại. |
 | TC-US19-019 | Extended KPI | Có Report/AI/moderation data | Mở KPI | Có confirmed-report rate, hidden/deleted/rejected, AI auto-display rate, queue time. |
 | TC-US19-020 | Dedup | Event retry/duplicate, gồm Share retry do lỗi kỹ thuật | Nạp pipeline | Event không bị tính lặp ngoài định nghĩa; Engagement không tăng sai. |
+| TC-US19-021 | Closed scope giữ nguyên KPI | Phim/tập E1 đang có Engagement Score = X với dữ liệu Comment/Reply/Like/Rating/Share đã phát sinh | Admin Đóng bình luận E1; kiểm tra dashboard trong suốt thời gian Đóng; sau đó mở lại scope | Engagement Score/KPI của E1 KHÔNG tụt xuống 0 và KHÔNG bị loại trừ chỉ vì scope Đóng; dữ liệu lịch sử hiển thị nguyên vẹn trên dashboard trong suốt thời gian Đóng; khi mở lại, KPI không cần tính lại vì chưa từng bị loại. |
+| TC-US19-022 | Dashboard empty/error/stale state | (a) Filter phim/tập/khoảng thời gian không có dữ liệu; (b) pipeline aggregate lỗi hoặc quá 5 phút chưa cập nhật; (c) export bị lỗi giữa chừng | (a) Áp filter không có data; (b) giả lập pipeline lỗi/trễ; (c) chạy export rồi ngắt giữa chừng | (a) Hiển thị empty state rõ ràng, không hiện số 0 gây hiểu nhầm mất dữ liệu; (b) hiển thị error/stale state kèm thời điểm last-updated, không âm thầm hiển thị số liệu cũ như đang mới; (c) báo lỗi export rõ ràng, không sinh file rỗng hoặc file dở bị hiểu nhầm là kết quả hợp lệ. |
+
+### Microcopy
+
+| Trạng thái | Nội dung hiển thị |
+|---|---|
+| Empty state — filter không có dữ liệu | **Chưa có dữ liệu cho lựa chọn này**<br>Không có hoạt động nào khớp với phim/tập và khoảng thời gian đã chọn.<br>`[Đổi bộ lọc]` |
+| Error/stale state — pipeline lỗi hoặc quá 5 phút chưa cập nhật | **Dữ liệu có thể chưa mới nhất**<br>Hệ thống đang gặp sự cố cập nhật. Cập nhật gần nhất: {last-updated}.<br>`[Thử tải lại]` |
+| Error state — export lỗi giữa chừng | **Xuất báo cáo không thành công**<br>Đã có lỗi trong quá trình tạo file, vui lòng thử lại. File không hợp lệ sẽ không được tải xuống.<br>`[Thử lại]` |

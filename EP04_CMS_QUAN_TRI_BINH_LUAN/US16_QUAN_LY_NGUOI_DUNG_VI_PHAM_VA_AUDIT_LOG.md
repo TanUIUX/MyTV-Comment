@@ -17,6 +17,8 @@
 - **Trung bình** → Khóa bình luận tạm thời.
 - **Nặng** → Admin quyết định Khóa bình luận hoặc Khóa tài khoản tùy bối cảnh; Khóa tài khoản chỉ dùng khi xác định vi phạm chính sách nghiêm trọng.
 
+Cảnh báo phải có notification bắt buộc riêng (in-app bắt buộc + push tùy chọn), **không bị tắt bởi switch cộng đồng** — xem US09 AC9.
+
 ### Reason taxonomy cho chế tài
 
 Cảnh báo / Khóa bình luận / Khóa tài khoản dùng cùng taxonomy vi phạm chung của Report/AI/CMS:
@@ -105,6 +107,9 @@ Admin bắt buộc chọn một reason chuẩn khi áp dụng cảnh báo/sancti
 - Appeal Account Lock đi qua Support/CSKH → CMS vì user không thể vào app; SLA 48h vẫn giữ.
 - Public KPI/Engagement và badge eligibility là hai semantic khác nhau; Account Lock có thể loại contribution khỏi public KPI nhưng không tự invalid contribution badge hợp lệ.
 - Appeal là cơ chế review sanction; không làm mất audit cũ.
+- IDOR ghi cross-scope (Moderator ngoài scope thao tác Cảnh báo/Khóa bình luận/Khóa tài khoản lên user không thuộc scope): xem test case IDOR ghi tại US13 (TC-US13-010), áp dụng tương tự cho các chế tài tại US16.
+
+*Xem thêm: [REQUIREMENTS_A11Y_SECURITY.md](../REQUIREMENTS_A11Y_SECURITY.md) mục Bảo mật — session invalidation khi Account Lock, IDOR theo scope.*
 
 ### Điểm cần PO chốt
 
@@ -146,3 +151,14 @@ Admin bắt buộc chọn một reason chuẩn khi áp dụng cảnh báo/sancti
 | TC-US16-028 | Audit retention | Có audit cũ | Kiểm tra retention | Audit giữ 2 năm độc lập soft-delete 90 ngày. |
 | TC-US16-029 | Audit immutability | Role vận hành thường | Thử sửa/xóa audit | Bị chặn. |
 | TC-US16-030 | No auto-sanction | C1 chỉ có Report chưa xác minh | Tạo nhiều Report | Không tự cảnh báo/khóa chỉ từ Report count. |
+| TC-US16-031 | Session/Account Lock concurrency | U1 đang đăng nhập, mở màn hình comment, đã gõ nội dung chưa gửi | Admin áp Account Lock trong lúc U1 đang gõ: (a) U1 bấm Gửi sau effective time; (b) request gửi TRƯỚC effective time; (c) gọi API bằng access token cũ sau lock | (a) Session vô hiệu ngay tại effective time, U1 bị đẩy về locked-account screen, nội dung chưa gửi không được tạo; (b) request vào moderation nhưng không public tới khi unlock; (c) mọi API dùng access token cũ đều bị từ chối. |
+| TC-US16-032 | Boundary SLA appeal 48h | Appeal in-app (Khóa bình luận) và appeal qua Support/CSKH (Account Lock) tại mốc 47h/48h/49h | Mở queue tại từng mốc | 47h chưa gắn Quá SLA; >48h gắn Quá SLA và lên đầu queue; hành vi tại đúng 48h khớp định nghĩa biên; mốc bắt đầu đếm của appeal qua Support (thời điểm tiếp nhận, không phải thời điểm nhập CMS) được ghi nhận rõ ràng. |
+| TC-US16-033 | IDOR ghi cross-scope | Xem test case IDOR ghi tại US13 (TC-US13-010); áp dụng tương tự cho Cảnh báo/Khóa bình luận/Khóa tài khoản trên user ngoài scope Moderator | — | Bị từ chối theo scope; không lộ tồn tại; không tạo audit "thành công" (xem chi tiết tại US13). |
+
+### Microcopy
+
+| Trạng thái | Nội dung hiển thị |
+|---|---|
+| Locked-account screen | **Tài khoản của bạn đang bị khóa**<br>Lý do: {reason}. Thời hạn: đến {dd/mm/yyyy hh:mm} (hoặc: Khóa vô thời hạn). Nếu bạn cho rằng đây là nhầm lẫn, hãy gọi tổng đài MyTV {hotline} ({giờ trực}) và cung cấp mã vụ việc: {CASE-ID}. Chúng tôi phản hồi trong vòng 48 giờ kể từ khi tiếp nhận.<br>`[Gọi tổng đài]` `[Sao chép mã vụ việc]` |
+
+> ⚠️ **CẦN PO XÁC NHẬN:** Số hotline và giờ trực cụ thể của tổng đài MyTV Support/CSKH — chưa có trong tài liệu gốc, cần PO/CSKH cung cấp để điền vào microcopy locked-account screen.

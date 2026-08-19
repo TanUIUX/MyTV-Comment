@@ -37,6 +37,8 @@
 - **Public Net Like** loại Like của account đang Account Lock; đây là rule cho public aggregate/ranking/Engagement, không phải xóa Like record.
 - Badge eligibility của recipient là một data semantic riêng theo US17 và cố ý không dao động theo trạng thái khóa của liker.
 
+*Xem thêm: [REQUIREMENTS_A11Y_SECURITY.md](../REQUIREMENTS_A11Y_SECURITY.md) mục A.2 — nút Like dùng `aria-pressed`, vùng `aria-live` cho số Like, announce khi reconcile revert.*
+
 ### Điểm cần PO chốt
 
 - Không còn blocker PO cho Like/Unlike trong scope hiện tại.
@@ -60,3 +62,10 @@
 | TC-US07-011 | Integration | Net Like thay đổi | Mở sort Được yêu thích/Nổi bật | Ranking dùng Net Like công khai hiện hành sau reconcile. |
 | TC-US07-012 | Account Lock aggregate | U1 đã Like C1, sau đó U1 bị Account Lock | Kiểm tra Like record, Net Like/ranking/Engagement rồi mở khóa | Record vẫn tồn tại; khi khóa Like U1 bị loại public aggregate; mở khóa được tính lại nếu hợp lệ. |
 | TC-US07-013 | Badge exception | U1 đã Like content của U2 rồi U1 bị Account Lock | Chạy badge job của U2 | Like vẫn được tính vào Fan trung thành eligibility của U2 theo US17 dù tạm không nằm trong public Net Like. |
+| TC-US07-014 | Mất mạng hoàn toàn trước flush | U1 thao tác Like/Unlike tạo batch chưa gửi | (a) Mất mạng ngay trước khi batch kịp gửi, đợi có mạng lại; (b) force-kill app trước khi batch gửi, mở lại app; (c) kiểm tra Net Like công khai/Featured Score ở cả 2 nhánh | (a) Client tự retry/flush batch khi có mạng lại; BE nhận đúng state cuối cùng đúng một lần, không nhân đôi Like/Unlike; (b) Sau khi mở lại app, UI reconcile lại đúng theo state hiện hành trên BE (không giữ optimistic state đã mất); (c) Net Like công khai và Featured Score khớp với BE ở mọi nhánh, không bị lệch tạm thời hay vĩnh viễn. |
+
+### Microcopy
+
+| Trạng thái | Nội dung hiển thị |
+|---|---|
+| Reconcile thất bại/mismatch với BE | **Chưa lưu được lượt thích.**<br>Vui lòng thử lại.<br>`[Thử lại]` |

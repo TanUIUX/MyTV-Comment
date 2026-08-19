@@ -1,11 +1,11 @@
-# US15 — Quản lý bình luận nổi bật và cấu hình theo phim
+# US15 — Quản lý bình luận ghim và cấu hình theo phim
 
 > Thuộc EP04 — CMS quản trị bình luận
 > [← Quay lại README của Epic](README.md) · [← Backlog MyTV](../README.md)
 
 ### User Story
 
-**Là Admin vận hành nội dung**, tôi muốn ghim bình luận nổi bật và cấu hình moderation theo series/tập, để định hướng thảo luận và áp dụng mức kiểm soát phù hợp.
+**Là Admin vận hành nội dung**, tôi muốn ghim bình luận và cấu hình moderation theo series/tập, để định hướng thảo luận và áp dụng mức kiểm soát phù hợp.
 
 ### Ưu tiên
 
@@ -44,6 +44,8 @@
 - Undo moderation không tự tạo lại Pin đã mất; khác với unlock Account Lock, vốn có thể khôi phục Pin metadata tạm ẩn nếu còn hợp lệ/chưa hết hạn.
 - Scheduled config phải audit before/after, actor, effective time và loại mốc.
 
+*Xem thêm: [REQUIREMENTS_A11Y_SECURITY.md](../REQUIREMENTS_A11Y_SECURITY.md) mục Bảo mật — kiểm soát quyền cấu hình theo phạm vi Admin.*
+
 ### Điểm cần PO chốt
 
 - Không còn blocker PO cho pin/config trong scope hiện tại.
@@ -68,3 +70,4 @@
 | TC-US15-012 | X-hours | Cấu hình lần lượt 3 loại mốc | Kiểm tra effective transition | Hệ thống dùng đúng loại mốc Admin chọn. |
 | TC-US15-013 | Mode transition | Có item public/pending | Đổi Mode1↔Mode2/Đóng | Hành vi đúng US12, không mất lịch sử. |
 | TC-US15-014 | Audit | Pin/reorder/expiry/config/lifecycle Pin | Tra history | Có actor/time/before-after/effective data phù hợp. |
+| TC-US15-015 | Xác nhận trước khi lưu | Admin thay đổi threshold cho episode đang inherit từ series | Mở màn hình xác nhận trước khi lưu | Hiển thị rõ: config đang hiệu lực, nguồn kế thừa (inherit từ series/default hay override riêng), config sau khi lưu, effective time kèm timezone. |

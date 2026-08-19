@@ -32,7 +32,7 @@
 5. Người chưa đăng nhập chỉ được đọc; khi chọn Đăng bình luận, Reply, Like/Unlike, Mention, Report, Rating, Chia sẻ hoặc bất kỳ thao tác tương tác nào khác, hệ thống yêu cầu đăng nhập trước khi tạo dữ liệu tương tác.
 6. Sau khi đăng nhập thành công, hệ thống đưa người dùng trở lại **đúng phim/tập/thread/comment** liên quan nhưng **không tự thực hiện action đã chọn trước login**; user phải chủ động thao tác lại sau khi đã xác thực.
 7. Khi phim bị đóng bình luận, toàn bộ khu vực Bình luận không hiển thị. Quy tắc chi tiết được quản lý tại US12 và US15.
-8. Nếu người dùng mở deep link cũ tới comment/thread trong scope đang **Đóng bình luận**, hệ thống vẫn mở đúng phim/tập nhưng **không hiển thị comment/thread**, hiển thị thông báo **“Khu vực bình luận hiện không khả dụng”**; đây là visibility gate của scope, không đổi target sang trạng thái Ẩn/Xóa. Khi Admin mở lại, deep link cũ hoạt động lại nếu target vẫn hợp lệ.
+8. Nếu người dùng mở deep link cũ tới comment/thread trong scope đang **Đóng bình luận**, hệ thống vẫn mở đúng phim/tập nhưng **không hiển thị comment/thread**, hiển thị thông báo **“Khu vực bình luận hiện không khả dụng”**; đây là visibility gate của scope, không đổi target sang trạng thái Ẩn/Xóa. Khi Admin mở lại, deep link cũ hoạt động lại nếu target vẫn hợp lệ. Khi nhiều gate cùng đúng, áp dụng Effective Visibility Resolver tại US12 (mục ưu tiên gate).
 
 ### Quy tắc nghiệp vụ
 
@@ -48,6 +48,8 @@
 - Dịch vụ nội dung/phim.
 - Hệ thống đăng nhập MyTV.
 - US12 — Quản lý trạng thái và phạm vi hiển thị bình luận.
+
+*Xem thêm: [REQUIREMENTS_A11Y_SECURITY.md](../REQUIREMENTS_A11Y_SECURITY.md) — set focus vào comment target sau login (không chỉ scroll), điều hướng bàn phím.*
 
 ### Ngoài phạm vi
 
@@ -87,6 +89,22 @@ Một phim đang Mở bình luận có bình luận gốc, reply, Chờ duyệt,
 | TC-US01-006 | State/Deep link | Phim ở trạng thái Đóng bình luận; có deep link cũ tới C1 | Mở trang chi tiết, gọi API đọc và mở deep link C1 | Toàn bộ khu vực bình luận bị ẩn; deep link mở đúng phim/tập nhưng không hiển thị C1/thread và hiện “Khu vực bình luận hiện không khả dụng”; C1 không bị đổi sang Ẩn/Xóa. |
 | TC-US01-007 | Security | Có ID bình luận Chờ duyệt/Ẩn | Gọi trực tiếp API bằng phiên khách với ID nội dung không công khai | API từ chối hoặc trả dữ liệu rỗng theo chuẩn bảo mật; không suy ra nội dung qua mã lỗi/metadata. |
 | TC-US01-008 | Reopen deep link | Scope từng Đóng, C1 vẫn hợp lệ | Mở lại scope rồi mở lại deep link cũ | Deep link lại mở đúng C1/thread; không cần phát hành link mới. |
+| TC-US01-009 | Accessibility | Khách chọn Like/Reply tại comment C1, được điều hướng qua login | Đăng nhập thành công và quay lại | Hệ thống set focus (không chỉ scroll) vào đúng C1/thread; điều hướng bàn phím tới được C1 ngay sau khi quay lại. |
+
+### Microcopy
+
+| Trạng thái | Nội dung hiển thị |
+|---|---|
+| Guest chặn Like | **Đăng nhập để thích bình luận**<br>Đăng nhập để bày tỏ cảm xúc với bình luận này.<br>`[Đăng nhập]` |
+| Guest chặn Rating | **Đăng nhập để đánh giá**<br>Đăng nhập để chấm điểm nội dung này.<br>`[Đăng nhập]` |
+| Guest chặn Comment | **Đăng nhập để bình luận**<br>Đăng nhập để chia sẻ cảm nhận của bạn.<br>`[Đăng nhập]` |
+| Guest chặn Reply | **Đăng nhập để trả lời**<br>Đăng nhập để tham gia thảo luận này.<br>`[Đăng nhập]` |
+| Guest chặn Mention | **Đăng nhập để nhắc tên người khác**<br>Đăng nhập để gắn thẻ người dùng trong bình luận.<br>`[Đăng nhập]` |
+| Guest chặn Report | **Đăng nhập để báo cáo**<br>Đăng nhập để gửi báo cáo vi phạm.<br>`[Đăng nhập]` |
+| Guest chặn Share | **Đăng nhập để chia sẻ**<br>Đăng nhập để chia sẻ bình luận này.<br>`[Đăng nhập]` |
+| Toast sau khi quay lại từ login | **Đã đăng nhập**<br>Hãy thực hiện lại thao tác bạn vừa chọn.<br>`[Đóng]` |
+| Chưa có bình luận nào (đã đăng nhập) | **Chưa có bình luận nào**<br>Hãy là người đầu tiên chia sẻ cảm nhận về nội dung này.<br>`[Viết bình luận]` |
+| Chưa có bình luận nào (guest) | **Chưa có bình luận nào**<br>Đăng nhập để trở thành người đầu tiên bình luận.<br>`[Đăng nhập]` |
 
 ### Điểm cần xác nhận khi chạy test
 

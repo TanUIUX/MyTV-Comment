@@ -45,6 +45,8 @@ Các KPI dùng để theo dõi chất lượng, không tự động disable tín
 
 ### Quy tắc nghiệp vụ
 
+> *Xem thêm: [REQUIREMENTS_A11Y_SECURITY.md](../REQUIREMENTS_A11Y_SECURITY.md) mục liên quan — an toàn dữ liệu đầu vào AI (PII, phạm vi dữ liệu) và kiểm soát nội dung do AI đề xuất.*
+
 - Human-in-the-loop bắt buộc: AI đề xuất, Admin quyết định.
 - Input bị giới hạn theo phim/tập hiện tại để giảm rủi ro privacy/context leakage.
 - Candidate exclusion vì mức nghiêm trọng chỉ dựa trên **AI Nặng** hoặc **CMS Flag nghiêm trọng**; unverified Report count không tự tạo exclusion.

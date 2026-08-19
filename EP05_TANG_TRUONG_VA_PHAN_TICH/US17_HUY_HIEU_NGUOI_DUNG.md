@@ -19,7 +19,7 @@
 - Có ít nhất **10 comment/reply hợp lệ**.
 - Không yêu cầu Like nhận được.
 
-#### Fan trung thành
+#### Fan trung thành (⚠️ CẦN PO XÁC NHẬN: đề xuất đổi tên hiển thị thành "Fan kỳ cựu" để giảm trùng nghĩa cảm xúc với "Fan tích cực" — đây là thay đổi tên hiển thị, không nằm trong 4 quyết định đã chốt nên chỉ ghi chú đề xuất, chưa đổi cứng tên trong tài liệu)
 - Xét rolling **90 ngày gần nhất**.
 - Hoạt động ít nhất **30 ngày**.
 - Có ít nhất **30 comment/reply hợp lệ**.
@@ -27,7 +27,10 @@
 
 #### Bình luận nổi bật
 - Là huy hiệu **toàn MyTV**, không gắn riêng theo phim/tập trên UI badge.
-- Với **lần cấp mới**, user đủ điều kiện nếu có ít nhất một comment đang public/Hiển thị đạt **≥20 Net Like công khai hiện tại + ≥5 Reply** và thuộc **Top 10% Featured Score cao nhất trên toàn MyTV trong 30 ngày gần nhất** tại thời điểm xét.
+- Với **lần cấp mới**, user đủ điều kiện nếu có ít nhất một comment đang public/Hiển thị đạt **≥20 Net Like công khai hiện tại + ≥5 Reply công khai hiện tại** và thuộc **Top 10% Featured Score cao nhất trên toàn MyTV trong 30 ngày gần nhất** tại thời điểm xét.
+- **Phạm vi tính Top 10%**: tập hợp mẫu là **toàn bộ comment đăng trong 30 ngày gần nhất, trên toàn MyTV, gộp mọi scope (cả cấp series và cấp episode)**; score dùng để xếp hạng là Featured Score **tính tại thời điểm job đánh giá chạy** (không phải mức cao nhất từng đạt được trong 30 ngày đó). Job chạy lại mỗi ngày nên hạng Top 10% được tính lại theo dữ liệu và score hiện hành tại mỗi lần chạy.
+- Điều kiện "≥5 Reply" là **Reply công khai hiện tại** (public reply, đối xứng với "≥20 Net Like công khai hiện tại"); reply đã bị Ẩn/Xóa/Từ chối hoặc tạm non-public do Account Lock của tác giả reply không được tính vào số 5 này.
+- Thành phần **freshness decay 72h** trong công thức Featured Score (dùng để sort "Nổi bật" trong 1 phim/tập ở US02) gần như triệt tiêu ở cửa sổ 30 ngày (`e^(-720/72) ≈ 0.000045`), nên **khi xét điều kiện badge Bình luận nổi bật, dùng biến thể Featured Score KHÔNG có thành phần freshness decay** (chỉ dùng phần Like + Reply của công thức). Freshness decay 72h chỉ có ý nghĩa cho sort trong phạm vi 1 phim/tập, không có ý nghĩa khi so sánh toàn MyTV trong cửa sổ 30 ngày.
 - Net Like dùng cho ngưỡng cấp mới là **public Net Like** theo US07/US02; Like của account đang Account Lock tạm không được tính tại thời điểm evaluation.
 - Sau khi được cấp, việc Like tụt dưới 20, Reply tụt dưới 5 hoặc comment tụt khỏi Top 10% do ranking/metric biến động **không tự thu hồi badge**. Các ngưỡng chỉ dùng tại thời điểm grant/re-grant.
 - Badge bị thu hồi nếu source comment bị moderation **Ẩn/Xóa/Từ chối** hoặc không còn hợp lệ.
@@ -109,3 +112,12 @@
 | TC-US17-024 | Admin badge expiry | Cấp badge với/không expiry | Kiểm tra trước/sau expiry | Có expiry thì hết hiệu lực đúng mốc; không expiry thì giữ tới thu hồi. |
 | TC-US17-025 | Toggle type | Tắt loại badge đang có owner | Refresh UI | Badge ẩn ngay; history còn; bật lại không duplicate. |
 | TC-US17-026 | Notification | Grant/revoke badge khi account bình thường và khi Account Lock | Kiểm tra push/in-app | Bình thường gửi theo setting US09; Account Lock suppress community notification và không backfill sau unlock. |
+| TC-US17-027 | Top 10% boundary calculation | Dataset 1000 comment public đăng trong 30 ngày, gộp mọi scope (series + episode), Featured Score (biến thể không freshness) đã biết trước cho từng comment; comment hạng 99, 100, 101 (quanh biên Top 10%) đều đạt ≥20 Net Like công khai + ≥5 Reply công khai; nhiễu thêm: 1 comment đang được Ghim, 1 comment non-public do Account Lock tác giả, 1 comment đã Ẩn, đều nằm trong 1000 comment gốc | Chạy job đánh giá badge Bình luận nổi bật | Dân số dùng để tính Top 10% chỉ gồm comment đủ điều kiện public (loại trừ comment Ẩn và comment non-public do Account Lock; comment Ghim không bị loại chỉ vì đang ghim); comment hạng 99 và hạng 100 (đúng biên 10%) được cấp badge; comment hạng 101 không được cấp; chạy lại job nhiều lần với cùng dữ liệu cho kết quả xếp hạng đồng hạng ổn định, lặp lại giống nhau giữa các lần chạy. |
+| TC-US17-028 | Grace period 7 ngày boundary | U1 đang có Fan tích cực/Fan trung thành, tụt dưới ngưỡng từ ngày D0 | Chạy job daily tại D+6, D+7, D+8; tình huống phụ: U1 đạt lại ngưỡng ở D+5 rồi tụt lại ở D+6 | D+6 badge còn giữ (trong grace); D+7 (đúng biên 7 ngày) và D+8 xử lý theo định nghĩa "hết 7 ngày vẫn không đạt mới tự thu hồi" đã chốt; tình huống phụ: khi U1 đạt lại ngưỡng ở D+5, bộ đếm grace được reset (hủy đếm dở), nên khi tụt lại ở D+6 grace 7 ngày mới được tính lại từ D+6, không cộng dồn với lần tụt trước. |
+
+### Microcopy
+
+| Trạng thái | Nội dung hiển thị |
+|---|---|
+| Bottom sheet xem đầy đủ badge (chạm vào badge chính trên card) | **Huy hiệu khác của {nickname}:**<br>{tên badge còn lại, liệt kê theo thứ tự ưu tiên đã chốt}<br>`[Đóng]` |
+| Notification khi được cấp badge mới | **Bạn nhận huy hiệu {tên badge}**<br>Cảm ơn bạn đã đồng hành cùng cộng đồng MyTV.<br>`[Xem huy hiệu]` |

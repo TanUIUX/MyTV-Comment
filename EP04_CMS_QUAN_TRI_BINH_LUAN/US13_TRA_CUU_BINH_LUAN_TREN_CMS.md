@@ -31,6 +31,9 @@
 - Quyền truy cập CMS vẫn giới hạn theo phạm vi Admin/Moderator; trong phạm vi đó họ được xem PII đầy đủ theo quyết định PO.
 - Export PII cần opt-in rõ ràng để hạn chế việc PII bị đưa ra file ngoài ý muốn.
 - Search/filter không làm thay đổi dữ liệu.
+- Nickname không tạo hàng chờ CMS vì không còn trạng thái Chờ duyệt cho nickname (xem US04/US11) — CMS chỉ tra cứu comment/reply.
+
+*Xem thêm: [REQUIREMENTS_A11Y_SECURITY.md](../REQUIREMENTS_A11Y_SECURITY.md) mục Bảo mật — IDOR, kiểm soát scope theo phạm vi được cấp.*
 
 ### Điểm cần PO chốt
 
@@ -51,3 +54,4 @@
 | TC-US13-007 | Export PII opt-in | Tick “Bao gồm PII” | Export CSV/XLSX | File có PII theo quyền; log ghi actor/time/filter/include-PII. |
 | TC-US13-008 | Pagination | Kết quả >1 trang | Paginate/lazy load | Không trùng/bỏ sót và thứ tự ổn định. |
 | TC-US13-009 | SLA visibility | Có item sắp/quá SLA | Mở queue | Hiển thị badge/thời gian chờ phù hợp để Admin ưu tiên. |
+| TC-US13-010 | IDOR ghi (write) | Moderator M2 chỉ có scope P2; biết trước comment ID C1 (thuộc phim P1) và user ID U1 (thuộc phim P1) | M2 gọi TRỰC TIẾP API (không qua UI) để: xem chi tiết C1; Duyệt/Ẩn/Xóa/Undo C1; bulk chứa C1; xem PII của U1; export PII với filter P1; ghim C1 (US15); áp Cảnh báo/Khóa bình luận/Khóa tài khoản lên U1 (US16) | Tất cả bị từ chối theo scope; không lộ sự tồn tại của C1/U1 qua mã lỗi hoặc metadata; không tạo audit event "thành công" cho bất kỳ thao tác nào. |
