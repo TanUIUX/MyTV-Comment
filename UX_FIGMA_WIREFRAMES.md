@@ -8,9 +8,30 @@
 
 ---
 
-## P0 — Core Consumer Loop · Mobile v1
+## P0 — Connected User Flow · Mobile v1
 
-**Section Figma:** [MyTV Comment — P0 Low-fi Mobile v1](https://www.figma.com/design/drR51WLeN2FkGZbN4FRqFY/Wireframe?node-id=3-2)
+**User Flow chính:** [MyTV Comment — P0 Connected User Flow Mobile v1](https://www.figma.com/design/drR51WLeN2FkGZbN4FRqFY/Wireframe?node-id=7-2)
+
+Flow này nối toàn bộ P0 thành **một hành trình có nhánh**, thay vì chỉ đặt các screen độc lập cạnh nhau:
+
+`Content Detail / Comment Area → Thread → Interaction → Auth/Composer/Action → Moderation result`
+
+Các nhánh ngoại lệ được nối vào cùng flow:
+
+- Guest interaction → Auth Gate → quay lại đúng context, **không auto-execute action cũ**.
+- Comment/Reply/Edit → moderation → Pending khi applicable.
+- Scope Đóng → Comment Area Closed.
+- Target moderation/lifecycle invalid → Target unavailable.
+- Comment Lock → Interaction blocked.
+- Thread actions → Edit / Delete / Report.
+
+---
+
+## P0 — Screen Inventory · Mobile v1
+
+**Section reference:** [MyTV Comment — P0 Low-fi Mobile v1](https://www.figma.com/design/drR51WLeN2FkGZbN4FRqFY/Wireframe?node-id=3-2)
+
+Screen Inventory được giữ lại làm thư viện/reference để Design/Dev/QA mở trực tiếp từng state. Source-of-truth để review flow P0 là **Connected User Flow** ở trên.
 
 ### Core screens
 
