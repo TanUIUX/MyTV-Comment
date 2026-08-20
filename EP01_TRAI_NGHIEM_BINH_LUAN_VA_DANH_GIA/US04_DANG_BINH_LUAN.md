@@ -22,7 +22,7 @@
 7. Ở Chế độ 2, nội dung không bị chặn vẫn vào Chờ duyệt tới khi Admin duyệt.
 8. Spoiler được che với cảnh báo và chỉ mở khi người xem chủ động chọn.
 9. Nickname phải **unique không phân biệt hoa/thường**, dài **3–30 ký tự**; cho phép chữ, số, khoảng trắng, `_`, `-`; không cho URL, số điện thoại hoặc ký tự điều khiển.
-10. User được đổi nickname tối đa **1 lần/24 giờ/account**; nickname mới/đổi phải qua **global AI moderation policy độc lập với Chế độ 1/2 của phim/tập**, chỉ có **2 kết quả**: Nhẹ/An toàn → dùng ngay, cập nhật nickname công khai ngay lập tức; Trung bình HOẶC Nặng (gộp) → **bị chặn ngay lập tức tại thời điểm submit**, không tạo bất kỳ trạng thái chờ duyệt nào.
+10. User được đổi nickname tối đa **1 lần đổi thành công/24 giờ/account** (submission bị validation/AI chặn không tiêu quota); nickname mới/đổi phải qua **global AI moderation policy độc lập với Chế độ 1/2 của phim/tập**, chỉ có **2 kết quả**: Nhẹ/An toàn → dùng ngay, cập nhật nickname công khai ngay lập tức; Trung bình HOẶC Nặng (gộp) → **bị chặn ngay lập tức tại thời điểm submit**, không tạo bất kỳ trạng thái chờ duyệt nào. Trường hợp AI không cho được quyết định hợp lệ (timeout >5 giây/5xx/dịch vụ không khả dụng, nickname bằng ngôn ngữ ngoài tiếng Việt/tiếng Anh, hoặc AI low-confidence) cũng **không tạo trạng thái chờ duyệt**: nickname không đổi, user được báo lỗi và cho thử lại, và **không tiêu quota** (theo US11).
 11. Khi nickname bị chặn tại submit, user thấy lỗi ngay, nickname không đổi và tiếp tục dùng nickname hợp lệ cũ. Nếu chưa từng có nickname hợp lệ, hiển thị số điện thoại đã mask: giữ `0` đầu + 3 số cuối, toàn bộ số giữa thành `*` theo độ dài thực tế, ví dụ `0912345124 → 0******124`.
 12. Không hiển thị đầy đủ số điện thoại hoặc PII nhạy cảm trên trải nghiệm người xem.
 13. Sau khi gửi thành công, ô nhập được xóa; retry không tạo comment trùng.
@@ -36,7 +36,7 @@
 - URL được validate theo hostname, không theo chuỗi chứa tên miền.
 - **Nickname là identity toàn tài khoản**, không thuộc scope series/episode; vì vậy không kế thừa Mode1/Mode2 hay threshold override theo phim/tập. Nickname dùng global AI policy riêng theo US11, chỉ có 2 kết quả: Nhẹ/An toàn dùng ngay; Trung bình hoặc Nặng đều bị chặn ngay tại submit, không tạo hàng chờ duyệt.
 - Nickname bị chặn tại submit không public và không tạo bản ghi chờ; nickname công khai giữ nguyên giá trị hợp lệ trước đó.
-- Đổi nickname có quota riêng: tối đa **1 lần đổi nickname thành công/24 giờ/account**. Quota được tính khi nickname mới vượt qua validation + global AI policy và được hệ thống chấp nhận lưu; submission bị validation/AI chặn không tiêu quota.
+- Đổi nickname có quota riêng: tối đa **1 lần đổi nickname thành công/24 giờ/account**. Quota được tính khi nickname mới vượt qua validation + global AI policy và được hệ thống chấp nhận lưu; submission bị validation/AI chặn không tiêu quota. Các trường hợp AI timeout/5xx/không khả dụng, nickname ngoài tiếng Việt/tiếng Anh hoặc AI low-confidence cũng bị chặn + cho thử lại (không có trạng thái Chờ duyệt cho nickname) và **không tiêu quota**, theo US11.
 - Khi comment bị Từ chối/Ẩn/Xóa bởi Admin, tác giả được xem lý do trong app và nhận notification theo US14/US16.
 
 *Xem thêm: [REQUIREMENTS_A11Y_SECURITY.md](../REQUIREMENTS_A11Y_SECURITY.md) — sanitization/XSS cho nội dung comment và nickname, chặn RTL override/zero-width/control char/homoglyph trong nickname.*

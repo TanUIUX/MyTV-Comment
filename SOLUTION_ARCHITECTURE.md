@@ -39,7 +39,7 @@ MyTV bổ sung khu vực thảo luận cho phim truyện/VOD: người xem đọ
 
 ### 2.2. Trong phạm vi
 
-- Phim truyện/VOD có timeline cố định; bình luận ở **cả cấp series và cấp tập**.
+- Phim truyện/VOD có timeline cố định; **phim lẻ bình luận và đánh giá ở cấp phim, phim bộ bình luận và đánh giá theo từng tập**. **Không có scope Series phía người xem.** Cấu hình cấp series vẫn tồn tại ở CMS (AI threshold/mode kế thừa episode override → series override → default hệ thống, US15) — đó là cấu hình quản trị, không phải scope bình luận của người xem.
 - Đọc công khai; đăng nhập mới được Bình luận, Trả lời, Thích, Nhắc tên, Báo cáo, Đánh giá, Chia sẻ.
 - Trả lời **một cấp** (không lồng sâu).
 - Kiểm duyệt AI hai chế độ + kiểm duyệt viên, có trạng thái và nhật ký kiểm toán rõ ràng.
@@ -68,7 +68,7 @@ MyTV bổ sung khu vực thảo luận cho phim truyện/VOD: người xem đọ
 - Edit Comment/Reply tối đa **5 lần/phút/target**, chặn trước khi tạo version/gọi AI khi vượt ngưỡng.
 - Badge 90 ngày dùng tên hiển thị **Fan kỳ cựu**.
 - Accessibility **WCAG 2.1 AA** và yêu cầu bảo mật XSS/IDOR/PII là yêu cầu xuyên suốt theo `REQUIREMENTS_A11Y_SECURITY.md`.
-- **Technical refinement note:** US11 đang có wording chưa đồng nhất giữa invariant “Nickname không có Chờ duyệt” và test timeout chung. Kiến trúc không tạo thêm nickname-pending state: nếu AI chưa trả quyết định hợp lệ thì nickname mới **không được đổi/public** và nickname cũ/fallback tiếp tục hiệu lực; wording test cần được normalize khi technical refinement.
+- **Nickname khi AI không có quyết định hợp lệ — đã chốt, không còn là điểm tồn đọng refinement:** nickname **không bao giờ** có trạng thái Chờ duyệt. AI timeout quá 5 giây, lỗi 5xx, dịch vụ AI không khả dụng, nickname ngoài tiếng Việt/tiếng Anh và nickname low-confidence đều được xử lý **giống nhau**: **không đổi nickname**, giữ nickname hợp lệ cũ (hoặc mask số điện thoại nếu chưa từng có nickname hợp lệ), báo lỗi **cho phép thử lại**, **không tạo hàng chờ duyệt / queue item** và **không tiêu quota** 1 lần đổi/24 giờ. Kiến trúc không tạo nickname-pending state; US11 đã được đồng bộ theo đúng invariant này.
 
 ---
 
@@ -445,7 +445,7 @@ Các ngưỡng số cụ thể cần baseline từ pilot, nhưng tối thiểu p
 | 2 | **Pilot scope và tiêu chí mở rộng**: nhóm phim/tập nào tham gia, thời gian pilot, ngưỡng go/no-go | PO + Vận hành + Kỹ thuật | Trước cuối Giai đoạn 1 |
 | 3 | **Hợp đồng tích hợp Player**: đọc current timestamp, seek, lỗi/fallback, versioning contract | Trưởng nhóm Player + Solution/Tech Lead | Trong Giai đoạn 0, trước khi triển khai US06 |
 | 4 | **Deployment topology**: modular monolith hay tách service/worker, hạ tầng queue/search/cache và ownership | Solution Architect + Tech Lead/Platform | Cuối Giai đoạn 0 sau sizing/estimate |
-| 5 | **Bố cục UI**: vị trí comment area, cách rút gọn nội dung dài, chuyển series↔episode | PO + Design | Trước khi finalize wireframe Giai đoạn 1 |
+| 5 | **Bố cục UI**: vị trí comment area, cách rút gọn nội dung dài, cách hiển thị context phim/tập đang xem | PO + Design | Trước khi finalize wireframe Giai đoạn 1 |
 
 ### 9.1. Guardrail Mode1/Mode2 đã có
 

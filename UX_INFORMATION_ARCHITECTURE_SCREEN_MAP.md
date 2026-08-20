@@ -13,7 +13,7 @@
 
 IA/SM phải bảo đảm 6 mục tiêu:
 
-1. Người xem luôn hiểu mình đang thảo luận ở **series hay episode nào**.
+1. Người xem luôn hiểu mình đang thảo luận ở **phim lẻ nào, hoặc tập nào của phim bộ**.
 2. Guest có thể đọc ngay, nhưng mọi interaction đi qua **auth gate** và quay lại đúng context.
 3. Không có đường điều hướng nào làm lộ comment/thread đang non-public do moderation, cascade, Account Lock hoặc scope Đóng.
 4. Các trạng thái moderation/sanction phải có **lối ra rõ ràng**, không tạo dead-end khó hiểu.
@@ -28,19 +28,22 @@ IA/SM phải bảo đảm 6 mục tiêu:
 
 Trong scope hiện tại không có Community Home, global comment feed, profile feed hay discovery feed.
 
-- Comment luôn thuộc **Series hoặc Episode**.
+- Comment luôn thuộc **một phim lẻ hoặc một tập của phim bộ**.
 - Deep link luôn quay về **phim/tập + comment/thread** nếu còn khả dụng.
 - Khi target không còn xem được, user vẫn ở **phim/tập**, không rơi vào 404 comment page.
 
 **Hệ quả UX:** Comment Area nằm trong trải nghiệm Content Detail/Watch; không tạo tab cấp ứng dụng tên “Cộng đồng” chỉ cho feature này.
 
-## IA-02 — Series/Episode là scope context, không phải top-level navigation
+## IA-02 — Không có scope Series phía người xem; context là phim lẻ hoặc tập hiện tại
 
-Chuyển Series ↔ Episode là thao tác đổi **scope của cùng một Comment Area**.
+Phía người xem **không tồn tại** phạm vi bình luận/rating “Toàn bộ phim/Series” và **không có** bộ chuyển scope Series ↔ Tập trên UI.
 
+- **Phim lẻ:** comment và rating ở **cấp phim**.
+- **Phim bộ:** comment và rating **chỉ theo tập đang xem**. Đổi tập là đổi **context nội dung**, không phải đổi scope trong cùng một Comment Area.
 - Không tạo hai hệ thống comment độc lập ở navigation cấp app.
-- Scope control phải luôn cho user biết mình đang đọc/viết ở đâu.
-- Khi đổi scope, list/count/rating/sort reload theo scope mới.
+- Comment Area phải luôn cho user biết mình đang đọc/viết ở phim nào, tập nào.
+- Khi đổi tập, count/rating/Pin/list reload theo tập mới và sort **reset về `Nổi bật`** (US02 AC3).
+- **CMS vẫn giữ cấu hình cấp series** (mode/Đóng/threshold/schedule/Pin theo inheritance episode override → series override → default hệ thống, US15). Đây là **cấu hình vận hành**, hoàn toàn khác với scope bình luận của người xem — bỏ scope Series phía người xem **không** đồng nghĩa bỏ cấu hình CMS cấp series.
 
 ## IA-03 — State nội dung và gate hiển thị là hai lớp
 
@@ -103,7 +106,7 @@ flowchart TD
     NOTI["Notification Center"]
     PROFILE["Profile / Settings"]
 
-    SCOPE["Series / Episode Scope"]
+    SCOPE["Content Context: phim lẻ / tập hiện tại"]
     RATING["Rating"]
     LIST["Comment List"]
     THREAD["Thread / Reply"]
@@ -149,12 +152,12 @@ Chứa hoặc dẫn tới:
 - Player/metadata nội dung hiện có.
 - Comment Area.
 - Rating.
-- Scope Series/Episode.
+- Context nội dung hiện tại: phim lẻ hoặc tập đang xem.
 - Sort/Pin/list/thread.
 - Comment/Reply composer.
 - Deep-link target focus.
 
-**Không chốt trong tài liệu này:** vị trí chính xác Comment Area phía trên/dưới metadata/player trên Web/Mobile.
+**Đã chốt (`UX_USER_FLOWS.md`):** Comment Area là **một tab riêng** trong trang nội dung, không phải block trôi nổi trên/dưới metadata. Phim bộ mặc định mở tab `Danh sách tập`, phim lẻ mặc định `Đề xuất`; user chủ động chọn tab `Bình luận ({count})`. Deep link comment/thread active thẳng tab `Bình luận`.
 
 ### B. Notification Center
 
@@ -188,8 +191,8 @@ User không thể đi vào app khi Account Lock còn hiệu lực.
 ```mermaid
 flowchart TD
     CA["Comment Area"]
-    HEADER["Header: Bình luận + public count"]
-    CONTEXT["Scope Context: Series / Episode"]
+    TAB["Nhãn tab: Bình luận + public count"]
+    CONTEXT["Content Context: phim lẻ / tập hiện tại"]
     RATE["Rating Aggregate + User Rating"]
     SORT["Sort Control"]
     PIN["Pinned Comments 0–3"]
@@ -198,7 +201,7 @@ flowchart TD
     EMPTY["Empty State"]
     COMP["Composer Entry"]
 
-    CA --> HEADER
+    CA --> TAB
     CA --> CONTEXT
     CA --> RATE
     CA --> SORT
@@ -213,9 +216,9 @@ flowchart TD
 
 Đây là **thứ tự thông tin đề xuất**, không phải quyết định layout cứng:
 
-1. Scope context hiện tại.
+1. Content context hiện tại (phim lẻ hoặc tập đang xem).
 2. Rating aggregate + rating action.
-3. Comment header + public count.
+3. Public comment count — hiển thị ở **nhãn tab** `Bình luận ({count})`, không phải header đếm riêng bên trong Comment Area.
 4. Composer entry.
 5. Sort control.
 6. Pinned group.
@@ -224,7 +227,7 @@ flowchart TD
 
 Lý do:
 
-- Scope phải rõ trước khi user đánh giá/viết.
+- Content context phải rõ trước khi user đánh giá/viết.
 - Composer được nhìn thấy sớm để tăng khả năng tham gia.
 - Pin là editorial layer và phải tách khỏi danh sách scoring để tránh hiểu nhầm thứ tự.
 
@@ -235,7 +238,7 @@ Một comment/reply card cần chứa tối thiểu các vùng thông tin:
 - Identity: nickname/fallback mask + badge nếu có.
 - Timestamp đăng + “Đã chỉnh sửa” nếu có.
 - Moderation-visible state cho chính tác giả nếu cần.
-- Text + Spoiler treatment.
+- Text + Spoiler treatment; comment dài **truncate ở 3 dòng** rồi mới tới `Xem thêm` / `Thu gọn` (US01, đã chốt).
 - Optional timestamp media context.
 - Like + count.
 - Reply action + reply count.
@@ -272,7 +275,7 @@ flowchart TD
 
 | Entry | Destination | Context phải giữ |
 |---|---|---|
-| Mở Content Detail/Watch | Comment Area | Series/Episode hiện tại |
+| Mở Content Detail/Watch | Comment Area | phim lẻ hoặc tập hiện tại |
 | Guest bấm Like/Reply/Comment/Rating/Report/Share | Auth Gate → quay lại Content | scope + thread + target comment + action origin |
 | Notification Reply/Mention | Content + target | phim/tập/thread/comment |
 | Notification moderation | Content hoặc moderation status | target + reason phù hợp |
@@ -290,7 +293,7 @@ flowchart TD
 
 Đây là **mô hình thông tin**, không phải API/URL contract:
 
-- Content route: `Series/Episode`.
+- Content route: `Phim lẻ` hoặc `Tập của phim bộ`.
 - Optional thread target: `Root Comment`.
 - Optional comment target: `Comment/Reply`.
 - Optional source: `notification/share`.
@@ -299,7 +302,7 @@ flowchart TD
 
 ```mermaid
 flowchart TD
-    DL["Mở deep link"] --> CTX["Resolve phim / series / episode"]
+    DL["Mở deep link"] --> CTX["Resolve phim lẻ / tập phim bộ"]
     CTX --> VIS["Effective Visibility Resolver"]
     VIS -->|Public| TARGET["Mở Comment Area + focus target"]
     VIS -->|Moderation/Self-delete/Admin cascade| F1["Bình luận không còn khả dụng"]
@@ -624,56 +627,62 @@ Một Screen ID có thể là **responsive destination dùng chung Web/Mobile**,
 
 ## 15.2. Consumer screen inventory
 
-| ID | Screen / View | Loại | Entry chính | Exit / Next | US |
-|---|---|---|---|---|---|
-| C01 | Content Detail / Watch | Primary | Browse, search, deep link | C02, player, app nav | US01, US06, US18 |
-| C02 | Comment Area — populated | Contextual view | C01 | C03/C04/C05/C06/C08/O01/O04 | US01–US08 |
-| C03 | Comment Area — Series scope | State/view | C02 scope control | C02 reload | US02, US03 |
-| C04 | Comment Area — Episode scope | State/view | C02 scope control | C02 reload | US02, US03 |
-| C05 | Focused Thread / Deep-link target | Context state | Notification/share/list | C02, C07/C08/actions | US01, US08, US09, US18 |
-| C06 | Comment Composer | Task view | C02 | C02 pending/public/error | US04, US06, US11 |
-| C07 | Reply Composer | Task view | C05 | C05 pending/public/error | US08, US09, US11 |
-| C08 | Rating interaction state | Component state | C02 | C02 | US03 |
-| C09 | Nickname Settings | Secondary | Profile hoặc composer identity | previous screen | US04, US11 |
-| C10 | Notification Center | Primary/secondary | App shell | C01/C05/C13 | US09, US10, US14, US16, US17 |
-| C11 | Community Notification Settings | Secondary | Profile/Settings | Profile | US09 |
-| C12 | Comment Lock Status | Secondary/status | banner/notification/Profile | C13 hoặc previous | US16 |
-| C13 | Comment Lock Appeal | Task | C12 | C12 confirmation/status | US16 |
-| C14 | Moderation Result Detail | Status/context | mandatory notification | C01/C05 | US12, US14 |
-| C15 | Badge feedback/context | Status | notification/profile/comment identity | source context | US17 |
-| C16 | Share Deep-link Landing | Route state | external link | C01/C05/S03–S05 | US18 |
+| ID | Screen / View | Loại | Platform | Entry chính | Exit / Next | US |
+|---|---|---|---|---|---|---|
+| C01 | Content Detail / Watch | Primary | Phone, Web, SmartTV | Browse, search, deep link | C02, player, app nav | US01, US06, US18 |
+| C02 | Comment Area — populated | Contextual view | Phone, Web, SmartTV (TV read-only) | C01 | C05/C06/C08/O01/O04; TV → C17 | US01–US08 |
+| C05 | Focused Thread / Deep-link target | Context state | Phone, Web (TV dùng C17) | Notification/share/list | C02, C07/C08/actions | US01, US08, US09, US18 |
+| C06 | Comment Composer | Task view | Phone (bottom sheet), Web (inline) | C02 | C02 pending/public/error | US04, US06, US11 |
+| C07 | Reply Composer | Task view | Phone (bottom sheet), Web (inline) | C05 | C05 pending/public/error | US08, US09, US11 |
+| C08 | Rating interaction state | Component state | Phone, Web, SmartTV | C02 | C02 | US03 |
+| C09 | Nickname Settings | Secondary | Phone, Web | Profile hoặc composer identity | previous screen | US04, US11 |
+| C10 | Notification Center | Primary/secondary | Phone, Web | App shell | C01/C05/C13 | US09, US10, US14, US16, US17 |
+| C11 | Community Notification Settings | Secondary | Phone, Web | Profile/Settings | Profile | US09 |
+| C12 | Comment Lock Status | Secondary/status | Phone, Web | banner/notification/Profile | C13 hoặc previous | US16 |
+| C13 | Comment Lock Appeal | Task | Phone, Web | C12 | C12 confirmation/status | US16 |
+| C14 | Moderation Result Detail | Status/context | Phone, Web | mandatory notification | C01/C05 | US12, US14 |
+| C15 | Badge feedback/context | Status | Phone, Web (TV chỉ hiển thị icon + tên) | notification/profile/comment identity | source context | US17 |
+| C16 | Share Deep-link Landing | Route state | Phone, Web | external link | C01/C05/S03–S05 | US18 |
+| C17 | Thread — SmartTV read-only | Primary (TV) | SmartTV | C02 trên TV: chọn root comment | quay lại C02; không có Reply composer | US01, US08 |
+
+SmartTV không có destination tạo nội dung: C06, C07, O03–O06, O08, O09, O10 không render trên TV; thay bằng state S13 (hướng dẫn + QR chuyển sang smartphone).
 
 ## 15.3. Consumer overlays / sheets
 
-| ID | Overlay | Entry | Outcome | US |
-|---|---|---|---|---|
-| O01 | Auth Gate | Guest interaction | Login → return context / cancel | US01, US03, US04, US07, US08, US10, US18 |
-| O02 | Sort selector | C02 | Nổi bật/Mới nhất/Nhiều lượt thích nhất | US02 |
-| O03 | Comment action menu | comment/reply overflow | Edit/Delete/Report/Share theo quyền | US05, US10, US18 |
-| O04 | Edit Comment/Reply | O03 | submit version / validation/error | US05, US11 |
-| O05 | Delete confirmation | O03 | self-delete / cancel | US05 |
-| O06 | Report sheet | O03 | submit report / cooldown/rate-limit | US10 |
-| O07 | Spoiler reveal | comment body | reveal content | US04, US08 |
-| O08 | Timestamp input/edit | composer | attach one timestamp | US06 |
-| O09 | Mention suggestion | composer after `@` | select account ID | US09 |
-| O10 | OS Share Sheet | Share action | successful open = Share event | US18 |
+| ID | Overlay | Platform | Entry | Outcome | US |
+|---|---|---|---|---|---|
+| O01 | Auth Gate | Phone, Web, SmartTV | Guest interaction (TV: Like/Rating) | Login → return context / cancel | US01, US03, US04, US07, US08, US10, US18 |
+| O02 | Sort selector | Phone, Web, SmartTV (remote) | C02 | Nổi bật/Mới nhất/Nhiều lượt thích | US02 |
+| O03 | Comment action menu | Phone, Web | comment/reply overflow | Edit/Delete/Report/Share theo quyền | US05, US10, US18 |
+| O04 | Edit Comment/Reply | Phone, Web | O03 | submit version / validation/error | US05, US11 |
+| O05 | Delete confirmation | Phone, Web | O03 | self-delete / cancel | US05 |
+| O06 | Report sheet | Phone, Web | O03 | submit report / cooldown/rate-limit | US10 |
+| O07 | Spoiler reveal | Phone, Web, SmartTV | comment body | reveal content | US04, US08 |
+| O08 | Timestamp input/edit | Phone, Web | composer | attach one timestamp | US06 |
+| O09 | Mention suggestion | Phone, Web | composer after `@` | select account ID | US09 |
+| O10 | OS Share Sheet | Phone, Web | Share action | successful open = Share event | US18 |
 
 ## 15.4. System/exception states
 
-| ID | State | Trigger | User-facing behavior | US |
-|---|---|---|---|---|
-| S01 | Comment Area Loading | mở/đổi scope/sort | skeleton/progress | US01, US02 |
-| S02 | Comment Area Empty | no public data | guest/logged-in variant | US01 |
-| S03 | Target no longer available | moderation/self-delete/admin cascade | “Bình luận không còn khả dụng” | US12, US18 |
-| S04 | Target temporarily unavailable | Account Lock | “Bình luận hiện không khả dụng” | US12, US18 |
-| S05 | Comment Area closed | scope Đóng | “Khu vực bình luận hiện không khả dụng” | US01, US12, US18 |
-| S06 | Pending moderation — author only | Comment/Reply/Edit pending | status visible only to author | US04, US05, US11, US12 |
-| S07 | Comment Lock interaction blocked | Comment/Reply/Mention/Edit after lock | explain sanction + allowed alternatives | US16 |
-| S08 | Account Lock full-screen | login/session effective lock | reason + hotline; no App Shell | US09, US16 |
-| S09 | Like reconcile error | server mismatch/fail | revert + announce + retry | US07 |
-| S10 | Timestamp unavailable | media/time invalid/unavailable | disabled timestamp + fallback | US06 |
-| S11 | Report cooldown | same target <24h | remaining time | US10 |
-| S12 | Report rate limit | >10/hour | retry countdown | US10 |
+| ID | State | Platform | Trigger | User-facing behavior | US |
+|---|---|---|---|---|---|
+| S01 | Comment Area Loading | Phone, Web, SmartTV | mở tab Bình luận / đổi tập / đổi sort | skeleton/progress | US01, US02 |
+| S02 | Comment Area Empty | Phone, Web, SmartTV | no public data | guest CTA login / logged-in CTA viết đầu tiên / SmartTV hướng dẫn + QR (S13) | US01 |
+| S03 | Target no longer available | Phone, Web, SmartTV | moderation/self-delete/admin cascade | “Bình luận không còn khả dụng” (vĩnh viễn) | US12, US18 |
+| S04 | Target temporarily unavailable | Phone, Web, SmartTV | Account Lock của tác giả/root author | “Bình luận hiện không khả dụng” (tạm thời; link hoạt động lại sau khi gỡ khóa) | US12, US16, US18 |
+| S05 | Comment Area closed | Phone, Web, SmartTV | scope Đóng | giữ tab `Bình luận` nhưng **bỏ count**; hiển thị “Khu vực bình luận hiện không khả dụng”; ẩn rating/list/composer/actions | US01, US12, US18 |
+| S06 | Pending moderation — author only | Phone, Web | Comment/Reply/Edit pending | status visible only to author | US04, US05, US11, US12 |
+| S07 | Comment Lock interaction blocked | Phone, Web | Comment/Reply/Mention/Edit after lock | explain sanction + allowed alternatives | US16 |
+| S08 | Account Lock full-screen | Phone, Web, SmartTV | login/session effective lock | reason + hotline; no App Shell | US09, US16 |
+| S09 | Like reconcile error | Phone, Web, SmartTV | server mismatch/fail | revert + announce + retry | US07 |
+| S10 | Timestamp unavailable | Phone, Web, SmartTV | media/time invalid/unavailable | disabled timestamp + fallback | US06 |
+| S11 | Report cooldown | Phone, Web | same target <24h | remaining time | US10 |
+| S12 | Report rate limit | Phone, Web | >10/hour | retry countdown | US10 |
+| S13 | SmartTV — không hỗ trợ tạo nội dung | SmartTV | user muốn Comment/Reply/Mention/Report/Share trên TV | ẩn entry tạo nội dung; hiển thị **hướng dẫn + QR** để chuyển sang smartphone; vẫn giữ đọc/Like/Rating/Sort/Spoiler/Timestamp | US01, US04, US09, US10, US18 |
+| S14 | Rate limit Comment/Reply | Phone, Web | >5 nội dung/phút/user (quota chung Comment+Reply) | “Bạn đang bình luận hơi nhanh”; không tạo record; cho gửi lại sau | US04, US08, US11 |
+| S15 | Edit rate limit | Phone, Web | >5 lần sửa/phút/target | chặn trước khi tạo version mới/gọi AI; giữ nội dung đang soạn; cho thử lại | US05, US11 |
+| S16 | Nickname bị chặn tại submit | Phone, Web | validation/AI chặn, hoặc AI không cho quyết định hợp lệ | “Tên này chưa phù hợp”; giữ nickname cũ/fallback mask; cho thử tên khác; không Pending, không tiêu quota | US04, US11 |
+| S17 | Nickname hết quota 24h | Phone, Web | đã có 1 lần đổi nickname thành công trong 24 giờ | chặn submit đổi nickname và cho biết phải chờ hết chu kỳ 24 giờ *(microcopy chưa có trong backlog)* | US04 |
 
 ---
 
@@ -692,12 +701,14 @@ flowchart TD
     C11["C11 Community Settings"]
     C12["C12 Comment Lock Status"]
     C13["C13 Appeal"]
+    C17["C17 Thread — SmartTV read-only"]
 
     APP{"Account Lock?"} -->|Có| S08
     APP -->|Không| C01
 
     C01 --> C02
-    C02 --> C05
+    C02 -->|Phone / Web| C05
+    C02 -->|SmartTV| C17
     C02 --> C06
     C05 --> C07
     C06 --> C09
@@ -820,24 +831,24 @@ flowchart TD
 
 | US | Primary Consumer | CMS / System |
 |---|---|---|
-| US01 Đọc bình luận | C01, C02, C05, O01, S01–S05 | — |
-| US02 Scope/count/sort | C02–C05, O02 | — |
+| US01 Đọc bình luận | C01, C02, C05, C17, O01, S01–S05, S13 | — |
+| US02 Content context/count/sort | C02, C05, C17, O02, S01 | — |
 | US03 Rating | C02, C08, O01 | M14 analytics |
-| US04 Đăng comment | C06, C09, O07/O08 | M02/M04 moderation |
-| US05 Edit/Delete | O03/O04/O05, S06/S07 | M04/M06/M17 |
+| US04 Đăng comment | C06, C09, O07/O08, S13/S14/S16/S17 | M02/M04 moderation |
+| US05 Edit/Delete | O03/O04/O05, S06/S07/S15 | M04/M06/M17 |
 | US06 Timestamp | C06/C07, O08, S10, C01 player | — |
 | US07 Like | C02/C05, S09, O01 | M14 analytics |
-| US08 Reply | C05/C07, O09 | M04 thread context |
-| US09 Mention/Notification | C07, O09, C10/C11 | — |
-| US10 Report | O06, S11/S12, C10 | M05/M04 |
-| US11 AI moderation | S06 + composer outcomes | M02/M04/M09/M19 |
+| US08 Reply | C05/C07, C17, O09, S13/S14 | M04 thread context |
+| US09 Mention/Notification | C07, O09, C10/C11, S13 | — |
+| US10 Report | O06, S11/S12/S13, C10 | M05/M04 |
+| US11 AI moderation | C09, S06/S14/S15/S16 + composer outcomes | M02/M04/M09/M19 |
 | US12 Visibility/state | S03–S06 | M04/M09/M17 |
 | US13 CMS search/export | — | M03/M04/M15 |
 | US14 CMS moderation | C14 + mandatory notification | M04–M07/M17 |
 | US15 Pin/config | C02 pinned group | M08/M09/M19 |
 | US16 Sanction/appeal | C12/C13/S07/S08 | M10–M13/M17 |
 | US17 Badge | C15 + identity badge | M18/M14/M17 |
-| US18 Share | O10/C16/S03–S05 | M14 analytics |
+| US18 Share | O10/C16/S03–S05, S13 | M14 analytics |
 | US19 Analytics | — | M14/M15 |
 | US20 AI Ops | — | M16/M08 |
 
@@ -868,27 +879,38 @@ Không cần mọi screen có đủ 12 state; wireframe checklist phải xác đ
 
 # 21. Responsive behavior — nguyên tắc, chưa chốt layout
 
-## Mobile
+## Mobile (Phone)
 
 - Task ngắn ưu tiên bottom sheet/full-screen sheet: sort, Report, action menu, reason.
-- Composer có thể mở inline hoặc full-screen tùy keyboard/space; phải giữ context scope.
+- **Đã chốt:** Comment/Reply composer trên Phone là **bottom sheet**, không phải task screen riêng; phải giữ context nội dung hiện tại.
 - Deep-link target cần scroll + focus/announcement.
 
 ## Web
 
+- **Đã chốt:** Comment/Reply composer trên Web là **inline** trong Comment Area/thread.
 - Task layer có thể dùng popover/dialog/side panel nếu không làm mất context.
 - CMS ưu tiên table/list + detail panel hoặc split-view khi phù hợp.
 - Keyboard navigation/focus indicator bắt buộc.
 
-**Không khóa ở IA:** breakpoint, pixel width, side-panel vs full-page cụ thể.
+## SmartTV / 10-foot UI
+
+- SmartTV **không tạo nội dung**: không Comment, Reply, Mention, Report, Share. Không render composer entry (C06/C07) và các overlay tạo nội dung (O03–O06, O08, O09, O10).
+- SmartTV **vẫn hỗ trợ**: đọc comment/thread, Like/Unlike, Rating 1–5 sao, đổi Sort, reveal Spoiler và bấm Timestamp để seek — tất cả bằng remote. Like/Rating vẫn yêu cầu login (O01).
+- Khi user muốn tham gia bình luận, TV hiển thị **hướng dẫn + QR** để chuyển sang smartphone (state `S13`). Empty state trên TV cũng dùng hướng dẫn + QR thay cho CTA viết bình luận đầu tiên (US01).
+- Thread trên TV **không expand inline** mà mở **trang thread riêng chỉ đọc** (`C17`, US08); không có Reply composer trong màn này.
+- Badge trên TV chỉ hiển thị icon + tên, không mở badge detail (US17).
+- Navigation theo D-pad/remote: focus order tuyến tính, focus indicator rõ ràng, không phụ thuộc hover/touch; lazy load và đổi sort phải thao tác được bằng remote (US02).
+- Account Lock áp dụng cho mọi platform gồm SmartTV; appeal Account Lock qua hotline `1800 1166` (US16).
+
+**Không khóa ở IA:** breakpoint, pixel width, side-panel vs full-page cụ thể, kích thước/vị trí QR trên TV.
 
 ---
 
 # 22. Navigation rules quan trọng
 
 1. Login return giữ target context nhưng **không giữ pending action để auto-submit**.
-2. Đổi Series/Episode làm reload dữ liệu scope, không carry list cũ.
-3. Sort preference áp dụng cho scope hiện tại; việc có persist sang scope khác hay không là Design/Product detail chưa khóa.
+2. Phim bộ đổi tập → reload toàn bộ dữ liệu của tập mới (count/rating/Pin/list), không carry list cũ. Phía người xem không có thao tác đổi scope Series↔Tập.
+3. Sort preference chỉ áp dụng cho content context hiện tại và **không persist sang context khác**: phim bộ đổi tập → **sort reset về `Nổi bật`** cùng lúc reload rating/public count/Pin/list của tập mới (US02 AC3).
 4. Deep link public → focus đúng target.
 5. Deep link non-public → content context + fallback, không lộ target.
 6. Account Lock → chặn toàn App Shell.
@@ -905,7 +927,7 @@ Các quyết định sau có thể coi là **UX structure baseline**:
 
 - Không có Community Home/global feed trong MVP.
 - Comment nằm trong Content Detail/Watch context.
-- Series/Episode là context selector trong Comment Area.
+- Không có scope selector Series↔Tập phía người xem; context của Comment Area là phim lẻ hoặc tập đang xem. CMS vẫn cấu hình được ở cấp series.
 - Notification là destination cấp app; comment target vẫn quay về content context.
 - Profile/Settings chứa nickname + community notification + Comment Lock status/appeal.
 - Account Lock nằm ngoài App Shell.
@@ -919,22 +941,20 @@ Các quyết định sau có thể coi là **UX structure baseline**:
 
 Đây là quyết định UX/UI, **không phải blocker business rule**:
 
-1. Comment Area đặt chính xác ở đâu trong Content Detail/Watch trên Web/Mobile.
-2. Series↔Episode dùng tab, segmented control, dropdown hay context switch khác.
-3. Composer inline hay mở task screen riêng trên Mobile.
-4. Pending comment của tác giả nằm inline theo vị trí thời gian hay khu riêng “Đang chờ duyệt”.
-5. Truncate comment dài bao nhiêu dòng trước “Xem thêm”.
-6. Comment action menu dùng kebab/context menu hay action row.
-7. Notification Center có group/tab “Cộng đồng” vs “Hệ thống” hay chỉ một feed với type label.
-8. Comment Lock status hiển thị banner toàn app hay chỉ trong Comment Area/Profile.
-9. Nickname shortcut có xuất hiện trong composer hay chỉ ở Profile.
-10. CMS Moderation dùng table + right panel hay list → full detail page.
-11. Search & Queue là hai navigation item hay một screen có saved filters.
-12. Reports có tab riêng trong Moderation hay chỉ filter + detail context.
-13. Pin/Config chung một Content Operations page hay hai subpage.
-14. Appeal Queue nằm dưới Users hay Moderation Ops.
-15. Analytics KPI card order và default time range.
-16. AI Ops nằm trong từng Content Detail CMS hay menu Growth rồi chọn scope.
+1. Pending comment của tác giả nằm inline theo vị trí thời gian hay khu riêng “Đang chờ duyệt”.
+2. Comment action menu dùng kebab/context menu hay action row.
+3. Notification Center có group/tab “Cộng đồng” vs “Hệ thống” hay chỉ một feed với type label.
+4. Comment Lock status hiển thị banner toàn app hay chỉ trong Comment Area/Profile.
+5. Nickname shortcut có xuất hiện trong composer hay chỉ ở Profile.
+6. CMS Moderation dùng table + right panel hay list → full detail page.
+7. Search & Queue là hai navigation item hay một screen có saved filters.
+8. Reports có tab riêng trong Moderation hay chỉ filter + detail context.
+9. Pin/Config chung một Content Operations page hay hai subpage.
+10. Appeal Queue nằm dưới Users hay Moderation Ops.
+11. Analytics KPI card order và default time range.
+12. AI Ops nằm trong từng Content Detail CMS hay menu Growth rồi chọn scope.
+
+Các điểm sau **đã được chốt ở nơi khác** nên không còn nằm trong danh sách này: vị trí Comment Area (tab riêng trong trang nội dung — `UX_USER_FLOWS.md`), composer Phone = bottom sheet / Web = inline (`UX_USER_FLOWS.md`), truncate comment dài **3 dòng** trước `Xem thêm`/`Thu gọn` (US01), và bộ chuyển Series↔Tập phía người xem (đã bỏ hẳn — xem IA-02).
 
 ---
 
@@ -944,13 +964,15 @@ Các quyết định sau có thể coi là **UX structure baseline**:
 
 Wireframe trước:
 
-- C01 Content Detail/Watch + C02 Comment Area.
-- Scope Series/Episode.
+- C01 Content Detail/Watch + C02 Comment Area (tab `Bình luận ({count})`).
 - Sort/Pin/List/Thread.
 - C06/C07 Composer.
 - Auth Gate.
-- Pending/Closed/Removed fallback.
+- Fallback states: `S06` Pending · `S05` scope Đóng (giữ tab `Bình luận`, bỏ count) · `S03` Target no longer available (“Bình luận không còn khả dụng”) · `S04` Account Lock target (“Bình luận hiện không khả dụng”) — S03 và S04 phải là **hai frame riêng** vì microcopy và ý nghĩa (vĩnh viễn vs tạm thời) khác nhau.
 - Edit/Delete/Report.
+- `C09` Nickname Settings + state `S16` nickname bị chặn tại submit và `S17` hết quota 24h (US04/US11 nằm trong P0).
+- Rate-limit states `S14` (Comment/Reply 5/phút/user) và `S15` (Edit 5/phút/target).
+- SmartTV: biến thể read-only của `C02`, màn `C17` thread read-only và state `S13` (hướng dẫn + QR chuyển sang smartphone).
 
 Bao phủ US01, US02, US04, US05, US08, US10, US11, US12.
 
@@ -1006,6 +1028,7 @@ Mỗi screen/frame trong Figma nên gắn metadata tối thiểu:
 
 - Screen ID từ tài liệu này.
 - User Story liên quan.
+- Platform: Phone / Web / SmartTV (theo cột Platform ở mục 15).
 - Actor/role.
 - Entry point.
 - Primary task.
@@ -1016,23 +1039,23 @@ Mỗi screen/frame trong Figma nên gắn metadata tối thiểu:
 
 Ví dụ:
 
-`C05 · US08/US09 · Logged-in · Deep-linked thread · Public · Reply available`
+`C05 · US08/US09 · Phone/Web · Logged-in · Deep-linked thread · Public · Reply available`
+
+`C17 · US08 · SmartTV · Logged-in/Guest · Thread read-only · Public · Không có Reply`
 
 Điều này giúp Design/Dev/QA đối chiếu cùng một screen mà không dựa vào tên frame tự do.
 
 ---
 
-# 27. Technical refinement note giữ nguyên
+# 27. Technical refinement note — đã chốt
 
-`US11` vẫn có wording chưa đồng nhất về **Nickname AI timeout**: business invariant nói nickname không có Pending, trong khi test timeout chung từng nói nickname → Pending.
+Điểm tồn đọng cũ về **Nickname AI timeout** trong `US11` **đã được PO chốt** và wording của US11 **đã được normalize**: nickname **không bao giờ** có trạng thái Chờ duyệt. AI timeout >5 giây / lỗi 5xx / dịch vụ AI không khả dụng, nickname ngoài tiếng Việt–tiếng Anh và AI low-confidence đều xử lý **giống nhau**: chặn + cho thử lại, **không tạo queue item**, **không tiêu quota** 1 lần đổi thành công/24 giờ.
 
-IA/Screen Map này **không tạo Nickname Pending screen/state**. Khi AI chưa có decision hợp lệ:
+Khẳng định sau vẫn giữ nguyên hiệu lực: IA/Screen Map này **không tạo Nickname Pending screen/state**. Khi AI chưa có decision hợp lệ:
 
 - nickname mới không được đổi/public;
-- nickname cũ/fallback tiếp tục hiển thị;
-- user nhận error/retry state phù hợp.
-
-Wording API/test cần normalize trước khi technical contract được khóa.
+- nickname cũ/fallback (mask số điện thoại nếu chưa từng có nickname hợp lệ) tiếp tục hiển thị;
+- user nhận error/retry state phù hợp — state `S16` trong mục 15.4.
 
 ---
 

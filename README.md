@@ -6,7 +6,7 @@ Tài liệu chuyển yêu cầu tính năng Bình luận trên MyTV thành backl
 
 ## 1. Mục tiêu sản phẩm
 
-- Tạo khu vực thảo luận cho phim/series/từng tập.
+- Tạo khu vực thảo luận cho phim lẻ và cho từng tập của phim bộ.
 - Mọi người được đọc comment public; đăng nhập mới được tương tác.
 - Kết hợp AI + Admin moderation với state/audit rõ ràng.
 - Cung cấp CMS để kiểm duyệt, xử lý vi phạm, appeal và theo dõi KPI.
@@ -15,7 +15,7 @@ Tài liệu chuyển yêu cầu tính năng Bình luận trên MyTV thành backl
 ## 2. Phạm vi hiện tại
 
 - Áp dụng trước cho Phim truyện/VOD có timeline cố định.
-- Hỗ trợ comment cấp series và từng episode.
+- Phim lẻ: comment ở **cấp phim**. Phim bộ: comment theo **từng tập**. **Không có scope Series phía người xem** (không có bộ chuyển Series↔Tập trên UI người xem).
 - Live/đang phát trực tiếp ngoài scope timestamp hiện tại.
 - **Không triển khai frame/clip trong MVP**; US06 dùng timestamp.
 - Mở rộng sang thể thao/thiếu nhi/giải trí ngoài scope 20 User Story hiện tại.
@@ -36,8 +36,8 @@ Tài liệu chuyển yêu cầu tính năng Bình luận trên MyTV thành backl
 | ID | Tên User Story | Epic | Ưu tiên |
 |---|---|---|---|
 | US01 | Đọc khu vực bình luận | EP01 | Must |
-| US02 | Xem bình luận theo series/tập, số lượng và sắp xếp | EP01 | Must |
-| US03 | Đánh giá series và tập phim | EP01 | Must |
+| US02 | Xem bình luận theo nội dung hiện tại, số lượng và sắp xếp | EP01 | Must |
+| US03 | Đánh giá phim/tập phim | EP01 | Must |
 | US04 | Đăng bình luận | EP01 | Must |
 | US05 | Sửa và xóa bình luận | EP01 | Must |
 | US06 | Bình luận kèm mốc thời gian | EP01 | Could |
@@ -56,7 +56,12 @@ Tài liệu chuyển yêu cầu tính năng Bình luận trên MyTV thành backl
 | US19 | Thống kê hoạt động bình luận | EP05 | Must |
 | US20 | AI hỗ trợ vận hành cộng đồng | EP05 | Could |
 
-> Ghi chú: filename US06/US18 vẫn giữ tên legacy chứa `CANH_PHIM` để không làm gãy liên kết repo; scope nội dung trong file đã chuyển sang timestamp/share comment MVP.
+> Ghi chú: một số filename vẫn giữ tên legacy để không làm gãy liên kết repo, nội dung và tiêu đề bên trong file đã được cập nhật:
+>
+> - US06/US18: filename chứa `CANH_PHIM`; scope nội dung đã chuyển sang timestamp / share comment MVP.
+> - US02: filename chứa `SERIES_TAP`; nội dung đã bỏ scope Series phía người xem, chỉ còn phim lẻ / từng tập.
+> - US03: filename chứa `SERIES`; nội dung đã bỏ rating cấp Series, chỉ còn rating phim lẻ / từng tập.
+> - US15: filename chứa `NOI_BAT`; nội dung là **ghim (Pin)** và cấu hình theo phim, không phải sort Nổi bật.
 
 ## 5. Các quyết định nghiệp vụ đã khóa
 
@@ -64,7 +69,8 @@ Tài liệu chuyển yêu cầu tính năng Bình luận trên MyTV thành backl
 
 - Guest đọc được comment public nhưng không tạo Comment, Reply, Like, Mention, Report, Rating, Share hoặc interaction event.
 - Khi guest chọn interaction rồi login thành công, hệ thống chỉ đưa user về **đúng phim/tập/thread/comment**; **không tự thực hiện action cũ**, user phải chủ động thao tác lại sau login.
-- Rating có cả cấp series và episode.
+- Phim lẻ: rating ở **cấp phim**. Phim bộ: rating theo **từng tập**. **Không có rating cấp Series** phía người xem.
+- Bỏ scope Series chỉ áp cho phía người xem: **CMS vẫn giữ cấu hình cấp series** — AI threshold/mode kế thừa theo thứ tự **episode override → series override → default hệ thống** (US15). Hai chuyện này khác nhau và không được hiểu nhầm là đã bỏ luôn cấu hình CMS.
 - Reply chỉ sâu một cấp.
 - Reply không hiển thị độc lập nếu root đang non-public.
 - Admin **Ẩn root** hoặc Account Lock của root author làm toàn thread tạm non-public nhưng không tự đổi moderation state của reply user khác.
@@ -97,7 +103,7 @@ Tài liệu chuyển yêu cầu tính năng Bình luận trên MyTV thành backl
 
 ### 5.4. Rating
 
-- Một rating hiện hành/account/scope; đổi rating không tăng tổng lượt; user được xóa rating.
+- Một rating hiện hành/account/scope; đổi rating không tăng tổng lượt; **user không được xóa rating**, chỉ được đổi mức sao; **không có thao tác DELETE rating trong MVP** (xem US03).
 - Average hiển thị **1 chữ số thập phân và luôn làm tròn lên** đến 0.1.
 - Khóa bình luận không loại rating.
 - Khóa toàn account loại rating khỏi **cả điểm trung bình và tổng số lượt rating công khai**; mở khóa tự tính lại cả hai nếu record còn.
@@ -160,7 +166,9 @@ Tài liệu chuyển yêu cầu tính năng Bình luận trên MyTV thành backl
 - Từ chối/Ẩn/Xóa → tác giả thấy reason và nhận thông tin theo kênh phù hợp; Account Lock tuân locked-account/Support flow.
 - Bulk moderation chỉ hỗ trợ **Duyệt / Từ chối / Ẩn / Xóa mềm**, hard max **100**, partial success; Report/Flag/Spoiler không bulk trong MVP.
 - Bulk Duyệt không cần reason; bulk Từ chối/Ẩn/Xóa dùng reason chung và có thể override từng item; item/batch reason “Vi phạm khác” bắt note hợp lệ.
-- Undo khi còn retention: **Từ chối→Chờ duyệt; Ẩn→Hiển thị; Xóa mềm→state ngay trước Xóa**; mọi Moderator có quyền tương ứng được Undo, không bắt reason nhưng tạo audit event mới.
+- Undo ánh xạ state: **Từ chối→Chờ duyệt; Ẩn→Hiển thị; Xóa mềm→state ngay trước Xóa**.
+- Điều kiện thời gian Undo theo US14: **Undo Từ chối và Undo Ẩn không giới hạn thời gian**; **Undo Xóa mềm chỉ trong 90 ngày retention kể từ thời điểm xóa** — với Undo Xóa root thì tính theo retention của **ROOT**.
+- Mọi Moderator có quyền tương ứng được Undo, không bắt reason nhưng tạo audit event mới.
 - Undo Xóa root chỉ áp dụng **CMS/Admin delete**, khôi phục thread theo state từng reply trước cascade; không áp dụng self-delete của user.
 - Undo moderation chỉ khôi phục content state; **không tự khôi phục Pin hoặc Featured badge** đã mất do moderation.
 - Moderation pending SLA **24 giờ**; quá SLA vẫn pending, đánh dấu Quá SLA và ưu tiên queue, không auto-approve/reject.

@@ -52,7 +52,7 @@ Quy tắc chọn thông báo:
 7. Khi chuyển **Chế độ 2 → Chế độ 1**, comment đang Chờ duyệt mà **đã có AI result an toàn/Nhẹ trước đó** tự chuyển Hiển thị; các case Trung bình/không đủ điều kiện tiếp tục Chờ duyệt.
 8. Khi chuyển **Chế độ 1 → Chế độ 2**, nội dung đã Hiển thị trước effective time vẫn giữ Hiển thị; Chế độ 2 áp dụng cho nội dung mới/version mới từ effective time.
 9. Khi chuyển sang **Đóng** trong lúc còn queue, queue được giữ và Admin vẫn xử lý trên CMS; item được Duyệt trong lúc Đóng không public cho tới khi mở lại.
-10. Deep link cũ từ Share/Notification tới target trong scope đang Đóng vẫn mở đúng phim/tập nhưng **không hiển thị comment/thread**, hiển thị **“Khu vực bình luận hiện không khả dụng”**; khi mở lại scope, link cũ hoạt động lại nếu target vẫn hợp lệ.
+10. Deep link cũ từ Share/Notification tới target trong scope đang Đóng vẫn mở đúng phim/tập nhưng **không hiển thị comment/thread**; thông báo fallback chọn theo **Effective Visibility Resolver** — nếu target CHỈ bị gate scope Đóng thì hiển thị **“Khu vực bình luận hiện không khả dụng”**, nếu target còn bị moderation riêng/Admin root cascade/Account Lock thì hiển thị thông báo của gate có ưu tiên cao hơn. Khi mở lại scope, link cũ hoạt động lại nếu target vẫn hợp lệ và không còn gate ưu tiên cao hơn đang active.
 11. Rule “sau X giờ” hỗ trợ ba loại mốc và **Admin chọn loại mốc khi cấu hình**: giờ phát hành MyTV, giờ phát sóng thực tế, hoặc mốc Admin nhập thủ công.
 12. Thay đổi mode/schedule chỉ áp dụng từ effective time và có timezone nhất quán.
 13. Khi comment bị **Từ chối / Ẩn / Xóa**, tác giả thấy lý do cụ thể trong app và nhận notification nghiệp vụ bắt buộc.
@@ -64,7 +64,7 @@ Quy tắc chọn thông báo:
 - Mode1: Nhẹ Hiển thị, Trung bình queue, Nặng chặn theo US11.
 - Mode2: Nhẹ/Trung bình queue, Nặng chặn.
 - Đóng là lớp visibility/interaction gate; không hủy moderation data và không đồng nghĩa moderation Ẩn/Xóa.
-- Deep link trong scope Đóng dùng fallback theo scope, không dùng thông báo “Bình luận không còn khả dụng” của target bị moderation riêng.
+- Deep link trong scope Đóng dùng fallback theo **Effective Visibility Resolver**: nếu target CHỈ bị gate scope Đóng thì hiển thị “Khu vực bình luận hiện không khả dụng”; nếu target còn có moderation riêng (Ẩn/Xóa mềm/Từ chối), Admin root cascade hoặc Account Lock thì dùng thông báo của gate có ưu tiên cao hơn theo bảng ưu tiên ở mục “Effective Visibility Resolver”.
 - Notification reason cho Từ chối/Ẩn/Xóa không bị tắt bởi switch thông báo cộng đồng US09.
 - Active day chỉ được ghi khi comment area thực sự khả dụng để user đăng nhập mở/đọc.
 - Concurrency tại effective time: mọi request submit Comment/Reply/Rating/Share xử lý theo mode/scope **có hiệu lực tại thời điểm hệ thống nhận request**, không theo thời điểm AI trả kết quả — kể cả khi AI xử lý bất đồng bộ và trả kết quả sau khi effective time đã đổi, quyết định mode/scope áp dụng vẫn chốt tại thời điểm nhận request ban đầu.
@@ -90,7 +90,7 @@ Quy tắc chọn thông báo:
 | TC-US12-006 | Close UI/API | Phim/tập Đóng | Mở UI và gọi Comment/Reply/Like/Mention/Report/Rating/Share APIs | Toàn bộ comment area/rating ẩn; mọi interaction mới trong scope bị chặn. |
 | TC-US12-007 | Close with queue | Có pending item | Đóng rồi Admin duyệt item | Queue vẫn xử lý; item đã duyệt không public trong lúc Đóng. |
 | TC-US12-008 | Reopen | Đang Đóng có data cũ/item đã duyệt | Mở lại | Data đủ điều kiện public lại; state xử lý riêng vẫn được tôn trọng. |
-| TC-US12-009 | Closed deep link | Scope Đóng, C1 vẫn hợp lệ | Mở deep link Share/Notification tới C1 | Mở đúng phim/tập + “Khu vực bình luận hiện không khả dụng”; không hiển thị C1 và không đổi state C1. |
+| TC-US12-009 | Closed deep link | Scope Đóng; TH1: C1 hợp lệ, chỉ bị gate scope Đóng. TH2: C1 vừa trong scope Đóng vừa bị Ẩn/Từ chối riêng. TH3: C1 trong scope Đóng và tác giả đang Account Lock | Mở deep link Share/Notification tới C1 ở từng TH | Cả 3 TH đều mở đúng phim/tập, không hiển thị C1 và không đổi state C1. Thông báo theo Effective Visibility Resolver: TH1 “Khu vực bình luận hiện không khả dụng”; TH2 “Bình luận không còn khả dụng” (gate 2 thắng gate 5); TH3 “Bình luận hiện không khả dụng” (gate 4 thắng gate 5). |
 | TC-US12-010 | Reopen deep link | Scope mở lại, C1 vẫn hợp lệ | Mở lại deep link cũ | Link lại mở đúng C1/thread, không cần tạo link mới. |
 | TC-US12-011 | X-hours | Cấu hình lần lượt 3 loại mốc | Kiểm tra trước/đúng/sau mốc | Transition đúng loại mốc Admin chọn và timezone. |
 | TC-US12-012 | Reason notification | Admin Từ chối/Ẩn/Xóa C1 | U1 mở app/notification | U1 thấy lý do cụ thể và nhận notification bắt buộc. |

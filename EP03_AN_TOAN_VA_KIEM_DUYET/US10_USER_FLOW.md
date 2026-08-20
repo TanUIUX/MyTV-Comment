@@ -9,7 +9,7 @@ flowchart TD
  A[Menu ⋯ → Báo cáo] --> B{Đã login + target public + không phải content mình?}
  B -->|Không| C[Auth/action unavailable]
  B -->|Có| D{Cooldown 24h / limit 10 report·h?}
- D -->|Blocked| E[Thông báo cooldown/rate-limit]
+ D -->|Blocked| E["Thông báo cooldown kèm số giờ còn lại / rate-limit"]
  D -->|OK| F[Mở bottom sheet Report]
  F --> G[Chọn 1 trong 6 reason]
  G --> H{Vi phạm khác?}
@@ -22,5 +22,5 @@ flowchart TD
 ## UX đã chốt
 
 - Report mở bằng bottom sheet trên Phone/Web.
-- Sau report thành công, action `Báo cáo` vẫn hiện; tap lại trong 24h báo `Bạn đã báo cáo nội dung này. Vui lòng thử lại sau.`
+- Sau report thành công, action `Báo cáo` vẫn hiện; tap lại trong 24h báo đúng microcopy đã chốt tại US10: **“Bạn đã báo cáo bình luận này — Có thể báo cáo lại sau {n} giờ nếu nội dung vẫn còn.”** `{n}` là số giờ còn lại của cooldown 24h, phải hiển thị động để user biết cần chờ bao lâu.
 - SmartTV không có Report; dùng Phone/Web.
