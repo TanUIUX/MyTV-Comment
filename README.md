@@ -84,7 +84,7 @@ Tài liệu chuyển yêu cầu tính năng Bình luận trên MyTV thành backl
 - Nổi bật là sort mặc định.
 - Hard max **3 comment ghim/scope**; Admin drag-drop vị trí 1–3; pin có expiry tùy chọn.
 - Featured Score phần không ghim: `0.5×ln(1+Like) + 0.3×ln(1+Reply) + 0.2×e^(-AgeHours/72)`.
-- `Like` dùng cho Featured Score/sort là **public Net Like hiện tại**, luôn không âm: `max(0, likes_current - unlikes_current)`; tổng Like actions vẫn tracking riêng.
+- `Like` dùng cho Featured Score/sort là **public Net Like** = **số Like record đang active** sau khi loại Like của account đang Account Lock. Like là trạng thái nhị phân nên đây là **phép đếm, không phải phép trừ** `likes − unlikes`; giá trị theo định nghĩa không âm. Tổng Like/Unlike actions lịch sử vẫn tracking riêng và không tham gia công thức (US07 AC11).
 - Like do account đang Account Lock tạo vẫn giữ record nhưng tạm **không tính public Net Like/Featured Score/ranking**; unlock tính lại nếu Like/target còn hợp lệ.
 - Initial root comments: **10**; lazy load **10/lần**.
 - Initial replies: **3**; “Xem thêm phản hồi” tải tối đa **10/lần**, phần còn lại <10 thì tải full.
@@ -93,10 +93,10 @@ Tài liệu chuyển yêu cầu tính năng Bình luận trên MyTV thành backl
 
 ### 5.3. Comment/Reply/Nickname
 
-- Comment và Reply: **1–1000 ký tự**, emoji-only hợp lệ, whitespace-only không hợp lệ. Trước khi đếm ký tự, moderation và lưu record, phải reject RTL/bidi override (ví dụ U+202E), **mọi zero-width character gồm U+200D/ZWJ**, và control character U+0000–U+001F; UI/API dùng cùng chuẩn. Emoji không chứa ZWJ vẫn hợp lệ.
+- Comment và Reply: **1–1000 ký tự**, emoji-only hợp lệ, whitespace-only không hợp lệ. Trước khi đếm ký tự, moderation và lưu record, phải reject theo blocklist tường minh: control `U+0000–U+001F`, `U+200B`, `U+200C`, `U+200E`/`U+200F`, `U+202A–U+202E`, `U+2066–U+2069`, `U+FEFF`. `U+200D` (ZWJ) và `U+FE0F` **chỉ hợp lệ trong emoji sequence hợp lệ theo Unicode RGI** — 👨‍👩‍👧‍👦, 🏳️‍🌈, ❤️‍🔥 là nội dung hợp lệ; ZWJ/VS16 ngoài emoji sequence bị reject. UI/API dùng cùng chuẩn.
 - URL chỉ cho `mytv.com.vn` và subdomain thực của domain này.
-- Rate limit chung Comment+Reply: **5 record trong rolling 60 giây/user**, tính từ thời điểm record được tạo; validation fail, Unicode reject, AI Nặng block hoặc AI lỗi/timeout không tạo record và không tiêu quota.
-- Nickname unique không phân biệt hoa/thường, 3–30 ký tự; cho chữ/số/khoảng trắng/`_`/`-`, không URL/phone/control char, RTL/bidi override hoặc mọi zero-width gồm U+200D/ZWJ; chuẩn hóa confusable/homoglyph trước uniqueness. Emoji ZWJ không được dùng trong Nickname.
+- Rate limit chung Comment+Reply: **5 attempt trong rolling 60 giây/user**. Attempt tính khi request đã qua validation cú pháp và **được gửi tới AI moderation**; validation fail và Unicode reject không tính attempt. AI Nặng chặn thì không tạo record nhưng vẫn tính attempt và ghi `blocked_attempt` cho audit/US16; **AI lỗi/timeout vẫn tạo record ở trạng thái Chờ duyệt** theo US11 AC6.
+- Nickname unique không phân biệt hoa/thường, 3–30 ký tự; cho chữ/số/khoảng trắng/`_`/`-`, không URL/phone/control char, RTL/bidi override, mọi zero-width gồm `U+200D` và `U+FE0F`, và **không cho emoji**; chuẩn hóa confusable/homoglyph trước uniqueness. Carve-out emoji RGI của comment **không** áp dụng cho nickname.
 - Nickname đổi tối đa **1 lần thành công/24 giờ/account** theo US04; submission bị validation/AI chặn không tiêu quota.
 - **Nickname dùng global AI moderation policy riêng**, độc lập Mode1/Mode2 và threshold override theo series/episode, chỉ còn **2 kết quả**: Nhẹ/An toàn dùng ngay; Trung bình hoặc Nặng đều bị chặn ngay, không tạo hàng chờ duyệt.
 - Nickname bị chặn thì giữ nickname hợp lệ cũ; chưa có nickname hợp lệ thì giữ `0` đầu + 3 số cuối, mask toàn bộ số giữa bằng `*`.
@@ -223,7 +223,7 @@ Tài liệu chuyển yêu cầu tính năng Bình luận trên MyTV thành backl
 ### 5.13. Analytics và AI Ops
 
 - Engagement Score: `Comment×2 + Reply×2 + Net Like×1 + Rating×1 + Share×2`.
-- `Rating` trong Engagement = **số rating hợp lệ tại snapshot cuối kỳ `to`** trong scope/thời gian; mỗi account rating hợp lệ = +1 bất kể 1★ hay 5★. `Net Like` cũng dùng snapshot cuối kỳ `to`; thiếu snapshot lịch sử thì báo dữ liệu không đủ.
+- `Rating` trong Engagement = **số rating hợp lệ tại snapshot gần nhất `≤ to`** trong scope/thời gian; mỗi account rating hợp lệ = +1 bất kể 1★ hay 5★. `Net Like` cũng lấy theo snapshot đó. Snapshot chốt **hằng ngày lúc 00:00**; khi `to` là hiện tại thì dùng realtime kèm nhãn tương ứng; kỳ trước ngày bật snapshot thì báo **không đủ dữ liệu lịch sử** và ranking Engagement không khả dụng cho kỳ đó.
 - `Share` trong Engagement = số **Share event hợp lệ từ share sheet mở thành công hoặc fallback Sao chép liên kết hoàn tất thành công** theo US18.
 - Public KPI/Engagement Score **KHÔNG bị loại trừ chỉ vì scope Đóng bình luận** — Đóng là gate hiển thị vận hành (chống spoiler/thời điểm nhạy cảm), không phải chế tài nội dung; dữ liệu Like/Reply/Rating/Share/Comment phát sinh trước và trong lúc Đóng vẫn tính đầy đủ. Chỉ đúng 4 nguyên nhân sau mới loại KPI: (1) Ẩn/Từ chối/Xóa do moderation, (2) self-delete cascade, (3) Admin root moderation cascade, (4) Account Lock.
 - Account Lock tạm loại content user khỏi public KPI; nếu locked user là root author thì **toàn thread** tạm bị loại public KPI/Engagement; unlock tính lại item còn hợp lệ.
@@ -246,13 +246,15 @@ Khi một comment/thread rơi vào từ 2 gate ẩn trở lên cùng lúc, hệ 
 
 | Ưu tiên | Gate | Thông báo fallback |
 |---|---|---|
-| 1 | Self-delete cascade (user tự xóa root) | **"Bình luận không còn khả dụng"** |
+| 1 | Self-delete (root cascade **hoặc reply tự xóa riêng lẻ**) | **"Bình luận không còn khả dụng"** |
 | 2 | Moderation state riêng (Ẩn/Xóa mềm/Từ chối do CMS/Admin) | **"Bình luận không còn khả dụng"** |
 | 3 | Admin root moderation cascade | **"Bình luận không còn khả dụng"** |
 | 4 | Account Lock (tác giả/root author) | **"Bình luận hiện không khả dụng"** |
 | 5 | Scope Đóng bình luận | **"Khu vực bình luận hiện không khả dụng"** |
 
-Chi tiết đầy đủ tại US12.
+Các chuỗi fallback trên **chỉ áp dụng khi hệ thống phải giải quyết một target cụ thể** (deep link, share link, notification, mở thread trực tiếp). Trong danh sách bình luận, nội dung không đủ điều kiện public bị **bỏ khỏi list, không để placeholder**.
+
+Chi tiết đầy đủ — gồm mô hình dữ liệu của gate (`moderation_state`, `cascade_source`, gate tính runtime) và state của edit version (`pending`/`approved`/`rejected`/`superseded`) — tại **US12**.
 
 ### 5.15. Glossary thuật ngữ chuẩn hóa
 
@@ -268,7 +270,7 @@ Chi tiết đầy đủ tại US12.
 
 - **Không còn blocker PO đang mở trong 20 User Story sau vòng review và đồng bộ quyết định đến Câu 169.**
 - Các khác biệt có chủ đích đã được ghi rõ giữa **public KPI/visibility** và **badge eligibility**, cũng như giữa **Account Lock/Admin Hide visibility cascade** và **self-delete cascade soft-delete**.
-- Bốn mục mở từ gói rà soát đã chốt: nickname **1 lần/24h**, Edit **5 lần/phút/target**, Account Lock dùng **1800 1166 — miễn phí, 24/7**, và tên badge **Fan kỳ cựu**.
+- Bốn mục mở từ gói rà soát đã chốt: nickname **1 lần/24h**, Edit **5 lần trong rolling 60 giây/target**, Account Lock dùng **1800 1166 — miễn phí, 24/7**, và tên badge **Fan kỳ cựu**.
 
 Các nội dung tiếp theo nên là thiết kế UI, data dictionary, technical implementation hoặc policy vận hành chi tiết dựa trên các business rule đã khóa; chỉ mở lại quyết định PO nếu phát hiện hành vi sản phẩm mới hoặc mâu thuẫn mới trong refinement/implementation.
 

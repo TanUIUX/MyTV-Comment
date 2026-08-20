@@ -22,7 +22,7 @@ MyTV bổ sung khu vực thảo luận cho phim truyện/VOD: người xem đọ
 | 2 | **Chi phí vận hành liên tục là khoản chưa có trong backlog** — cần đội moderator trực để giữ SLA 24 giờ, và chi phí gọi AI theo lượng bình luận | Cần chốt ngân sách vận hành trước khi mở rộng ra toàn bộ thư viện phim |
 | 3 | **Rủi ro lớn nhất là rò rỉ nội dung đã bị ẩn**, do có 5 cơ chế ẩn chồng nhau | Đã có phương án kiến trúc xử lý — tập trung logic vào một module duy nhất (mục 5) |
 
-**Đề xuất kiến trúc/kế hoạch:** triển khai theo **4 giai đoạn**, ưu tiên ra mắt giới hạn ở nhóm phim thí điểm trước khi mở rộng. Con số **6–7 tháng / 1 squad** tại mục 7 chỉ là giả định lập kế hoạch sơ bộ, không phải cam kết delivery trước khi đội phát triển estimate.
+**Đề xuất kiến trúc/kế hoạch:** ưu tiên **ra mắt giới hạn ở nhóm phim thí điểm** trước khi mở rộng toàn thư viện, với nguyên tắc không ra mắt tính năng viết khi chưa có công cụ kiểm duyệt tương ứng (mục 7). **Kế hoạch triển khai chi tiết — phân đợt, thứ tự User Story và timeline — không thuộc tài liệu này** và sẽ được chốt ở tài liệu delivery plan riêng sau buổi ước lượng cùng đội phát triển.
 
 **Trạng thái PO:** backlog không còn blocker PO đến Câu 169. Các mục tại phần 9 là quyết định đầu tư/vận hành/design cần chốt trước pilot hoặc trước khi cam kết rollout, không phải business rule còn mở.
 
@@ -59,13 +59,14 @@ MyTV bổ sung khu vực thảo luận cho phim truyện/VOD: người xem đọ
 ### 2.4. Ràng buộc đã khóa
 
 - Xác thực dùng hệ thống đăng nhập MyTV sẵn có, **không xây riêng**.
-- Lưu nội dung xóa mềm **90 ngày**; nhật ký kiểm toán **2 năm** (hai đồng hồ độc lập).
+- Retention xóa mềm có **ba trường hợp** (US05, US08, US14): root bị self-delete hoặc CMS/Admin xóa mềm giữ **90 ngày**; reply bị cascade theo root **không có đồng hồ riêng và purge cùng root**; reply tự xóa riêng lẻ giữ **90 ngày tính từ lúc reply bị xóa**. Nhật ký kiểm toán **2 năm**, độc lập với mọi đồng hồ retention nội dung.
 - AI moderation timeout **5 giây**, hỗ trợ tiếng Việt và tiếng Anh; ngoài ra chuyển kiểm duyệt viên.
 - SLA kiểm duyệt **24 giờ**, SLA khiếu nại **48 giờ** — quá hạn không tự động duyệt.
 - Khiếu nại khóa tài khoản đi qua tổng đài, vì người dùng không vào được ứng dụng.
 - Account Lock screen dùng **Tổng đài MyTV 1800 1166 (miễn phí, hỗ trợ 24/7)**; Support/CSKH chuyển appeal vào CMS.
 - Nickname đổi tối đa **1 lần thành công/24 giờ/account**; submission bị validation/AI chặn không tiêu quota.
-- Edit Comment/Reply tối đa **5 lần/phút/target**, chặn trước khi tạo version/gọi AI khi vượt ngưỡng.
+- Comment/Reply tối đa **5 attempt/rolling 60 giây/user** (quota chung; attempt tính khi request đã gọi AI, kể cả khi bị chặn). Edit tối đa **5 lần/rolling 60 giây/target**, chặn trước khi tạo version/gọi AI khi vượt ngưỡng.
+- **AI lỗi/timeout với Comment/Reply/Edit là fail-safe**: record vẫn được tạo ở trạng thái Chờ duyệt Admin, không bao giờ tự public. Nickname là ngoại lệ duy nhất — không có trạng thái Chờ duyệt.
 - Badge 90 ngày dùng tên hiển thị **Fan kỳ cựu**.
 - Accessibility **WCAG 2.1 AA** và yêu cầu bảo mật XSS/IDOR/PII là yêu cầu xuyên suốt theo `REQUIREMENTS_A11Y_SECURITY.md`.
 - **Nickname khi AI không có quyết định hợp lệ — đã chốt, không còn là điểm tồn đọng refinement:** nickname **không bao giờ** có trạng thái Chờ duyệt. AI timeout quá 5 giây, lỗi 5xx, dịch vụ AI không khả dụng, nickname ngoài tiếng Việt/tiếng Anh và nickname low-confidence đều được xử lý **giống nhau**: **không đổi nickname**, giữ nickname hợp lệ cũ (hoặc mask số điện thoại nếu chưa từng có nickname hợp lệ), báo lỗi **cho phép thử lại**, **không tạo hàng chờ duyệt / queue item** và **không tiêu quota** 1 lần đổi/24 giờ. Kiến trúc không tạo nickname-pending state; US11 đã được đồng bộ theo đúng invariant này.
@@ -173,7 +174,7 @@ flowchart TB
 
 ### 4.0. Cách hiểu sơ đồ
 
-Các khối mang tên `... Service` trong tài liệu này là **logical component / bounded responsibility**, chưa phải quyết định mỗi khối phải là một microservice triển khai độc lập. Technical design Giai đoạn 0 sẽ chốt deployment topology dựa trên tải, ownership, khả năng vận hành và nền tảng hiện có của MyTV. Có thể bắt đầu bằng **modular monolith + worker/event components** nếu phù hợp, miễn vẫn giữ ranh giới trách nhiệm và contract rõ ràng.
+Các khối mang tên `... Service` trong tài liệu này là **logical component / bounded responsibility**, chưa phải quyết định mỗi khối phải là một microservice triển khai độc lập. Technical design ở đợt nền tảng sẽ chốt deployment topology dựa trên tải, ownership, khả năng vận hành và nền tảng hiện có của MyTV. Có thể bắt đầu bằng **modular monolith + worker/event components** nếu phù hợp, miễn vẫn giữ ranh giới trách nhiệm và contract rõ ràng.
 
 `Effective Visibility Resolver` là **logic dùng chung bắt buộc**, nhưng không nhất thiết phải là một network hop riêng. Ưu tiên thiết kế để mọi read path dùng cùng implementation/policy version, tránh copy logic giữa BFF/service/client.
 
@@ -181,17 +182,17 @@ Các khối mang tên `... Service` trong tài liệu này là **logical compone
 
 | Khối | Trách nhiệm chính | User Story liên quan |
 |---|---|---|
-| **Comment Service** | Vòng đời bình luận/trả lời, lịch sử phiên bản khi sửa, xóa mềm 90 ngày, cascade khi xóa gốc | US01, US02, US04, US05, US08 |
+| **Comment Service** | Vòng đời bình luận/trả lời; lịch sử phiên bản khi sửa với đúng một version `pending` hiện hành (version bị thay chuyển `superseded`); retention xóa mềm ba trường hợp theo mục 2.4; delete cascade ghi `cascade_source` khi xóa gốc | US01, US02, US04, US05, US08 |
 | **Rating Service** | Một đánh giá hiện hành mỗi tài khoản mỗi phạm vi, tính điểm trung bình; nhận `content_completed` từ Player khi đạt 90% duration hoặc end-of-content event để mở post-watch rating prompt; Comment Area chỉ hiển thị aggregate khi `total > 0` | US03 |
 | **Interaction Service** | Thích/Bỏ thích gom theo lô 5 giây, gộp về trạng thái cuối, sự kiện Chia sẻ có khử trùng lặp | US07, US18 |
 | **Identity Service** | Tên hiển thị duy nhất không phân biệt hoa thường, chính sách kiểm duyệt riêng, mặt nạ số điện thoại | US04 |
 | **Effective Visibility Resolver** | **Nguồn chân lý duy nhất** trả lời "nội dung này có được hiển thị công khai không, và nếu không thì vì sao" | US12 (định nghĩa gốc), dùng bởi tất cả |
 | **Moderation Orchestrator** | Hàng chờ ưu tiên theo mức rủi ro, SLA 24 giờ, thao tác đơn và hàng loạt, hoàn tác | US11, US12, US13, US14 |
-| **AI Adapter** | Gọi nhà cung cấp AI, xử lý timeout/lỗi; Comment/Reply/Edit fail-safe về queue. Nickname giữ invariant **không có Pending** và không được đổi/public khi chưa có AI decision hợp lệ | US11 |
+| **AI Adapter** | Gọi nhà cung cấp AI, xử lý timeout/lỗi; Comment/Reply/Edit **fail-safe về queue Chờ duyệt (record vẫn được tạo)**; nội dung mức Nặng không tạo record nhưng ghi `blocked_attempt` cho audit/US16; mỗi lần gọi AI tiêu một attempt trong rate limit US04. Nickname giữ invariant **không có Pending**: không đổi/public khi chưa có AI decision hợp lệ, **cho user thử lại và không tiêu quota** | US11 |
 | **Sanction Service** | Cảnh báo, khóa bình luận, khóa tài khoản, khiếu nại và SLA 48 giờ | US16 |
 | **Notification Service** | Tách bạch **thông báo bắt buộc** (kiểm duyệt, chế tài, khiếu nại) và **thông báo cộng đồng** có công tắc tắt | US09 |
 | **Badge Service** | Tác vụ hằng ngày, cửa sổ trượt 30/90 ngày, ân hạn 7 ngày | US17 |
-| **Analytics Service** | Engagement Score, độ tươi tối đa 5 phút, snapshot Net Like/Rating theo thời điểm cuối kỳ khi filter lịch sử, báo thiếu dữ liệu nếu không có snapshot, đối soát hằng ngày | US19 |
+| **Analytics Service** | Engagement Score, độ tươi tối đa 5 phút, **snapshot hằng ngày lúc 00:00** cho public Net Like/Rating (filter lịch sử dùng snapshot gần nhất `≤ to`), báo thiếu dữ liệu và tắt ranking cho kỳ không có snapshot, đối soát hằng ngày | US19 |
 | **Audit Log** | Ghi bất biến mọi thao tác quản trị, lưu 2 năm độc lập với vòng đời nội dung | US14, US16 |
 
 ---
@@ -202,9 +203,9 @@ Bảy quyết định dưới đây định hình toàn bộ giải pháp. Mỗi
 
 ### AD-01 — Gom toàn bộ logic hiển thị vào một module dùng chung
 
-**Bối cảnh.** Một bình luận có thể bị ẩn bởi **năm cơ chế độc lập**: người dùng tự xóa, kiểm duyệt viên ẩn/xóa/từ chối, ẩn lây theo bình luận gốc, khóa tài khoản tác giả, và đóng khu vực bình luận theo phim. Các cơ chế này chồng lên nhau; dữ liệu phải lưu các gate active độc lập, không chỉ gate thắng priority.
+**Bối cảnh.** Một bình luận có thể bị ẩn bởi **năm cơ chế độc lập**: người dùng tự xóa, kiểm duyệt viên ẩn/xóa/từ chối, ẩn lây theo bình luận gốc, khóa tài khoản tác giả, và đóng khu vực bình luận theo phim. Các cơ chế này chồng lên nhau, và nhiều gate có thể cùng active tại một thời điểm.
 
-**Quyết định.** Không cho phép bất kỳ dịch vụ nào tự tính khả năng hiển thị. Mọi truy vấn đi qua **Effective Visibility Resolver** với thứ tự ưu tiên đã chốt: *tự xóa → kiểm duyệt riêng → ẩn lây theo gốc → khóa tài khoản → đóng khu vực*. Gate active được lưu bằng tập/cờ độc lập; `cascade_source` chỉ dùng cho delete cascade (`self_delete`/`admin_root_delete`), không dùng cho visibility cascade tạm thời.
+**Quyết định.** Không cho phép bất kỳ dịch vụ nào tự tính khả năng hiển thị. Mọi truy vấn đi qua **Effective Visibility Resolver** với thứ tự ưu tiên đã chốt: *tự xóa → kiểm duyệt riêng → ẩn lây theo gốc → khóa tài khoản → đóng khu vực*. Mô hình dữ liệu do **US12 định nghĩa duy nhất**: chỉ `moderation_state` và `cascade_source` (delete cascade: `self_delete`/`admin_root_delete`) được lưu trên bình luận; **visibility gate tạm thời không được lưu xuống hàng dữ liệu** mà do Resolver tính runtime từ state của gốc, trạng thái khóa tài khoản và trạng thái đóng của phạm vi. Cố ý không denormalize gate xuống từng trả lời — trạng thái đóng là thuộc tính của phim/tập, nhân bản nó xuống hàng con sẽ tạo chính lớp lỗi mà quyết định này nhằm loại bỏ.
 
 **Đánh đổi.** Thêm một điểm phụ thuộc chung và một chặng gọi nội bộ. Đổi lại, loại bỏ được lớp lỗi nguy hiểm nhất của tính năng này — mỗi nơi tính một kiểu dẫn tới lộ nội dung đã bị ẩn.
 
@@ -355,9 +356,11 @@ stateDiagram-v2
 
 ### 7.1. Nguyên tắc phân chia
 
-Backlog có **15/20 User Story ở mức Must** — nếu hiểu "Must" là "phải có trong bản đầu tiên" thì không thể ra mắt trong thời gian hợp lý. Vì vậy các giai đoạn dưới đây chia theo **phụ thuộc kỹ thuật và khả năng ra mắt an toàn**, không chia theo nhãn ưu tiên.
+Backlog có **15/20 User Story ở mức Must** — nếu hiểu "Must" là "phải có trong bản đầu tiên" thì không thể ra mắt trong thời gian hợp lý. Vì vậy việc phân đợt phải dựa trên **phụ thuộc kỹ thuật và khả năng ra mắt an toàn**, không dựa trên nhãn ưu tiên.
 
-Nguyên tắc chốt: **không ra mắt bất kỳ tính năng viết nào khi chưa có công cụ kiểm duyệt tương ứng.** Điều này giải thích vì sao CMS (US13, US14) nằm ngay ở Giai đoạn 1 dù thường bị coi là việc nội bộ.
+Nguyên tắc chốt: **không ra mắt bất kỳ tính năng viết nào khi chưa có công cụ kiểm duyệt tương ứng.** Đây là lý do CMS (US13, US14) phải đi cùng đợt với vòng lặp đăng/sửa/xóa bình luận, dù thường bị coi là việc nội bộ.
+
+> **Phạm vi mục này.** Tài liệu kiến trúc chỉ khóa *nguyên tắc phân đợt* và *điều kiện thoát pilot*. **Bảng phân đợt cụ thể và timeline được chốt ở tài liệu delivery plan riêng**, sau buổi ước lượng cùng đội phát triển — cố ý không đưa vào đây để tránh việc con số sơ bộ bị đọc thành cam kết. Các mốc trong tài liệu này vì vậy được diễn đạt theo **sự kiện** ("trước pilot", "trước rollout rộng"), không theo số thứ tự giai đoạn.
 
 ### 7.2. Exit criteria đề xuất trước khi mở rộng khỏi pilot
 
@@ -377,13 +380,13 @@ Các ngưỡng số cụ thể cần baseline từ pilot, nhưng tối thiểu p
 
 | Mã | Rủi ro | Mức | Phương án giảm thiểu |
 |---|---|---|---|
-| **R-01** | **Năng lực kiểm duyệt không đủ giữ SLA 24 giờ.** Backlog mô tả SLA nhưng không nói ai trực và bao nhiêu người | Cao | Đo khối lượng thực tế ở giai đoạn thí điểm trước khi mở rộng; mặc định Chế độ 1 (AD-04); xây bảng theo dõi hàng chờ theo thời gian thực từ Giai đoạn 1 |
+| **R-01** | **Năng lực kiểm duyệt không đủ giữ SLA 24 giờ.** Backlog mô tả SLA nhưng không nói ai trực và bao nhiêu người | Cao | Đo khối lượng thực tế ở pilot trước khi mở rộng; mặc định Chế độ 1 (AD-04); bảng theo dõi hàng chờ theo thời gian thực phải có **ngay từ đợt ra mắt tính năng viết đầu tiên** |
 | **R-02** | **Rò rỉ nội dung đã bị ẩn** do năm cơ chế ẩn chồng nhau tính không thống nhất | Cao | Module hiển thị dùng chung (AD-01); bộ kiểm thử ma trận trạng thái bắt buộc; kiểm tra ở cả giao diện và API |
 | **R-03** | **Yêu cầu bảo mật/A11y đã có nhưng có nguy cơ được implement không đồng đều giữa Web/Mobile/CMS/service.** | Cao | Dùng `REQUIREMENTS_A11Y_SECURITY.md` làm Definition of Done xuyên suốt; test XSS/IDOR/PII/WCAG trên các critical flow; không coi AI moderation là security control |
-| **R-04** | **Chi phí AI tăng theo lượng nội dung/version cần phân loại** | Trung bình | Áp quota đã khóa: nickname 1 lần đổi thành công/24h/account, Edit 5 lần/phút/target; theo dõi cost/1.000 AI decisions ở pilot; cache không được làm sai policy version hoặc bỏ moderation bắt buộc |
+| **R-04** | **Chi phí AI tăng theo lượng nội dung/version cần phân loại** | Trung bình | Áp quota đã khóa: nickname 1 lần đổi thành công/24h/account, Comment/Reply **5 attempt/rolling 60 giây/user** (đếm cả request bị AI chặn), Edit **5 lần/rolling 60 giây/target**; theo dõi cost/1.000 AI decisions ở pilot; cache không được làm sai policy version hoặc bỏ moderation bắt buộc |
 | **R-05** | **Phụ thuộc một nhà cung cấp AI duy nhất**, chỉ hỗ trợ tiếng Việt và tiếng Anh | Trung bình | Thiết kế lớp adapter để thay nhà cung cấp; dự phòng luôn là chuyển kiểm duyệt viên, không bao giờ tự động hiển thị |
-| **R-06** | **Tích hợp trình phát video hai chiều** chưa có hợp đồng giao tiếp; ảnh hưởng cả tính năng mốc thời gian | Trung bình | Chốt hợp đồng giao tiếp với đội trình phát ngay Giai đoạn 0, dù tính năng thuộc Giai đoạn 3 |
-| **R-07** | **Quy trình appeal Account Lock phụ thuộc phối hợp CSKH → CMS.** Người bị khóa không vào được ứng dụng | Trung bình | Dùng Tổng đài MyTV **1800 1166 (miễn phí, 24/7)** theo backlog; chốt SOP/ownership với CSKH trước Giai đoạn 2, theo dõi SLA 48 giờ và mã vụ việc end-to-end |
+| **R-06** | **Tích hợp trình phát video hai chiều** chưa có hợp đồng giao tiếp; ảnh hưởng cả tính năng mốc thời gian | Trung bình | Chốt hợp đồng giao tiếp với đội trình phát **ngay ở đợt nền tảng**, trước khi triển khai US06/US03 — dù hai tính năng dùng nó (mốc thời gian, post-watch rating prompt) nằm ở đợt sau |
+| **R-07** | **Quy trình appeal Account Lock phụ thuộc phối hợp CSKH → CMS.** Người bị khóa không vào được ứng dụng | Trung bình | Dùng Tổng đài MyTV **1800 1166 (miễn phí, 24/7)** theo backlog; chốt SOP/ownership với CSKH **trước khi bật sanction Khóa tài khoản trên user thật**, theo dõi SLA 48 giờ và mã vụ việc end-to-end |
 | **R-08** | **Sai lệch số liệu giữa giao diện và máy chủ** do cập nhật lạc quan và gom theo lô | Thấp | Máy chủ là nguồn chân lý (AD-03); đối soát hằng ngày; theo dõi tỷ lệ lệch |
 
 ---
@@ -395,10 +398,11 @@ Các ngưỡng số cụ thể cần baseline từ pilot, nhưng tối thiểu p
 | # | Điểm cần chốt | Ai quyết | Mốc cần chốt |
 |---|---|---|---|
 | 1 | **Ngân sách vận hành thường xuyên**: moderator capacity, AI cost envelope, on-call/CSKH ownership | Ban lãnh đạo + Vận hành | Trước khi mở pilot có user thật; phải đủ để giữ SLA 24h/48h |
-| 2 | **Pilot scope và tiêu chí mở rộng**: nhóm phim/tập nào tham gia, thời gian pilot, ngưỡng go/no-go | PO + Vận hành + Kỹ thuật | Trước cuối Giai đoạn 1 |
-| 3 | **Hợp đồng tích hợp Player**: đọc current timestamp, seek, lỗi/fallback, versioning contract | Trưởng nhóm Player + Solution/Tech Lead | Trong Giai đoạn 0, trước khi triển khai US06 |
-| 4 | **Deployment topology**: modular monolith hay tách service/worker, hạ tầng queue/search/cache và ownership | Solution Architect + Tech Lead/Platform | Cuối Giai đoạn 0 sau sizing/estimate |
-| 5 | **Bố cục UI**: vị trí comment area, cách rút gọn nội dung dài, cách hiển thị context phim/tập đang xem | PO + Design | Trước khi finalize wireframe Giai đoạn 1 |
+| 2 | **Pilot scope và tiêu chí mở rộng**: nhóm phim/tập nào tham gia, thời gian pilot, ngưỡng go/no-go | PO + Vận hành + Kỹ thuật | Trước khi mở pilot |
+| 3 | **Hợp đồng tích hợp Player**: đọc current timestamp, seek, event `content_completed`, lỗi/fallback, versioning contract | Trưởng nhóm Player + Solution/Tech Lead | Ở đợt nền tảng, trước khi triển khai US03/US06 |
+| 4 | **Deployment topology**: modular monolith hay tách service/worker, hạ tầng queue/search/cache và ownership | Solution Architect + Tech Lead/Platform | Sau sizing/estimate, trước khi bắt đầu code nền tảng |
+| 5 | **Bố cục UI**: vị trí comment area, cách rút gọn nội dung dài, cách hiển thị context phim/tập đang xem | PO + Design | Trước khi finalize wireframe P0 |
+| 6 | **Delivery plan và timeline**: phân đợt cụ thể, thứ tự User Story, ước lượng thời gian và nhân sự | PO + Tech Lead + Vận hành | Buổi ước lượng cùng đội phát triển; kết quả nằm ở tài liệu delivery plan riêng, không nằm trong tài liệu kiến trúc này |
 
 ### 9.1. Guardrail Mode1/Mode2 đã có
 
@@ -410,7 +414,7 @@ Các ngưỡng số cụ thể cần baseline từ pilot, nhưng tối thiểu p
 ### 9.2. Bốn mục PO của gói rà soát trước đã đóng
 
 - Nickname: **1 lần đổi thành công/24 giờ/account**.
-- Edit Comment/Reply: **5 lần/phút/target**.
+- Edit Comment/Reply: **5 lần/rolling 60 giây/target**.
 - Account Lock appeal: **Tổng đài MyTV 1800 1166 — miễn phí, 24/7**.
 - Badge 90 ngày: tên hiển thị **Fan kỳ cựu**.
 
@@ -448,6 +452,6 @@ Các chỉ số được nhóm theo mục tiêu, lấy từ phần chỉ số c�
 **Các bước tiếp theo:**
 
 1. Technical design chi tiết: mô hình dữ liệu, hợp đồng API, deployment topology, transactional outbox/idempotency và thiết kế module Effective Visibility Resolver dùng chung.
-2. Buổi ước lượng cùng đội phát triển để thay các con số sơ bộ ở mục 7 bằng cam kết thật.
-3. Wireframe và luồng màn hình cho Giai đoạn 1, sau khi ba quyết định bố cục ở mục 9 được chốt.
+2. Buổi ước lượng cùng đội phát triển, kết quả là **tài liệu delivery plan riêng**: phân đợt, thứ tự User Story và timeline có cam kết. Tài liệu kiến trúc này chỉ giữ nguyên tắc phân đợt và exit criteria pilot (mục 7).
+3. Wireframe và luồng màn hình cho **đợt P0 consumer + P0 CMS** theo `UX_INFORMATION_ARCHITECTURE_SCREEN_MAP.md` mục 25, sau khi ba quyết định bố cục ở mục 9 được chốt.
 4. Kế hoạch vận hành: tuyển dụng và đào tạo kiểm duyệt viên, quy trình phối hợp với CSKH.

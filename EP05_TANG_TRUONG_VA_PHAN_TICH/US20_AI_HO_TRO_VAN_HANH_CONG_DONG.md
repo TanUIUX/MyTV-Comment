@@ -30,7 +30,7 @@
 
 ### Acceptance Criteria — Đề xuất câu hỏi/chủ đề
 
-1. Admin bấm “AI đề xuất” để sinh câu hỏi/chủ đề gắn đúng series/tập.
+1. Admin bấm “AI đề xuất” để sinh câu hỏi/chủ đề gắn đúng **phim lẻ hoặc tập hiện tại**; không có proposal ở cấp series vì phía người xem không tồn tại scope series (README mục 5.1). Cấu hình cấp series ở CMS là chuyện khác và không tạo nơi hiển thị proposal.
 2. AI proposal phải qua safety/Spoiler check.
 3. Admin có thể **chỉnh sửa → duyệt → đăng** ngay; **không cần Admin thứ hai phê duyệt**.
 4. Nếu Admin không xác nhận, AI proposal không được public.

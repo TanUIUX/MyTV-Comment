@@ -166,7 +166,7 @@ Mỗi mục dưới đây ghi: vấn đề gốc → thay đổi → file bị �
 2. **Microcopy cho `S17` (nickname hết quota 24 giờ) chưa tồn tại** ở bất kỳ US nào. Tài liệu chỉ mô tả state, chưa đặt chuỗi hiển thị — cố tình không bịa. **Cần UX Writer bổ sung.**
 3. **SmartTV chưa có trong `UX_FIGMA_WIREFRAMES.md`.** File đó tự khai báo phạm vi là *P0 Mobile v1*, nên không tự thêm mục TV vào. IA đã có sẵn Screen ID (`C17`, `S13`) để dựng khi Design mở đợt TV. **Cần Design quyết thời điểm mở đợt.**
 
-Ngoài ra, một điểm nhỏ đáng cân nhắc: `SOLUTION_ARCHITECTURE.md` phần mô tả AI Adapter nêu đúng invariant nickname nhưng chưa nhắc "cho thử lại / không tiêu quota / không queue". Không sai, chỉ là chưa đầy đủ bằng US11 — có thể bổ sung ở lần cập nhật kiến trúc tới.
+Ngoài ra, một điểm nhỏ đáng cân nhắc: `SOLUTION_ARCHITECTURE.md` phần mô tả AI Adapter nêu đúng invariant nickname nhưng chưa nhắc "cho thử lại / không tiêu quota / không queue". Không sai, chỉ là chưa đầy đủ bằng US11. → **Đã bổ sung ở vòng 3** (xem phụ lục cuối file).
 
 ---
 
@@ -176,13 +176,34 @@ Các quyết định dưới đây được chốt sau vòng 2 và là business 
 
 1. **KPI/Engagement:** Account Lock tạm loại public KPI/Engagement; Scope Đóng không loại KPI.
 2. **Retention/cascade:** root giữ 90 ngày; reply cascade purge cùng root, không có đồng hồ riêng; reply self-delete riêng lẻ giữ 90 ngày; dùng `cascade_source` để phân biệt self-delete và Admin root delete.
-3. **Visibility:** lưu các visibility gate độc lập; `cascade_source` chỉ dùng cho delete cascade. Self-delete fallback dùng “Bình luận không còn khả dụng”.
+3. **Visibility:** `cascade_source` chỉ dùng cho delete cascade; **visibility gate tạm thời không lưu trên comment/reply** mà do Effective Visibility Resolver tính runtime. Cờ `hidden_by_root_cascade` đã bị bỏ. Self-delete fallback dùng “Bình luận không còn khả dụng”, và các chuỗi fallback chỉ áp dụng cho deep link/target resolution — trong danh sách thì nội dung bị bỏ khỏi list, không để placeholder.
 4. **Scope Đóng:** giữ tab `Bình luận`, bỏ count, hiển thị trạng thái không khả dụng; ẩn rating/list/composer/actions.
 5. **Rating:** khi `total = 0`, ẩn khối rating trong tab; rating đầu tiên qua post-watch prompt sau `content_completed` (90% duration hoặc end event), phim bộ lưu theo tập.
 6. **Share:** share sheet mở thành công hoặc copy-link fallback thành công đều ghi một Share event.
-7. **Analytics:** filter lịch sử dùng snapshot Net Like/Rating tại thời điểm `to`; thiếu snapshot phải báo dữ liệu không đủ. CMS được roll-up Series, không tạo scope người xem.
-8. **Moderation/limits:** Comment/Reply dùng rolling 60 giây; Report dùng rolling 60 phút; Undo không có chain; AI request snapshot policy tại thời điểm nhận.
+7. **Analytics:** snapshot public Net Like/Rating chốt **hằng ngày lúc 00:00**, filter lịch sử dùng snapshot gần nhất `≤ to`; `to` = hiện tại thì dùng realtime kèm nhãn; kỳ trước ngày bật snapshot báo thiếu dữ liệu và **ranking Engagement không khả dụng** cho kỳ đó. CMS được roll-up Series, không tạo scope người xem.
+8. **Moderation/limits:** Comment/Reply dùng **5 attempt/rolling 60 giây** (attempt tính khi đã gọi AI, kể cả khi bị chặn); Report dùng rolling 60 phút; Undo không có chain; AI request snapshot policy tại thời điểm nhận.
 9. **UX/platform:** SmartTV đọc, Like/Unlike, Rating, Sort, Spoiler, Timestamp; không tạo Comment/Reply/Mention/Report/Share/Edit/Delete.
 10. **Quyền CMS:** EP04 có role + scope permission matrix; API là nơi enforce cuối.
 
-Các thay đổi này đã được đồng bộ vào README, Solution Architecture, IA/UX và User Story liên quan; chưa commit vì repo không yêu cầu commit tự động.
+Các thay đổi này đã được đồng bộ vào README, Solution Architecture, IA/UX và User Story liên quan.
+
+---
+
+## Vòng 3 — Rà soát mâu thuẫn logic của branch `review/refinement-2026-08`
+
+Vòng này đối chiếu branch với bản gốc và xử lý 22 điểm không nhất quán. Bốn điểm cần PO chốt đã được chốt như sau:
+
+1. **AI timeout với Comment/Reply/Edit — fail-safe.** Branch từng ghi ở US04/US08/README rằng "AI lỗi/timeout không tạo record", mâu thuẫn trực tiếp với US11 AC6. **Chốt theo US11:** timeout/5xx/không khả dụng vẫn **tạo record ở trạng thái Chờ duyệt Admin** để không làm mất nội dung user đã viết. Nickname vẫn là ngoại lệ duy nhất không có Chờ duyệt.
+2. **Rate limit đếm attempt thay vì record.** "Bị AI Nặng chặn thì không tiêu quota" tạo lỗ spam và chi phí AI vô hạn: mỗi lần bị chặn là miễn phí. **Chốt:** 5 **attempt**/rolling 60 giây/user — attempt tính khi request đã qua validation cú pháp và được gửi tới AI, kể cả khi bị chặn; validation fail/Unicode reject không tính. Nội dung bị chặn ghi `blocked_attempt` làm căn cứ audit và lịch sử vi phạm US16.
+3. **ZWJ — carve-out cho emoji RGI.** Lệnh cấm tuyệt đối `U+200D` của branch làm reject 👨‍👩‍👧‍👦, 🏳️‍🌈, ❤️‍🔥, 👩‍💻, trái với AC1 "emoji-only là nội dung hợp lệ", và `REQUIREMENTS_A11Y_SECURITY` §B.2 chưa được sửa theo. **Chốt:** blocklist tường minh (không dùng bộ lọc theo category `Cf`, vì bộ đó bao cả `U+FE0F`); `U+200D`/`U+FE0F` chỉ hợp lệ trong emoji sequence hợp lệ theo Unicode RGI. **Nickname không có carve-out**, chặn tuyệt đối.
+4. **Kế hoạch triển khai không thuộc tài liệu kiến trúc.** Branch xóa mục 7.2 của `SOLUTION_ARCHITECTURE.md` (bảng 4 giai đoạn, gantt, ước lượng 32 tuần) nhưng để lại 10 tham chiếu treo tới "Giai đoạn 0/1/2/3" và "các con số sơ bộ ở mục 7". **Chốt:** không khôi phục bảng giai đoạn; mục 7 chỉ giữ nguyên tắc phân đợt và exit criteria pilot; toàn bộ mốc trong tài liệu diễn đạt theo **sự kiện** ("trước pilot", "ở đợt nền tảng"); delivery plan và timeline nằm ở tài liệu riêng, thêm thành mục 9.6 trong bảng quyết định cần chốt.
+
+Các sửa đổi đồng bộ kèm theo:
+
+- **US03** đánh lại Acceptance Criteria 1–13 (branch có hai AC cùng số 5); thêm gate scope Đóng cho post-watch prompt; ghi rõ **rủi ro cold-start** của quyết định `total = 0` ẩn toàn bộ khối rating (PO giữ nguyên hành vi branch).
+- **US12** trở thành nguồn chân lý duy nhất của **mô hình dữ liệu gate** và **state của edit version** (`pending`/`approved`/`rejected`/`superseded`). US05/US08/US14/SA chỉ dẫn chiếu. Bỏ `root_visibility_gates` khỏi US08 và bỏ `hidden_by_root_cascade` khỏi US05 — cờ này sau khi tách hai lifecycle đã trả `false` cho reply bị Admin Ẩn root, tức có nguy cơ làm lộ reply của thread đã bị ẩn.
+- **US07 AC11** sửa công thức: public Net Like là **phép đếm Like record active**, không phải `max(0, likes − unlikes)` — Like là trạng thái nhị phân nên phép trừ đó trừ Unlike hai lần. Đồng bộ README 5.2 và US19.
+- **US19** thống nhất một cách nói cho mốc lấy số liệu và bổ sung tần suất snapshot; thêm TC-US19-016.
+- **Quét đồng bộ:** rolling window ở SA/README/IA/US10_USER_FLOW; TC-US15-010 (scope Đóng giữ tab); gate 1 Resolver bao cả reply tự xóa riêng lẻ; `O11` vào ma trận coverage IA và P1; microcopy giới hạn 10 mention ở US09; US20 AC1 bỏ "series/tập"; TC-US06-012 về cuối bảng; retention ba trường hợp vào SA §2.4.
+- **Role model CMS** được định nghĩa tại US13 với ba role và ba permission có tên; ma trận ở EP04 README dẫn chiếu về đó và được phủ bởi TC-US13-011/012.
+- **US17** ghi lý do dùng nguyên Featured Score có freshness (đảo quyết định vòng 2) kèm hệ quả đã chấp nhận.

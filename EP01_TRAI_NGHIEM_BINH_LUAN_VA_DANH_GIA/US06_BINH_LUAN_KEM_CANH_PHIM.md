@@ -62,12 +62,12 @@
 | TC-US06-004 | Max one | Comment đã có timestamp | Thử gắn timestamp thứ hai | Không cho lưu hơn 1 timestamp/comment hoặc reply. |
 | TC-US06-005 | Scope | Đang comment E1 | Sửa request trỏ timestamp sang E2 | API từ chối mismatch. |
 | TC-US06-006 | Playback | Comment có `18:00`; U1 có entitlement | Bấm timestamp | Player seek 18:00 và tiếp tục phát. |
-| TC-US06-012 | Entitlement | Comment có `18:00`; U1 chưa có entitlement | Bấm timestamp | Không seek/không phát; hiển thị CTA “Xem tập phim để nhảy tới mốc 18:00” + `[Xem ngay]`; thread/comment vẫn nguyên vẹn. |
 | TC-US06-007 | Fallback | Source/timestamp không còn khả dụng | Mở comment | Text/thread vẫn hiển thị; timestamp không gây crash và có trạng thái thay thế. |
 | TC-US06-008 | No media | Kiểm tra UI/API | Tìm chức năng frame/clip/upload | Không có chức năng tạo/share frame/clip hoặc upload media cá nhân trong MVP. |
 | TC-US06-009 | Live scope | Nội dung Live | Kiểm tra timestamp comment | Không cung cấp tính năng timestamp theo US06 trong scope hiện tại. |
 | TC-US06-010 | Spoiler + timestamp cùng lúc | Comment vừa bật Spoiler vừa có timestamp hợp lệ | Gửi và mở bằng U2 | Timestamp không làm thay đổi rule Spoiler/moderation của phần text; text vẫn bị che theo Spoiler cho tới khi U2 chủ động mở, timestamp vẫn hiển thị/hoạt động độc lập với trạng thái che. |
 | TC-US06-011 | Timestamp format sai | Chuỗi "abc", "99:99", "12:60" nhập làm timestamp | Gửi qua UI/API | Toàn bộ giá trị định dạng sai bị chặn, không được lưu thành timestamp hợp lệ. |
+| TC-US06-012 | Entitlement | Comment có `18:00`; U1 chưa có entitlement | Bấm timestamp | Không seek/không phát; hiển thị CTA “Xem tập phim để nhảy tới mốc 18:00” + `[Xem ngay]`; thread/comment vẫn nguyên vẹn. |
 
 ### Microcopy
 

@@ -76,3 +76,4 @@
 | Trạng thái | Nội dung hiển thị |
 |---|---|
 | Không tìm thấy kết quả mention phù hợp | **Không tìm thấy người dùng phù hợp.**<br>Bạn có thể nhắc đến người đã tham gia thảo luận này. |
+| Đã đạt giới hạn 10 mention trong một nội dung | **Mỗi bình luận nhắc được tối đa 10 người.**<br>Bỏ một người khỏi danh sách nhắc để thêm người khác. |

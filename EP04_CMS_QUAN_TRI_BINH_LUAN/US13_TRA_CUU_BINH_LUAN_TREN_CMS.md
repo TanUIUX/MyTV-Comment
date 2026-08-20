@@ -11,6 +11,23 @@
 
 **Must**
 
+### Role model CMS — nguồn chân lý duy nhất
+
+Toàn bộ EP04 (`README` của Epic, US14, US15, US16) dùng đúng ba role dưới đây và **không định nghĩa lại**. Mọi quyền đều là **tổ hợp `role` + `scope` được cấp**, và **API là nơi enforce cuối** — UI ẩn action không được coi là kiểm soát quyền.
+
+| Role | Tên dùng trong tài liệu | Được cấp mặc định | Ghi chú |
+|---|---|---|---|
+| `moderator` | **Moderator** (trước đây có nơi gọi "Admin kiểm duyệt") | Tra cứu + xử lý nội dung trong scope | Các quyền Pin/config/sanction phải được cấp thêm tường minh |
+| `ops_admin` | **Admin vận hành** | Toàn bộ quyền nội dung + Pin/config + sanction trong scope | Role vận hành nội dung hằng ngày, chủ thể của US15 |
+| `manager` | **Quản lý** | Xem báo cáo/audit toàn hệ thống; quyền ghi theo policy được cấp | Không mặc định có quyền ghi nội dung |
+
+Hai nguyên tắc bắt buộc:
+
+1. **Permission grant chỉ được thu hẹp, không được mở rộng vượt role.** Một `moderator` được cấp thêm permission vẫn không thể vượt quá tập quyền tối đa của `moderator`.
+2. **Mọi ô "được cấp thêm" phải là một permission có tên**, không phải quy ước ngầm. Ba permission cấp thêm hiện có: `content_moderation` (Duyệt/Từ chối/Ẩn/Xóa mềm/Undo/bulk), `pin_and_config` (ghim/reorder/expiry/mode/threshold/schedule), `sanction` (Cảnh báo/Khóa bình luận/Khóa tài khoản/xử lý appeal).
+
+Ma trận quyền baseline theo từng nhóm chức năng nằm ở [README của EP04](README.md#4-ma-trận-quyền-cms), dẫn chiếu về mục này.
+
 ### Acceptance Criteria
 
 1. Admin/Moderator xem được comment/reply trong phạm vi CMS được cấp.
@@ -55,3 +72,5 @@
 | TC-US13-008 | Pagination | Kết quả >1 trang | Paginate/lazy load | Không trùng/bỏ sót và thứ tự ổn định. |
 | TC-US13-009 | SLA visibility | Có item sắp/quá SLA | Mở queue | Hiển thị badge/thời gian chờ phù hợp để Admin ưu tiên. |
 | TC-US13-010 | IDOR ghi (write) | Moderator M2 chỉ có scope P2; biết trước comment ID C1 (thuộc phim P1) và user ID U1 (thuộc phim P1) | M2 gọi TRỰC TIẾP API (không qua UI) để: xem chi tiết C1; Duyệt/Ẩn/Xóa/Undo C1; bulk chứa C1; xem PII của U1; export PII với filter P1; ghim C1 (US15); áp Cảnh báo/Khóa bình luận/Khóa tài khoản lên U1 (US16) | Tất cả bị từ chối theo scope; không lộ sự tồn tại của C1/U1 qua mã lỗi hoặc metadata; không tạo audit event "thành công" cho bất kỳ thao tác nào. |
+| TC-US13-011 | Ma trận quyền theo role | Bốn account cùng scope P1: M1 role `moderator` không permission thêm; M2 role `moderator` có `content_moderation`; O1 role `ops_admin`; G1 role `manager` không quyền ghi | Mỗi account gọi lần lượt qua **API trực tiếp**: Duyệt/Ẩn/Xóa mềm/Undo/bulk; ghim + đặt expiry (US15); đổi mode/threshold (US15); Cảnh báo/Khóa bình luận/Khóa tài khoản (US16); xử lý appeal; export CSV không PII; export có PII; đọc audit log | Kết quả khớp đúng ma trận baseline: M1 bị từ chối moderation/Pin/config/sanction; M2 làm được moderation nhưng vẫn bị từ chối Pin/config/sanction; O1 làm được cả ba nhóm trong scope; G1 đọc được báo cáo/audit nhưng bị từ chối mọi thao tác ghi. Mọi request bị từ chối trả lỗi nhất quán (403/404), không lộ tồn tại record và **không tạo audit event "thành công"**. |
+| TC-US13-012 | Grant không mở rộng vượt role | M1 role `moderator` được cấp thêm cả ba permission `content_moderation`, `pin_and_config`, `sanction` | Gọi các API vượt tập quyền tối đa của `moderator`, ví dụ đọc audit log ngoài scope và export PII ngoài scope | Permission cấp thêm chỉ mở đúng nhóm chức năng tương ứng **trong scope**; không có đường nào để `moderator` đạt quyền vượt role; request vượt phạm vi bị từ chối và ghi log truy cập. |

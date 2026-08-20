@@ -23,7 +23,7 @@
 8. Double-click/retry không làm tăng/giảm trùng Like.
 9. Guest chọn Like được chuyển sang login; không tạo Like trước xác thực.
 10. Comment bị Ẩn/Xóa hoặc user không còn quyền xem không thể nhận Like mới.
-11. Net Like hiện tại được dùng cho sort Được yêu thích/Featured Score; **public Net Like không âm** (`max(0, likes_current - unlikes_current)`); lịch sử thao tác Like/Unlike có thể được tracking riêng cho US19.
+11. **Public Net Like = số Like record đang ở trạng thái active**, sau khi loại Like của account đang Account Lock. Unlike làm record của chính user đó hết active chứ **không phải một bộ đếm âm riêng**, nên giá trị này theo định nghĩa không bao giờ âm — không có phép trừ `likes − unlikes` ở đây. Đây là giá trị dùng cho sort `Nhiều lượt thích` và Featured Score; lịch sử thao tác Like/Unlike được tracking riêng cho US19 và không tham gia công thức.
 12. Nếu account đã tạo Like sau đó bị **Khóa tài khoản**, Like record **không bị xóa**, nhưng trong thời gian khóa Like đó tạm bị loại khỏi **Net Like công khai, Featured Score/ranking và Engagement Score**. Khi account được mở khóa, Like được tính lại nếu record và target vẫn hợp lệ.
 13. Việc một liker bị Account Lock **không làm thay đổi Fan kỳ cựu eligibility của người đã nhận Like đó**; badge dùng semantics riêng tại US17 để tránh badge của recipient dao động theo lock/unlock của past liker.
 
@@ -35,6 +35,7 @@
 - Batch window 5 giây là rule client; phải hỗ trợ idempotency/dedup ở BE.
 - Coalescing không ngăn analytics ghi nhận lịch sử thao tác UI nếu data dictionary US19 cần; Net Like cuối cùng vẫn dựa trên state hiện hành ở BE.
 - **Public Net Like** loại Like của account đang Account Lock; đây là rule cho public aggregate/ranking/Engagement, không phải xóa Like record.
+- Vì Like là trạng thái nhị phân theo AC2, `public Net Like` là một **phép đếm**, không phải phép trừ. Nếu counter cache hoặc aggregate pipeline ra giá trị âm thì đó là **dữ liệu lệch**: hiển thị `0` như một guard và để job reconciliation của US19 sửa lại đúng theo state hiện hành ở BE, đồng thời ghi log.
 - Badge eligibility của recipient là một data semantic riêng theo US17 và cố ý không dao động theo trạng thái khóa của liker.
 
 *Xem thêm: [REQUIREMENTS_A11Y_SECURITY.md](../REQUIREMENTS_A11Y_SECURITY.md) mục A.2 — nút Like dùng `aria-pressed`, vùng `aria-live` cho số Like, announce khi reconcile revert.*

@@ -80,7 +80,8 @@ Nickname KHÔNG dùng trạng thái Chờ duyệt; chỉ có **2 kết quả**, 
 - Không còn hành vi tự che `***` cho mức Nhẹ trong policy hiện tại.
 - Nickname là identity toàn account nên dùng global policy riêng; không lấy episode/series mode làm đầu vào quyết định nickname; nickname KHÔNG có trạng thái Chờ duyệt (chỉ 2 kết quả: dùng ngay hoặc chặn ngay khi submit).
 - AI hỗ trợ quyết định; Admin có quyền override theo policy và feedback phải được lưu.
-- Fallback khi AI lỗi luôn fail-safe, không fail-open: với **Comment/Reply/Edit** → đưa vào queue Chờ duyệt Admin; với **Nickname** → chặn không đổi nickname và cho user thử lại, KHÔNG tạo queue/hàng chờ.
+- Fallback khi AI lỗi luôn fail-safe, không fail-open: với **Comment/Reply/Edit** → **record được tạo** và đưa vào queue Chờ duyệt Admin (không làm mất nội dung user đã viết, không bao giờ tự public); với **Nickname** → chặn không đổi nickname và cho user thử lại, KHÔNG tạo queue/hàng chờ. US04 AC4 và US08 AC6 dẫn chiếu đúng invariant này.
+- **Nội dung bị chặn ở mức Nặng vẫn được ghi nhận**: không tạo comment/reply record public, nhưng lưu `blocked_attempt` gồm nội dung, taxonomy label, mức, model/policy version và thời điểm — phục vụ audit, đo false positive và làm căn cứ lịch sử vi phạm tại US16. Mỗi request đã gọi AI đều tiêu một **attempt** trong rate limit của US04, kể cả khi kết quả là chặn, để một account không thể gọi AI không giới hạn bằng nội dung vi phạm.
 - Edit (version sửa) áp dụng rate limit riêng: tối đa **5 lần sửa trong rolling 60 giây/comment hoặc reply**, tính độc lập theo từng target; request vượt ngưỡng bị chặn trước khi gọi AI/tạo queue item.
 
 
@@ -97,7 +98,7 @@ Nickname KHÔNG dùng trạng thái Chờ duyệt; chỉ có **2 kết quả**, 
 | TC-US11-001 | Coverage | Comment/reply/edit/nickname | Gửi từng loại | Mọi dữ liệu public mới đi AI trước. |
 | TC-US11-002 | Mode1/light | Mode1, AI Nhẹ | Gửi Comment/Reply/Edit | Nội dung giữ nguyên text và Hiển thị. |
 | TC-US11-003 | Mode1/medium | Mode1, AI Trung bình | Gửi Comment/Reply/Edit | Chờ duyệt; chỉ tác giả thấy. |
-| TC-US11-004 | Heavy | Content Mode1/2, AI Nặng | Gửi Comment/Reply/Edit | Bị chặn; không tạo dữ liệu public mới. |
+| TC-US11-004 | Heavy | Content Mode1/2, AI Nặng | Gửi Comment/Reply/Edit; tra CMS/audit và bộ đếm rate limit | Bị chặn, không tạo dữ liệu public mới; có `blocked_attempt` lưu nội dung/label/mức/policy version/thời điểm; request tiêu 1 attempt trong cửa sổ rate limit US04. |
 | TC-US11-005 | Mode2 | AI Nhẹ/Trung bình | Gửi Comment/Reply/Edit | Cả hai vào queue; chỉ Admin duyệt mới public. |
 | TC-US11-006 | Nickname global policy | E1 Mode1, E2 Mode2; cùng mẫu nickname Nhẹ/An toàn và Trung bình/Nặng | Đổi nickname từ E1/E2 | Kết quả giống nhau ở mọi scope, không có trạng thái Chờ duyệt: Nhẹ/An toàn dùng ngay; Trung bình hoặc Nặng đều bị chặn ngay tại thời điểm submit, nickname không đổi, tiếp tục hiển thị nickname hợp lệ cũ/mask số điện thoại; Mode1/2 không ảnh hưởng kết quả. |
 | TC-US11-007 | Timeout — content | AI >5s/5xx/down | Gửi Comment/Reply/version sửa | Comment/reply/version vào **Chờ duyệt Admin**; không tự public; không fail-open. |

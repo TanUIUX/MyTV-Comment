@@ -661,7 +661,7 @@ SmartTV không có destination tạo nội dung: C06, C07, O03–O06, O08, O09, 
 | O08 | Timestamp input/edit | Phone, Web | composer | attach one timestamp | US06 |
 | O09 | Mention suggestion | Phone, Web | composer after `@` | select account ID | US09 |
 | O10 | OS Share Sheet | Phone, Web | Share action | successful open or successful copy fallback = Share event | US18 |
-| O11 | Post-watch Rating Prompt | Phone, Web, SmartTV | Player phát `content_completed` khi đạt 90% duration hoặc end-of-content event, lần đầu trong phiên xem | Chọn 1–5 sao và lưu đúng content scope; seek đơn thuần không kích hoạt; không tạo scope Series | US03 |
+| O11 | Post-watch Rating Prompt | Phone, Web, SmartTV | Player phát `content_completed` khi đạt 90% duration hoặc end-of-content event, lần đầu trong phiên xem, **và scope không ở trạng thái Đóng bình luận** | Chọn 1–5 sao và lưu đúng content scope; seek đơn thuần không kích hoạt; không tạo scope Series; SmartTV dùng biến thể điều hướng remote | US03, US12 |
 
 ## 15.4. System/exception states
 
@@ -678,9 +678,9 @@ SmartTV không có destination tạo nội dung: C06, C07, O03–O06, O08, O09, 
 | S09 | Like reconcile error | Phone, Web, SmartTV | server mismatch/fail | revert + announce + retry | US07 |
 | S10 | Timestamp unavailable | Phone, Web, SmartTV | media/time invalid/unavailable | disabled timestamp + fallback | US06 |
 | S11 | Report cooldown | Phone, Web | same target <24h | remaining time | US10 |
-| S12 | Report rate limit | Phone, Web | >10/hour | retry countdown | US10 |
+| S12 | Report rate limit | Phone, Web | >10 Report trong rolling 60 phút/user | retry countdown | US10 |
 | S13 | SmartTV — không hỗ trợ tạo nội dung | SmartTV | user muốn Comment/Reply/Mention/Report/Share trên TV | ẩn entry tạo nội dung; hiển thị **hướng dẫn + QR** để chuyển sang smartphone; vẫn giữ đọc/Like/Rating/Sort/Spoiler/Timestamp | US01, US04, US09, US10, US18 |
-| S14 | Rate limit Comment/Reply | Phone, Web | >5 Comment/Reply record trong rolling 60 giây/user (quota chung) | “Bạn đang bình luận hơi nhanh”; không tạo record; cho gửi lại sau | US04, US08, US11 |
+| S14 | Rate limit Comment/Reply | Phone, Web | >5 attempt Comment/Reply trong rolling 60 giây/user (quota chung; attempt tính cả lần bị AI chặn) | “Bạn đang bình luận hơi nhanh”; không gọi AI, không tạo record; cho gửi lại sau | US04, US08, US11 |
 | S15 | Edit rate limit | Phone, Web | >5 lần sửa trong rolling 60 giây/target | chặn trước khi tạo version mới/gọi AI; giữ nội dung đang soạn; cho thử lại | US05, US11 |
 | S16 | Nickname bị chặn tại submit | Phone, Web | validation/AI chặn, hoặc AI không cho quyết định hợp lệ | “Tên này chưa phù hợp”; giữ nickname cũ/fallback mask; cho thử tên khác; không Pending, không tiêu quota | US04, US11 |
 | S17 | Nickname hết quota 24h | Phone, Web | đã có 1 lần đổi nickname thành công trong 24 giờ | chặn submit đổi nickname và cho biết phải chờ hết chu kỳ 24 giờ *(microcopy chưa có trong backlog)* | US04 |
@@ -834,7 +834,7 @@ flowchart TD
 |---|---|---|
 | US01 Đọc bình luận | C01, C02, C05, C17, O01, S01–S05, S13 | — |
 | US02 Content context/count/sort | C02, C05, C17, O02, S01 | — |
-| US03 Rating | C02, C08, O01 | M14 analytics |
+| US03 Rating | C02, C08, O01, O11 | M14 analytics |
 | US04 Đăng comment | C06, C09, O07/O08, S13/S14/S16/S17 | M02/M04 moderation |
 | US05 Edit/Delete | O03/O04/O05, S06/S07/S15 | M04/M06/M17 |
 | US06 Timestamp | C06/C07, O08, S10, C01 player | — |
@@ -972,14 +972,14 @@ Wireframe trước:
 - Fallback states: `S06` Pending · `S05` scope Đóng (giữ tab `Bình luận`, bỏ count) · `S03` Target no longer available (“Bình luận không còn khả dụng”) · `S04` Account Lock target (“Bình luận hiện không khả dụng”) — S03 và S04 phải là **hai frame riêng** vì microcopy và lifecycle semantics khác nhau; S03 không mặc định vĩnh viễn vì Admin root delete có thể Undo trong 90 ngày.
 - Edit/Delete/Report.
 - `C09` Nickname Settings + state `S16` nickname bị chặn tại submit và `S17` hết quota 24h (US04/US11 nằm trong P0).
-- Rate-limit states `S14` (Comment/Reply 5 record/rolling 60 giây/user) và `S15` (Edit 5/phút/target).
+- Rate-limit states `S14` (Comment/Reply 5 attempt/rolling 60 giây/user) và `S15` (Edit 5 lần/rolling 60 giây/target).
 - SmartTV: biến thể read-only của `C02`, màn `C17` thread read-only và state `S13` (hướng dẫn + QR chuyển sang smartphone).
 
 Bao phủ US01, US02, US04, US05, US08, US10, US11, US12.
 
 ## P1 — Community interaction
 
-- Rating.
+- Rating: khối aggregate trong `C02` (**chỉ render khi `total > 0`**) + `C08` rating interaction state + `O11` Post-watch Rating Prompt (Phone/Web + biến thể remote cho SmartTV). Khi `total = 0` tab không có khối rating và không có empty-state, nên `O11` là đường vào duy nhất của rating đầu tiên — không được bỏ khỏi đợt vẽ.
 - Like optimistic/reconcile.
 - Timestamp.
 - Mention.

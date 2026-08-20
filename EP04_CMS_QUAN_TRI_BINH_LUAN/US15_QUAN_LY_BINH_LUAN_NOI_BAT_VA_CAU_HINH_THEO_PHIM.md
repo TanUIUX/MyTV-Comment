@@ -65,7 +65,7 @@
 | TC-US15-007 | Account Lock + moderation | C1 đang Pin; U1 bị Account Lock; sau đó Admin Ẩn/Xóa/Từ chối C1 | Mở khóa U1 | Pin không tự trở lại vì source đã bị moderation riêng. |
 | TC-US15-008 | Undo moderation pin | C1 từng Pin rồi bị Admin Ẩn/Xóa hoặc Admin root delete cascade làm mất Pin | Undo moderation/delete | Content state có thể phục hồi nhưng Pin metadata không tự phục hồi; cần Admin ghim lại. Self-delete cũng làm Pin metadata mất và không được Undo public. |
 | TC-US15-009 | Inheritance | Series Mode1, E1 không override, E2 override Mode2 | Gửi nội dung E1/E2 | E1 dùng Mode1 series; E2 dùng Mode2. |
-| TC-US15-010 | Episode close | Series Mở, E2 override Đóng | Mở E1/E2 | E1 hoạt động; E2 ẩn toàn khu vực và chặn interaction theo US12. |
+| TC-US15-010 | Episode close | Series Mở, E2 override Đóng | Mở E1/E2; xem hết E2 để player phát `content_completed` | E1 hoạt động bình thường; E2 **giữ tab `Bình luận` nhưng bỏ count**, hiển thị “Khu vực bình luận hiện không khả dụng”, ẩn rating/list/composer và chặn interaction theo US12; post-watch rating prompt không mở trên E2. |
 | TC-US15-011 | AI threshold inheritance | Default/series/episode khác nhau | Gửi cùng mẫu content | Dùng đúng episode→series→default; nickname không bị ảnh hưởng. |
 | TC-US15-012 | X-hours | Cấu hình lần lượt 3 loại mốc | Kiểm tra effective transition | Hệ thống dùng đúng loại mốc Admin chọn. |
 | TC-US15-013 | Mode transition | Có item public/pending | Đổi Mode1↔Mode2/Đóng | Hành vi đúng US12, không mất lịch sử. |

@@ -38,10 +38,12 @@ Tài liệu này tổng hợp các yêu cầu **cross-cutting** (áp dụng xuy�
 
 ### B.2. Ký tự đối kháng / Unicode
 
-- Chặn hoặc neutralize trong comment/reply/nickname các nhóm ký tự:
-  - **RTL override**: U+202E và các ký tự bidi override tương tự.
-  - **Zero-width**: U+200B (zero-width space), U+200D (zero-width joiner) và tương tự — có thể dùng để né bộ lọc từ khoá.
-  - **Control character**: U+0000–U+001F.
+- Chặn trong comment/reply/nickname theo **blocklist tường minh** (không dùng bộ lọc theo Unicode category `Cf` hay "default ignorable", vì các bộ đó bao cả `U+FE0F` và sẽ làm mất những emoji thông dụng như ❤️, ⚠️, ✔️):
+  - **Bidi**: `U+202A–U+202E` (override, gồm RLO `U+202E`), `U+2066–U+2069` (isolate), `U+200E`/`U+200F` (LRM/RLM).
+  - **Zero-width**: `U+200B` (ZWSP), `U+200C` (ZWNJ), `U+FEFF` (BOM) — có thể dùng để né bộ lọc từ khoá.
+  - **Control character**: `U+0000–U+001F`.
+- **Carve-out cho emoji (chỉ áp dụng comment/reply):** `U+200D` (ZWJ) và `U+FE0F` (VS16) **được phép khi và chỉ khi nằm trong một emoji sequence hợp lệ theo Unicode RGI** — 👨‍👩‍👧‍👦, 🏳️‍🌈, ❤️‍🔥, 👩‍💻 là nội dung hợp lệ theo US04 AC1. ZWJ hoặc VS16 đứng ngoài emoji sequence (ví dụ `a<U+200D>b`) bị reject vì đó chính là kỹ thuật né bộ lọc. Validation phải parse theo emoji sequence, không chỉ scan từng codepoint rời.
+- **Nickname không có carve-out này**: nickname chặn tuyệt đối `U+200D`, `U+FE0F` và mọi emoji, vì nickname là identity và phải chuẩn hoá confusable trước khi check uniqueness.
 - **Nickname** phải chặn **homoglyph** (ví dụ ký tự Cyrillic а/о nhìn giống Latin a/o) — không được tạo ra nickname "nhìn giống hệt" một nickname đã tồn tại mà vẫn vượt qua được kiểm tra uniqueness (chuẩn hoá Unicode/so khớp confusable trước khi check unique).
 
 ### B.3. IDOR — phân quyền ghi theo scope CMS

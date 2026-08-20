@@ -27,16 +27,16 @@
 1. Khi content có ít nhất một rating hợp lệ công khai (`total > 0`), đầu tab Bình luận hiển thị thang điểm 5 sao, điểm trung bình và tổng số lượt đánh giá. Khi `total = 0`, ẩn toàn bộ khối rating, không hiển thị thang sao, average, total hoặc empty-state.
 2. Guest xem được aggregate khi `total > 0` nhưng phải login để đánh giá; login quay lại đúng content và không auto-rating. Prompt rating sau khi xem xong cũng yêu cầu login nếu người xem là guest; login chỉ quay lại đúng content/prompt, không auto-submit.
 3. **Phim lẻ:** rating cấp phim. **Phim bộ:** rating chỉ cấp tập hiện tại; **không có rating cấp Series**.
-4. Sau khi player phát `content_completed` — playback đạt **90% duration hoặc player phát end-of-content event**, tính lần đầu trong phiên xem — hệ thống mở **prompt rating riêng ngoài tab Bình luận**. Seek vượt mốc không tự kích hoạt nếu chưa có playback/completion hợp lệ. Với phim bộ, prompt xuất hiện sau từng tập và rating lưu đúng scope tập hiện tại.
+4. Sau khi player phát `content_completed` — playback đạt **90% duration hoặc player phát end-of-content event**, tính lần đầu trong phiên xem — hệ thống mở **prompt rating riêng ngoài tab Bình luận** (`O11` trong IA). Seek vượt mốc không tự kích hoạt nếu chưa có playback/completion hợp lệ. Với phim bộ, prompt xuất hiện sau từng tập và rating lưu đúng scope tập hiện tại. Prompt **không được mở khi content scope đang Đóng bình luận** — player kiểm tra trạng thái scope trước khi hiển thị, không mở prompt rồi để API từ chối (US12 AC4). Khóa bình luận **không** chặn prompt vì sanction đó chỉ chặn Comment/Reply/Edit.
 5. Mỗi account chỉ có một rating hiện hành trên mỗi content scope.
-5. User được thay đổi rating 1–5 sao; đổi rating không tăng tổng lượt.
-6. **Không hỗ trợ xóa rating** sau khi đã đánh giá.
-7. Chọn số sao → submit ngay, không cần nút Gửi đánh giá.
-8. Submit/update lỗi → giữ/revert về rating hợp lệ trước đó; không tạo state nửa chừng và không tự retry.
-9. Average hiển thị 1 chữ số thập phân và luôn làm tròn lên đến 0.1 gần nhất, ví dụ `4.21 → 4.3`, `4.20 → 4.2`.
-10. Account Lock tạm loại rating khỏi cả average và public total; unlock tính lại nếu record còn. Comment Lock không loại rating.
-11. Scope Đóng giữ tab `Bình luận` nhưng bỏ count, ẩn rating cùng danh sách/comment actions và hiển thị trạng thái “Khu vực bình luận hiện không khả dụng”.
-12. SmartTV cho user đã login đánh giá 1–5 sao bằng remote và thay đổi rating.
+6. User được thay đổi rating 1–5 sao; đổi rating không tăng tổng lượt.
+7. **Không hỗ trợ xóa rating** sau khi đã đánh giá.
+8. Chọn số sao → submit ngay, không cần nút Gửi đánh giá.
+9. Submit/update lỗi → giữ/revert về rating hợp lệ trước đó; không tạo state nửa chừng và không tự retry.
+10. Average hiển thị 1 chữ số thập phân và luôn làm tròn lên đến 0.1 gần nhất, ví dụ `4.21 → 4.3`, `4.20 → 4.2`.
+11. Account Lock tạm loại rating khỏi cả average và public total; unlock tính lại nếu record còn. Comment Lock không loại rating.
+12. Scope Đóng giữ tab `Bình luận` nhưng bỏ count, ẩn rating cùng danh sách/comment actions và hiển thị trạng thái “Khu vực bình luận hiện không khả dụng”.
+13. SmartTV cho user đã login đánh giá 1–5 sao bằng remote và thay đổi rating; trên SmartTV prompt `O11` dùng biến thể điều hướng bằng remote.
 
 ### Quy tắc nghiệp vụ
 
@@ -45,6 +45,7 @@
 - Rating record không bị xóa do Account Lock; khóa/mở khóa chỉ ảnh hưởng việc rating có được tính vào aggregate công khai hay không.
 - Tập rating dùng để tính **average** và **total count công khai** phải nhất quán: rating của account đang Account Lock không tham gia cả hai chỉ số.
 - Khi `total count công khai = 0`, `average = null` và UI ẩn toàn bộ khối rating; không áp dụng làm tròn và không hiển thị empty-state.
+- **Rủi ro đã được chấp nhận có chủ đích (cold-start rating).** Vì `total = 0` ẩn toàn bộ khối rating và prompt `O11` chỉ mở lần đầu trong mỗi phiên xem, ba nhóm user không có đường nào để tạo rating: user đã xem xong content từ phiên trước, user vừa dismiss prompt trong phiên hiện tại, và user đang xem giữa phim. Với content mới phát hành, `total` giữ ở 0 cho tới khi có người xem đạt `content_completed` **và** không bỏ qua prompt. PO chấp nhận đánh đổi này để rating chỉ đến từ người đã thực sự xem; nếu KPI rating ở pilot thấp bất thường thì đây là biến số cần xem lại trước tiên (ví dụ mở lại prompt từ tab cho user đã có lịch sử xem).
 - Không có thao tác DELETE rating ở UX/API product contract MVP; con đường duy nhất để thay đổi là chọn lại mức sao 1–5.
 - Rating nằm trong khu vực Bình luận và bị ẩn khi phim/tập ở trạng thái Đóng bình luận theo US12.
 
@@ -77,9 +78,10 @@
 | TC-US03-010 | SmartTV | U1 đã đăng nhập trên SmartTV | Chọn số sao bằng remote rồi đổi sang mức khác | Submit và update rating hoạt động như Phone/Web. |
 | TC-US03-011 | Comment Lock | U1 bị Khóa bình luận nhưng account không bị khóa | Đối chiếu aggregate | Rating của U1 vẫn được tính trong cả average và total count công khai. |
 | TC-US03-012 | Rounding | Average thô lần lượt 4.20, 4.21, 4.29, 4.31 | Đối chiếu hiển thị UI và API public | Kết quả lần lượt 4.2, 4.3, 4.3, 4.4 — luôn làm tròn lên đến 0.1 gần nhất, hiển thị đúng 1 chữ số thập phân. |
-| TC-US03-013 | Scope Đóng | Content đang ở trạng thái Đóng bình luận, đã có rating trước đó | Mở trang phim/tập; thử gửi rating qua API; sau đó Admin mở lại scope | Khi Đóng: tab Bình luận vẫn hiện nhưng bỏ count; trạng thái “Khu vực bình luận hiện không khả dụng” hiển thị, thang sao/average/total và interaction bị ẩn/chặn; API chặn rating mới. Khi mở lại: rating và aggregate cũ hiển thị lại đúng. |
+| TC-US03-013 | Scope Đóng | Content đang ở trạng thái Đóng bình luận, đã có rating trước đó | Mở trang phim/tập; xem hết content để player phát `content_completed`; thử gửi rating qua API; sau đó Admin mở lại scope | Khi Đóng: tab Bình luận vẫn hiện nhưng bỏ count; trạng thái “Khu vực bình luận hiện không khả dụng” hiển thị, thang sao/average/total và interaction bị ẩn/chặn; **prompt `O11` không được mở** dù đã đạt `content_completed`; API chặn rating mới. Khi mở lại: rating và aggregate cũ hiển thị lại đúng và prompt hoạt động bình thường ở phiên xem sau. |
 | TC-US03-014 | Scope phim lẻ | Phim lẻ M1 | U1 đánh giá M1 rồi đổi mức sao | Rating nằm ở cấp phim; U1 chỉ có một rating hiện hành trên M1. |
 | TC-US03-015 | Idempotency | U1 gửi/đổi rating với retry và request lỗi giữa chừng | Gửi lặp cùng thao tác nhiều lần | Chỉ tồn tại một rating hiện hành hợp lệ; tổng lượt không bị sai lệch do retry. |
+| TC-US03-016 | Comment Lock vs prompt | U1 đang bị Khóa bình luận; content đang Mở | U1 xem hết tập để player phát `content_completed`; chọn sao trong prompt | Prompt vẫn mở và rating được ghi nhận bình thường — Khóa bình luận chỉ chặn Comment/Reply/Edit, không chặn Rating (US12). |
 
 ### Microcopy
 

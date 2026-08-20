@@ -16,7 +16,7 @@
 `Engagement Score = Comment × 2 + Reply × 2 + Net Like × 1 + Rating × 1 + Share × 2`
 
 - Chỉ tính Comment/Reply **đang đủ điều kiện public trong dữ liệu chính thức**; nội dung/thread non-public do moderation, lifecycle hoặc Account Lock visibility gate tạm không được tính.
-- Engagement dùng **public Net Like hiện tại**, không âm (`max(0, likes_current - unlikes_current)`), không dùng tổng số lần bấm Like lịch sử.
+- Engagement dùng **public Net Like** theo định nghĩa US07 AC11 (số Like record đang active, đã loại Like của account đang Account Lock — là phép đếm, không phải phép trừ), không dùng tổng số lần bấm Like lịch sử. Mốc lấy giá trị theo AC2: kỳ lịch sử dùng snapshot, kỳ hiện tại dùng giá trị realtime.
 - `Rating` = **số lượng rating hợp lệ tại snapshot cuối kỳ `to`** trong scope/thời gian đang tính; mỗi account có một rating hợp lệ đóng góp **+1**, bất kể rating 1★ hay 5★.
 - `Share` = số **Share event hợp lệ khi OS/Web share sheet mở thành công hoặc fallback Sao chép liên kết hoàn tất thành công** theo US18; không cần callback xác nhận user đã gửi sang ứng dụng đích.
 
@@ -37,11 +37,11 @@
 ### Acceptance Criteria
 
 1. Dashboard filter theo phim/series/tập và khoảng thời gian. Filter/roll-up `series` chỉ là aggregate vận hành CMS từ các tập thuộc series, không tạo scope Comment/Rating phía người xem.
-2. Với filter `[from, to]`, Comment/Reply/Share đếm event hợp lệ phát sinh trong khoảng; public Net Like và Rating dùng snapshot hợp lệ tại thời điểm `to`. Nếu thiếu snapshot lịch sử, dashboard/export phải báo dữ liệu không đủ thay vì dùng trạng thái hiện tại để giả làm số liệu lịch sử.
+2. Với filter `[from, to]`: KPI dạng **event** (Comment, Reply, Share, Report) đếm event hợp lệ phát sinh trong khoảng; KPI dạng **trạng thái** (public Net Like, Rating) lấy từ **snapshot hằng ngày chốt lúc 00:00 theo timezone hệ thống**, dùng snapshot gần nhất `≤ to`. Khi `to` là thời điểm hiện tại, dùng giá trị realtime theo AC4 và **gắn nhãn “số liệu realtime”** để phân biệt với số đã chốt snapshot. Nếu kỳ báo cáo nằm trước ngày bật snapshot, dashboard/export **báo “không đủ dữ liệu lịch sử”** cho các chỉ số trạng thái và **ranking theo Engagement Score (AC5) không khả dụng cho kỳ đó**, thay vì dùng trạng thái hiện tại để giả làm số liệu lịch sử.
 3. **Unique commenters**: trong một khoảng thời gian + scope filter, mỗi account chỉ tính **1 lần** nếu có ít nhất một Comment/Reply đang đủ điều kiện được tính trong public KPI; đổi filter thì tính lại unique trong scope mới.
 4. Dashboard cập nhật với độ trễ tối đa **5 phút** và hiển thị thời điểm cập nhật gần nhất.
 5. Ranking phim/tập dùng Engagement Score đã chốt; tie-break phải ổn định.
-6. Dashboard hiển thị Net Like và tổng thao tác Like/Unlike; Engagement chỉ dùng **Net Like công khai**.
+6. Dashboard hiển thị public Net Like và tổng thao tác Like/Unlike lịch sử như **hai chỉ số riêng biệt**; Engagement chỉ dùng **public Net Like** theo mốc ở AC2.
 7. Trong Engagement, **mỗi rating hợp lệ tại snapshot thời điểm `to` = 1 đơn vị Rating**, không nhân theo số sao; điểm sao/average là KPI chất lượng riêng.
 8. Trong Engagement, **mỗi lần OS/Web share sheet mở thành công hoặc fallback Sao chép liên kết hoàn tất thành công = 1 Share**; cancel/đóng sheet sau đó không hoàn tác event đã ghi; retry/lỗi kỹ thuật phải dedup.
 9. Khi comment/reply/thread trở thành non-public do **Ẩn/Từ chối/Xóa, self-delete cascade, Admin root moderation cascade hoặc Account Lock visibility**, score/KPI public được điều chỉnh ở pipeline/đối soát tiếp theo. Danh sách nguyên nhân loại KPI ở trên **KHÔNG bao gồm scope Đóng bình luận**. Scope Đóng bình luận là gate hiển thị vận hành (chống spoiler/thời điểm nhạy cảm), KHÔNG phải chế tài nội dung — KPI/Engagement Score của dữ liệu đã phát sinh trước và trong thời gian Đóng được GIỮ NGUYÊN, không bị loại trừ chỉ vì scope đang Đóng. Khi scope mở lại, không cần tính lại KPI vì KPI chưa từng bị loại.
@@ -58,7 +58,8 @@
 
 ### Quy tắc nghiệp vụ
 
-- Data dictionary phải định nghĩa rõ Comment/Reply hợp lệ/public, public Net Like (floor 0), Unique commenter và denominator của các tỷ lệ; semantics Rating/Share trong Engagement đã khóa tại US này.
+- Data dictionary phải định nghĩa rõ Comment/Reply hợp lệ/public, public Net Like (đếm Like record active theo US07 AC11), Unique commenter và denominator của các tỷ lệ; semantics Rating/Share trong Engagement đã khóa tại US này.
+- Snapshot hằng ngày là **hạ tầng bắt buộc của US19**, không phải tối ưu về sau: nếu không có nó thì mọi báo cáo cho kỳ đã qua đều là số liệu hiện tại gắn nhãn quá khứ. Kỳ trước ngày bật snapshot được báo thiếu dữ liệu một cách tường minh và không backfill bằng suy diễn.
 - Rating 1★ và 5★ có cùng trọng số interaction `+1 Rating`; chất lượng rating được phản ánh ở KPI average riêng, không làm thay đổi trọng số Engagement của một hành động rating.
 - Share event được ghi tại mốc share sheet mở thành công hoặc fallback Sao chép liên kết hoàn tất thành công; không phụ thuộc callback hoàn tất share của OS/app đích.
 - Nội dung Chờ duyệt chưa được tính vào public KPI.
@@ -83,7 +84,7 @@
 | TC-US19-004 | Rating lock | U1 có rating rồi Account Lock | Refresh sau pipeline | Rating U1 bị loại khỏi count Rating dùng cho Engagement và aggregate public; mở khóa tính lại nếu record còn. |
 | TC-US19-005 | Share semantics | User mở share sheet thành công rồi cancel | Kiểm tra KPI | Share tăng 1; không cần callback hoàn tất gửi. |
 | TC-US19-006 | Moderation invalid content | Comment/reply đang tính score rồi bị Ẩn/Từ chối/Xóa | Refresh sau pipeline/reconciliation | Nội dung/thread liên quan bị loại khỏi score public theo lifecycle đã chốt. |
-| TC-US19-007 | Like semantics | Like rồi Unlike nhiều lần, có aggregate lệch âm giả lập | Kiểm tra dashboard/reconciliation | Có thể thấy tổng action history; Engagement chỉ dùng public Net Like hiện hành với floor 0; reconciliation sửa aggregate âm và ghi log. |
+| TC-US19-007 | Like semantics | C1 có 10 Like, sau đó 4 người trong số đó Unlike; thêm một aggregate lệch âm giả lập | Đối chiếu public Net Like, tổng action history và job reconciliation | Public Net Like = **6** (đếm record active), không phải `6 − 4 = 2`; tổng action history hiển thị riêng là 14 thao tác; aggregate âm giả lập được reconciliation sửa về đúng state BE và ghi log. |
 | TC-US19-008 | Locked liker | U1 đã Like C1 rồi Account Lock | Refresh Net Like/ranking/Engagement; sau đó unlock | Like record giữ; khi lock bị loại public aggregate; unlock tính lại nếu hợp lệ. |
 | TC-US19-009 | Account Lock content | U1 có C1/R1 public | Khóa U1 rồi unlock | Khi khóa contribution content U1 tạm bị loại public KPI/Engagement; unlock tính lại item hợp lệ. |
 | TC-US19-010 | Locked root thread | U1 root C1; U2 có R1 hợp lệ | Account Lock U1 | Cả C1/R1 tạm bị loại public KPI/Engagement; R1 không đổi moderation state. |
@@ -99,6 +100,7 @@
 | TC-US19-020 | Dedup | Event retry/duplicate, gồm Share retry do lỗi kỹ thuật | Nạp pipeline | Event không bị tính lặp ngoài định nghĩa; Engagement không tăng sai. |
 | TC-US19-021 | Closed scope giữ nguyên KPI | Phim/tập E1 đang có Engagement Score = X với dữ liệu Comment/Reply/Like/Rating/Share đã phát sinh | Admin Đóng bình luận E1; kiểm tra dashboard trong suốt thời gian Đóng; sau đó mở lại scope | Engagement Score/KPI của E1 KHÔNG tụt xuống 0 và KHÔNG bị loại trừ chỉ vì scope Đóng; dữ liệu lịch sử hiển thị nguyên vẹn trên dashboard trong suốt thời gian Đóng; khi mở lại, KPI không cần tính lại vì chưa từng bị loại. |
 | TC-US19-022 | Dashboard empty/error/stale state | (a) Filter phim/tập/khoảng thời gian không có dữ liệu; (b) pipeline aggregate lỗi hoặc quá 5 phút chưa cập nhật; (c) export bị lỗi giữa chừng | (a) Áp filter không có data; (b) giả lập pipeline lỗi/trễ; (c) chạy export rồi ngắt giữa chừng | (a) Hiển thị empty state rõ ràng, không hiện số 0 gây hiểu nhầm mất dữ liệu; (b) hiển thị error/stale state kèm thời điểm last-updated, không âm thầm hiển thị số liệu cũ như đang mới; (c) báo lỗi export rõ ràng, không sinh file rỗng hoặc file dở bị hiểu nhầm là kết quả hợp lệ. |
+| TC-US19-023 | Snapshot lịch sử | Kỳ A nằm sau ngày bật snapshot; kỳ B nằm trước ngày bật snapshot; kỳ C có `to` = hiện tại | Chạy dashboard và export cho cả ba kỳ, xem cả ranking Engagement | Kỳ A: public Net Like/Rating lấy từ snapshot gần nhất `≤ to`, số liệu lặp lại giống nhau giữa các lần chạy. Kỳ B: báo "không đủ dữ liệu lịch sử" cho chỉ số trạng thái và **ranking Engagement không khả dụng**; không có số nào được suy ra từ trạng thái hiện tại. Kỳ C: hiển thị realtime kèm nhãn "số liệu realtime". |
 
 ### Microcopy
 
