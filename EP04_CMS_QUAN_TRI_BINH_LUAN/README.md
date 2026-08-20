@@ -30,8 +30,25 @@
 
 ---
 
+## 4. Ma trận quyền CMS
 
-## Danh sách User Story
+Quyền luôn bị giới hạn bởi **role + scope được cấp**; API phải kiểm tra cả hai, không chỉ ẩn action trên UI. Bảng dưới là quyền baseline, permission grant có thể thu hẹp nhưng không được mở rộng vượt role:
+
+| Quyền | Moderator | Admin vận hành | Quản lý |
+|---|---|---|---|
+| Tra cứu content và PII trong scope | Có | Có | Có |
+| Duyệt/Từ chối/Ẩn/Xóa mềm/Undo/bulk | Có nếu được cấp moderation | Có | Có theo policy |
+| Ghim, reorder, expiry Pin | Không mặc định | Có | Có |
+| Cấu hình mode/threshold/schedule | Không mặc định | Có | Có |
+| Cảnh báo/Khóa bình luận/Khóa tài khoản | Có nếu được cấp moderation | Có | Có theo policy |
+| Xử lý appeal | Có nếu được cấp | Có | Có |
+| Export CSV/XLSX | Có theo scope | Có theo scope | Có theo scope |
+| Export PII | Opt-in + scope + audit | Opt-in + scope + audit | Opt-in + scope + audit |
+| Đọc audit log | Có trong scope | Có | Có |
+
+Mọi thao tác ghi, export PII, Pin/config, sanction và Undo đều phải enforce role + scope ở API; thao tác bị từ chối không được tạo audit event thành công.
+
+## 5. Danh sách User Story
 
 | ID | User Story | File |
 |---|---|---|
@@ -42,7 +59,7 @@
 
 [← Quay lại backlog tổng](../README.md)
 
-## 4. Điều kiện hoàn thành Epic
+## 6. Điều kiện hoàn thành Epic
 
 - CMS hỗ trợ đầy đủ tra cứu, xử lý, cấu hình và quản lý vi phạm theo quyền.
 - Admin luôn thấy đủ ngữ cảnh trước khi ra quyết định.

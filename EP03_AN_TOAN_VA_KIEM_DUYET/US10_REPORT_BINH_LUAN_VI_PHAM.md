@@ -30,7 +30,7 @@ Report/AI/CMS dùng chung taxonomy nghiệp vụ:
 5. Report được chuyển vào CMS; số lượng Report không public trên app.
 6. Một hoặc nhiều Report **không tự động Ẩn/Xóa** comment; nội dung tiếp tục Hiển thị cho tới khi CMS/moderation có quyết định khác.
 7. Cùng một user chỉ được Report lại cùng target sau **24 giờ kể từ lần Report trước**, miễn target vẫn Hiển thị.
-8. Mỗi user tối đa **10 Report trong 1 giờ** trên toàn hệ thống.
+8. Mỗi user tối đa **10 Report trong rolling 60 phút** trên toàn hệ thống, tính từ thời điểm Report được tạo.
 9. Sau khi Admin xử lý Report, reporter nhận **in-app notification** xác nhận Report đã được xử lý; không gửi push và không tiết lộ chi tiết chế tài của user bị Report.
 10. Guest chọn Report được chuyển sang login; không tạo Report trước xác thực.
 11. Danh tính reporter không hiển thị cho cộng đồng.
@@ -40,7 +40,7 @@ Report/AI/CMS dùng chung taxonomy nghiệp vụ:
 - Report là tín hiệu, không phải kết luận vi phạm.
 - “Bỏ qua Report” tại US14 là action đóng Report khi Admin xác định nội dung không vi phạm; không có action “Duyệt giữ nguyên” riêng.
 - Description của “Khác/Vi phạm khác”: bắt buộc, **1–500 ký tự hợp lệ** sau khi loại trường hợp chỉ có khoảng trắng.
-- Rate limit 10 Report/giờ và cooldown 24h/cùng target áp dụng đồng thời.
+- Rate limit **10 Report/rolling 60 phút** và cooldown 24h/cùng target áp dụng đồng thời; cả hai tính từ Report record gần nhất/tạo thành công. Cooldown tính từ lần Report gần nhất và không reset khi target đổi visibility/được Undo; target phải đang Hiển thị và reporter còn quyền xem tại thời điểm Report lại.
 
 ### Điểm cần PO chốt
 
@@ -54,7 +54,7 @@ Report/AI/CMS dùng chung taxonomy nghiệp vụ:
 |---|---|
 | Report đã gửi thành công | **Đã gửi báo cáo**<br>Chúng tôi sẽ xem xét và thông báo kết quả cho bạn.<br>`[Đóng]` |
 | Report cooldown 24h (Report lại cùng target quá sớm) | **Bạn đã báo cáo bình luận này**<br>Có thể báo cáo lại sau {n} giờ nếu nội dung vẫn còn.<br>`[Đóng]` |
-| Report rate limit 10/giờ | **Bạn đã gửi 10 báo cáo trong 1 giờ qua**<br>Vui lòng thử lại sau {mm:ss}.<br>`[Đóng]` |
+| Report rate limit 10/rolling 60 phút | **Bạn đã gửi 10 báo cáo trong 60 phút qua**<br>Vui lòng thử lại sau {mm:ss}.<br>`[Đóng]` |
 | Notification kết quả report (không tiết lộ chi tiết chế tài) | **Kết quả báo cáo của bạn**<br>MyTV đã xem xét báo cáo của bạn trong {tên tập}. Cảm ơn bạn đã giúp giữ cộng đồng an toàn.<br>`[Xem chi tiết]` |
 
 ---
@@ -69,7 +69,7 @@ Report/AI/CMS dùng chung taxonomy nghiệp vụ:
 | TC-US10-004 | Self-report | U1 là tác giả C1 | Thử Report | UI/API chặn, không tạo Report. |
 | TC-US10-005 | Data integrity | U1 Report C1 V1 | Kiểm tra CMS | Có reporter/target/version/reason/time đầy đủ. |
 | TC-US10-006 | Visibility | C1 nhận nhiều Report | Refresh public app | C1 không tự đổi state chỉ vì Report count. |
-| TC-US10-007 | Cooldown | U1 vừa Report C1 | Report lại trước/sau 24h | Trước 24h bị chặn; từ 24h trở đi được phép nếu C1 vẫn public. |
-| TC-US10-008 | Rate limit | U1 gửi Report nhiều target | Gửi 10 rồi Report thứ 11 trong 1 giờ | Report thứ 11 bị chặn; không làm sai dữ liệu. |
+| TC-US10-007 | Cooldown | U1 vừa Report C1; C1 lần lượt bị Ẩn rồi được Undo | Report lại trước/sau 24h ở từng trạng thái | Trước 24h bị chặn; việc C1 bị Ẩn/Undo không reset timer; từ 24h trở đi được phép nếu C1 đang public và U1 còn quyền xem. |
+| TC-US10-008 | Rate limit | U1 gửi 10 Report thành công trong rolling 60 phút | Gửi Report thứ 11; thử lại sau khi Report cũ nhất quá 60 phút | Report thứ 11 trong cửa sổ bị chặn; sau khi cũ nhất ra khỏi rolling window, được phép nếu target/cooldown hợp lệ; không làm sai dữ liệu. |
 | TC-US10-009 | Reporter notification | Admin xử lý Report | Mở notification của reporter | Có in-app notification kết quả xử lý, không có push/chi tiết sanction. |
 | TC-US10-010 | Privacy/auth | Guest hoặc U2 xem C1 đã bị U1 Report | Kiểm tra UI/API public | Guest phải login để Report; không lộ danh tính/số Report. |

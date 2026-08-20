@@ -16,17 +16,17 @@
 1. User có thể Reply một comment gốc đang Hiển thị và cho phép tương tác.
 2. Reply luôn được lưu ở **một cấp** dưới root comment; khi trả lời một reply, dữ liệu mới vẫn thuộc root và UI có thể mention người được trả lời để giữ ngữ cảnh.
 3. Reply hỗ trợ text, emoji, Spoiler và timestamp theo cùng rule content của comment.
-4. Reply tối thiểu **1 ký tự hợp lệ hoặc 1 emoji**, tối đa **1000 ký tự**; emoji-only hợp lệ.
+4. Reply tối thiểu **1 ký tự hợp lệ hoặc 1 emoji**, tối đa **1000 ký tự**; emoji-only hợp lệ. Trước khi đếm ký tự, moderation và lưu record, UI/API phải reject RTL/bidi override (ví dụ U+202E), mọi zero-width character gồm U+200D/ZWJ, và control character U+0000–U+001F bằng cùng một chuẩn. Emoji không chứa ZWJ vẫn hợp lệ.
 5. URL trong reply chỉ hợp lệ với `mytv.com.vn` hoặc subdomain hợp lệ; áp dụng cùng hostname validation US04.
-6. Comment + reply dùng chung rate limit **5 nội dung/1 phút/user**.
+6. Comment + reply dùng chung rate limit **5 Comment/Reply record trong rolling 60 giây/user**, tính từ thời điểm record được tạo; validation fail, Unicode reject, AI mức Nặng block hoặc AI lỗi/timeout không tạo record và không tiêu quota.
 7. Reply đi qua cùng moderation theo US11.
 8. Reply công khai làm tăng tổng số bình luận; reply Chờ duyệt/Từ chối/Ẩn/Xóa không làm tăng số công khai.
 9. Mỗi root comment ban đầu hiển thị tối đa **3 reply**.
 10. Khi bấm **“Xem thêm {n} phản hồi”** (hiển thị kèm số lượng còn lại, không phải chuỗi trần "Xem thêm phản hồi"), mỗi lần tải **tối đa 10 reply**; nếu phần còn lại <10 thì tải toàn bộ phần còn lại.
 11. Xóa một reply riêng lẻ làm reply biến mất hoàn toàn khỏi UI, **không để placeholder**.
-12. Root không còn public thì thread không được hiển thị độc lập khỏi root. **Admin Ẩn root** làm toàn thread tạm không public nhưng không đổi moderation state của reply (reply chỉ mang cờ `hidden_by_root_cascade`, không có đồng hồ retention riêng); Undo Ẩn root làm các reply hợp lệ hiện lại theo state riêng, với điều kiện **root còn trong 90 ngày retention**.
+12. Root không còn public thì thread không được hiển thị độc lập khỏi root. **Admin Ẩn root** làm toàn thread tạm không public nhưng không đổi moderation state của reply; reply lưu các gate đang active trong `root_visibility_gates` (ví dụ `admin_hide`, `account_lock`) để có thể đồng thời giữ nhiều gate, không dùng `cascade_source` và không có đồng hồ retention delete. Resolver tính từ toàn bộ gate active; gỡ một gate không làm mất gate còn lại. Undo Ẩn root làm các reply hợp lệ hiện lại theo state riêng nếu không còn gate khác, không phụ thuộc retention delete của root.
 13. Nếu tác giả root bị **Account Lock**, root và toàn bộ thread tạm không public; reply của user khác **không bị đổi moderation state/không bị coi là vi phạm**. Khi root author được mở khóa, thread hiện lại nếu từng item vẫn hợp lệ.
-14. Nếu user **self-delete root**, root + toàn bộ reply bị cascade soft-delete theo US05; reply chỉ mang cờ ẩn theo cascade, không có retention riêng — toàn bộ retention 90 ngày tính theo root. Nếu CMS/Admin Xóa mềm root, thread không public và root + toàn bộ reply bị ẩn do cascade có thể được Undo cùng lúc theo rule US14, với điều kiện **root còn trong 90 ngày retention**.
+14. Nếu user **self-delete root**, root + toàn bộ reply bị cascade soft-delete theo US05; reply ghi `cascade_source = self_delete`, không có retention riêng và được purge cùng root khi retention root hết hạn; toàn bộ retention root là 90 ngày. Reply self-delete riêng lẻ giữ 90 ngày tính từ lúc xóa. Nếu CMS/Admin Xóa mềm root, thread không public và root + toàn bộ reply bị delete cascade với `cascade_source = admin_root_delete`, có thể được Undo cùng lúc theo rule US14, với điều kiện **root còn trong 90 ngày retention**.
 15. Guest chọn Reply được chuyển sang login; không tạo dữ liệu trước xác thực.
 
 ### Quy tắc nghiệp vụ
@@ -35,8 +35,8 @@
 - Reply không tham gia danh sách root comment khi sort.
 - Pagination reply: initial 3, sau đó batch tối đa 10 cho tới hết.
 - Tất cả validation text/emoji/URL/rate limit đồng bộ với US04.
-- **Visibility cascade** do Admin Hide hoặc Account Lock của root author không tự thay đổi state moderation của reply; reply chỉ mang cờ `hidden_by_root_cascade = true/false`, **không có đồng hồ retention 90 ngày riêng cho reply**.
-- **Delete cascade** là lifecycle riêng: self-delete root soft-delete toàn thread; CMS/Admin soft-delete root tuân US14. Root + toàn bộ reply bị ẩn do cascade được khôi phục cùng lúc khi Undo, với điều kiện **ROOT còn trong 90 ngày retention** (không phải reply còn retention).
+- **Visibility cascade** do Admin Hide hoặc Account Lock của root author không tự thay đổi state moderation của reply; reply ghi toàn bộ gate đang active trong `root_visibility_gates` (có thể đồng thời gồm `admin_hide`, `account_lock` và gate scope), **không có retention delete riêng và không dùng `cascade_source`**. Reply self-delete riêng lẻ có retention 90 ngày tính từ lúc xóa.
+- **Delete cascade** là lifecycle riêng: self-delete root soft-delete toàn thread với `cascade_source = self_delete`; CMS/Admin soft-delete root tuân US14 với `cascade_source = admin_root_delete`. Root + toàn bộ reply bị ẩn do Admin delete cascade được khôi phục cùng lúc khi Undo, với điều kiện **ROOT còn trong 90 ngày retention**. Reply self-delete riêng lẻ không được Undo root khôi phục.
 - Reply không được hiển thị như content độc lập khi root đang non-public.
 
 *Xem thêm: [REQUIREMENTS_A11Y_SECURITY.md](../REQUIREMENTS_A11Y_SECURITY.md) mục A.2 — "Xem thêm phản hồi" phải giữ focus tại nút sau khi tải xong và announce số lượng vừa tải qua `aria-live`.*

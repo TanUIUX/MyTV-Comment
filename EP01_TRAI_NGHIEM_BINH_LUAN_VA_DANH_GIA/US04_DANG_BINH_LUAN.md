@@ -5,7 +5,7 @@
 
 ### User Story
 
-**Là người dùng đã đăng nhập**, tôi muốn đăng bình luận bằng văn bản, emoji và tùy chọn Spoiler, để chia sẻ cảm nhận về series hoặc tập phim đang xem.
+**Là người dùng đã đăng nhập**, tôi muốn đăng bình luận bằng văn bản, emoji và tùy chọn Spoiler, để chia sẻ cảm nhận về phim lẻ hoặc tập phim đang xem.
 
 ### Ưu tiên
 
@@ -14,14 +14,14 @@
 ### Acceptance Criteria
 
 1. Comment hỗ trợ văn bản, emoji và Spoiler; **emoji-only là nội dung hợp lệ**.
-2. Comment tối thiểu **1 ký tự hợp lệ hoặc 1 emoji**, không tính khoảng trắng; tối đa **1000 ký tự**. UI và API dùng cùng giới hạn.
+2. Comment tối thiểu **1 ký tự hợp lệ hoặc 1 emoji**, không tính khoảng trắng; tối đa **1000 ký tự**. Trước khi đếm ký tự, moderation và lưu record, UI/API phải reject RTL/bidi override (ví dụ U+202E), mọi zero-width character gồm U+200D/ZWJ, và control character U+0000–U+001F bằng cùng một chuẩn. Emoji không chứa ZWJ vẫn hợp lệ.
 3. URL chỉ hợp lệ khi hostname là `mytv.com.vn` hoặc subdomain thực sự của `mytv.com.vn`; không chấp nhận domain giả như `mytv.com.vn.evil.com`.
-4. Mỗi user tối đa **5 comment/reply trong 1 phút**; quota được tính chung giữa comment và reply.
-5. Comment được gắn đúng series/tập hiện tại và đi qua moderation theo US11.
+4. Mỗi user tối đa **5 Comment/Reply record trong rolling 60 giây**; quota được tính chung giữa comment và reply, tính từ thời điểm record được tạo. Validation fail, Unicode reject, AI mức Nặng block hoặc AI lỗi/timeout không tạo record và không tiêu quota.
+5. Comment được gắn đúng **content scope hiện tại** — phim lẻ ở cấp phim, phim bộ ở cấp tập hiện tại — và đi qua moderation theo US11.
 6. Ở Chế độ 1, nội dung AI mức Nhẹ/An toàn được Hiển thị; Trung bình vào Chờ duyệt; Nặng bị chặn.
 7. Ở Chế độ 2, nội dung không bị chặn vẫn vào Chờ duyệt tới khi Admin duyệt.
 8. Spoiler được che với cảnh báo và chỉ mở khi người xem chủ động chọn.
-9. Nickname phải **unique không phân biệt hoa/thường**, dài **3–30 ký tự**; cho phép chữ, số, khoảng trắng, `_`, `-`; không cho URL, số điện thoại hoặc ký tự điều khiển.
+9. Nickname phải **unique không phân biệt hoa/thường**, dài **3–30 ký tự**; cho phép chữ, số, khoảng trắng, `_`, `-`; không cho URL, số điện thoại, ký tự điều khiển, RTL/bidi override hoặc mọi zero-width gồm U+200D/ZWJ; chuẩn hóa confusable/homoglyph trước uniqueness. Emoji ZWJ không được dùng trong Nickname.
 10. User được đổi nickname tối đa **1 lần đổi thành công/24 giờ/account** (submission bị validation/AI chặn không tiêu quota); nickname mới/đổi phải qua **global AI moderation policy độc lập với Chế độ 1/2 của phim/tập**, chỉ có **2 kết quả**: Nhẹ/An toàn → dùng ngay, cập nhật nickname công khai ngay lập tức; Trung bình HOẶC Nặng (gộp) → **bị chặn ngay lập tức tại thời điểm submit**, không tạo bất kỳ trạng thái chờ duyệt nào. Trường hợp AI không cho được quyết định hợp lệ (timeout >5 giây/5xx/dịch vụ không khả dụng, nickname bằng ngôn ngữ ngoài tiếng Việt/tiếng Anh, hoặc AI low-confidence) cũng **không tạo trạng thái chờ duyệt**: nickname không đổi, user được báo lỗi và cho thử lại, và **không tiêu quota** (theo US11).
 11. Khi nickname bị chặn tại submit, user thấy lỗi ngay, nickname không đổi và tiếp tục dùng nickname hợp lệ cũ. Nếu chưa từng có nickname hợp lệ, hiển thị số điện thoại đã mask: giữ `0` đầu + 3 số cuối, toàn bộ số giữa thành `*` theo độ dài thực tế, ví dụ `0912345124 → 0******124`.
 12. Không hiển thị đầy đủ số điện thoại hoặc PII nhạy cảm trên trải nghiệm người xem.
@@ -32,7 +32,7 @@
 ### Quy tắc nghiệp vụ
 
 - Chỉ tài khoản đăng nhập mới được đăng bình luận.
-- Giới hạn 1000 ký tự và rate limit 5 nội dung/phút cũng áp dụng Reply tại US08. Giới hạn 1000 ký tự được đếm theo **grapheme cluster** (đơn vị hiển thị/Unicode extended grapheme cluster), không đếm theo code unit/UTF-16, để nhất quán với emoji tổ hợp (ZWJ, skin-tone modifier); UI và API phải dùng cùng thuật toán đếm.
+- Giới hạn 1000 ký tự và rate limit **5 Comment/Reply record trong rolling 60 giây** cũng áp dụng Reply tại US08. Sau khi reject U+200D/ZWJ và các ký tự bị cấm, giới hạn 1000 ký tự được đếm theo **grapheme cluster** (đơn vị hiển thị/Unicode extended grapheme cluster), không đếm theo code unit/UTF-16; UI và API phải dùng cùng thuật toán đếm.
 - URL được validate theo hostname, không theo chuỗi chứa tên miền.
 - **Nickname là identity toàn tài khoản**, không thuộc scope series/episode; vì vậy không kế thừa Mode1/Mode2 hay threshold override theo phim/tập. Nickname dùng global AI policy riêng theo US11, chỉ có 2 kết quả: Nhẹ/An toàn dùng ngay; Trung bình hoặc Nặng đều bị chặn ngay tại submit, không tạo hàng chờ duyệt.
 - Nickname bị chặn tại submit không public và không tạo bản ghi chờ; nickname công khai giữ nguyên giá trị hợp lệ trước đó.
@@ -56,7 +56,7 @@
 | TC-US04-003 | Minimum | Chuẩn bị rỗng, whitespace, 1 ký tự | Gửi | Rỗng/whitespace bị chặn; 1 ký tự hợp lệ được nhận. |
 | TC-US04-004 | Boundary | 999/1000/1001 ký tự | Gửi qua UI/API | 999/1000 hợp lệ; 1001 bị chặn nhất quán. |
 | TC-US04-005 | URL | Link `mytv.com.vn`, `www.mytv.com.vn`, `support.mytv.com.vn`, `mytv.com.vn.evil.com`, domain khác | Gửi | Chỉ domain MyTV và subdomain thực được phép. |
-| TC-US04-006 | Rate limit | U1 gửi comment/reply liên tiếp | Gửi 5 rồi nội dung thứ 6 trong rolling 1 phút | 5 nội dung đầu có thể được nhận; nội dung thứ 6 bị rate-limit và không tạo record. |
+| TC-US04-006 | Rate limit | U1 gửi comment/reply liên tiếp | Gửi 5 rồi nội dung thứ 6 trong rolling 60 giây | 5 record đầu có thể được nhận; nội dung thứ 6 bị rate-limit và không tạo record. |
 | TC-US04-007 | Spoiler | Comment có Spoiler | Gửi và mở bằng U2 | Nội dung bị che; chỉ mở khi U2 chủ động chọn. |
 | TC-US04-008 | Moderation | Mode 1 với mức Nhẹ/Trung bình/Nặng | Gửi từng mẫu | Nhẹ Hiển thị, Trung bình Chờ duyệt, Nặng bị chặn. |
 | TC-US04-009 | Mode 2 | Nội dung không bị chặn | Gửi | Vào Chờ duyệt; chưa public trước Admin. |
@@ -66,10 +66,11 @@
 | TC-US04-013 | Fallback identity | U1 chưa có nickname hợp lệ, phone `0912345124` | Mở comment | Hiển thị `0******124`, không lộ số đầy đủ. |
 | TC-US04-014 | Security/idempotency | Logout hoặc retry request | Gửi qua API | Không bypass auth; retry không tạo trùng. |
 | TC-US04-015 | Media restriction | Thử upload ảnh/video cá nhân | UI/API | Không có luồng upload; API từ chối. |
-| TC-US04-016 | Grapheme boundary | Chuỗi 1000 grapheme cluster có emoji ZWJ đa-codepoint (ví dụ 👨‍👩‍👧‍👦, 🏳️‍🌈) chèn ở nhiều vị trí | Gửi qua UI và API cùng payload | UI và API đếm ra cùng 1000 đơn vị (grapheme cluster); không bị lệch do đếm theo code point/UTF-16; 1001 grapheme bị chặn nhất quán ở cả hai bề mặt. |
-| TC-US04-017 | Nickname Unicode abuse | Nickname chứa RTL override (U+202E), zero-width (U+200B/U+200D không thuộc emoji hợp lệ), control char, hoặc ký tự homoglyph giả mạo chữ Latin | Gửi đổi nickname | Bị chặn ngay tại submit theo rule an toàn nickname; xem thêm ../REQUIREMENTS_A11Y_SECURITY.md. |
+| TC-US04-016 | Grapheme boundary | Chuỗi 1000 grapheme cluster dùng emoji không ZWJ (ví dụ 🙂, 👍🏽, 🇻🇳) chèn ở nhiều vị trí | Gửi qua UI và API cùng payload | UI và API đếm ra cùng 1000 đơn vị (grapheme cluster); không bị lệch do đếm theo code point/UTF-16; 1001 grapheme bị chặn nhất quán ở cả hai bề mặt. |
+| TC-US04-017 | Nickname Unicode abuse | Nickname chứa RTL override (U+202E), zero-width (U+200B/U+200D), control char, hoặc ký tự homoglyph giả mạo chữ Latin | Gửi đổi nickname | Bị chặn ngay tại submit theo rule an toàn nickname; xem thêm ../REQUIREMENTS_A11Y_SECURITY.md. |
 | TC-US04-018 | XSS payload | Payload `<script>alert(1)</script>`, `<img src=x onerror=alert(1)>`, `javascript:alert(1)` gửi làm nội dung comment và làm nickname | Gửi qua UI/API, sau đó hiển thị lại trên mọi bề mặt (danh sách comment, thông báo, CMS) | Payload được escape/sanitize ở mọi nơi hiển thị, không thực thi script; xem thêm ../REQUIREMENTS_A11Y_SECURITY.md. |
 | TC-US04-019 | Nickname quota | U1 chưa đổi nickname trong 24h | Đổi nickname hợp lệ thành công, sau đó thử đổi lần 2 trước 24h; thử lại sau đủ 24h; kiểm tra thêm một submission bị validation/AI chặn | Lần đổi thành công đầu được lưu; lần đổi thành công thứ 2 trong 24h bị chặn; sau đủ 24h được đổi lại. Submission bị validation/AI chặn không tiêu quota. |
+| TC-US04-020 | ZWJ rejection | Comment/nickname chứa U+200D/ZWJ, kể cả emoji ZWJ như 👨‍👩‍👧‍👦 | Gửi qua UI/API | Bị reject/neutralize nhất quán trước đếm ký tự, moderation và lưu record; emoji không chứa ZWJ vẫn được xử lý theo rule emoji thông thường. |
 
 ### Microcopy
 

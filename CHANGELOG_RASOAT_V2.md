@@ -76,7 +76,7 @@ Mỗi mục dưới đây ghi: vấn đề gốc → thay đổi → file bị �
 - Khôi phục mục **Ưu tiên** (`Must`) — US02 từng là file **duy nhất trong 20 file** thiếu mục này
 - Đổi heading `### Business rules` → `### Quy tắc nghiệp vụ` — US02 từng là file duy nhất dùng tiếng Anh
 - Khôi phục **Giá trị, Điều kiện tiên quyết, Phụ thuộc, Điểm cần PO chốt, Phân tích kiểm thử, Microcopy**
-- Khôi phục rule tường minh loại trừ Account Lock (kể cả reply cascade) và scope Đóng khỏi public count, diễn đạt theo Effective Visibility Resolver, kèm ghi chú **không ảnh hưởng KPI** (US19)
+- Khôi phục rule tường minh loại trừ Account Lock (kể cả reply cascade) và scope Đóng khỏi public count, diễn đạt theo Effective Visibility Resolver. **Đính chính sau changelog:** scope Đóng không loại public KPI/Engagement; Account Lock tạm loại public KPI/Engagement theo README/US19 hiện hành.
 - Khôi phục `TC-US02-005` (counter exclusion) và `TC-US02-010` (tính tay Featured Score)
 
 **Thay đổi — US03: 55 → 85 dòng, test case 8 → 13.** Bổ sung các mục cấu trúc chuẩn, dẫn chiếu a11y (`radiogroup`), test case mới cho Comment Lock, làm tròn, scope Đóng, phim lẻ, idempotency.
@@ -121,7 +121,7 @@ Mỗi mục dưới đây ghi: vấn đề gốc → thay đổi → file bị �
 | 3.2 | IA liệt kê **3 quyết định đã chốt** vào mục "chưa chốt" → gây vòng review thừa và rủi ro thiết kế ngược | Gỡ khỏi mục "chưa chốt", chuyển thành phát biểu khẳng định: Comment Area = **tab riêng**; composer Phone = bottom sheet / Web = inline; truncate **3 dòng**. Kèm theo: đổi mô hình count từ "Header" sang **nhãn tab**; state scope Đóng nay ghi rõ *"giữ tab `Bình luận` nhưng bỏ count"* (trước đây thiếu → wireframe sẽ vẫn hiện `Bình luận (128)` ở khu vực không khả dụng) |
 | 3.3 | IA nói sort persist "chưa khóa", trong khi US02 AC3 đã khóa reset về `Nổi bật`. Nằm trong mục IA đặt tên "Navigation rules quan trọng" — nơi dev tin cậy nhất | Thay bằng phát biểu khẳng định theo US02 AC3 |
 | 3.4 | `UX_FIGMA_WIREFRAMES` **thiếu `S04`** (Account Lock). Dev sẽ tái dùng frame `S03` → hiện "Bình luận **không còn** khả dụng" thay vì "**hiện không** khả dụng" → user hiểu nhầm bị gỡ vĩnh viễn | Thêm hàng `S04`; thêm nhánh Account Lock vào connected flow; thêm rule **"3 chuỗi fallback = 3 frame khác nhau"**; IA liệt kê S03 và S04 là hai frame riêng trong P0 kèm lý do |
-| 3.5 | IA thiếu state cho rate limit comment/edit/nickname; màn `C09 Nickname Settings` có trong bảng nhưng **không nằm ở P0/P1/P2** → không đợt nào vẽ | Thêm `S14` (5 nội dung/phút), `S15` (5 edit/phút/target), `S16` (nickname bị chặn), `S17` (hết quota 24h); đưa `C09` + S16/S17 vào **P0**; bổ sung C09 vào hàng US11 của ma trận coverage |
+| 3.5 | IA thiếu state cho rate limit comment/edit/nickname; màn `C09 Nickname Settings` có trong bảng nhưng **không nằm ở P0/P1/P2** → không đợt nào vẽ | Thêm `S14` (5 Comment/Reply record/rolling 60 giây), `S15` (5 edit/rolling 60 giây/target), `S16` (nickname bị chặn), `S17` (hết quota 24h); đưa `C09` + S16/S17 vào **P0**; bổ sung C09 vào hàng US11 của ma trận coverage. Đây là rule hiện hành sau refinement bổ sung. |
 | 3.6 | `US14_USER_FLOW` chỉ cho 1 reason chung, mất quyền override từng item (US14 AC5 cho phép). 40 comment gồm 38 Spam + 2 Spoiler → cả 40 bị ghi sai lý do, audit sai căn cứ chế tài | Cập nhật: reason chung cho batch → **override reason/note từng item** → item có reason cuối "Vi phạm khác" bắt note 1–500 → bước xem trước per-item → Apply → partial success |
 
 ---
@@ -167,3 +167,22 @@ Mỗi mục dưới đây ghi: vấn đề gốc → thay đổi → file bị �
 3. **SmartTV chưa có trong `UX_FIGMA_WIREFRAMES.md`.** File đó tự khai báo phạm vi là *P0 Mobile v1*, nên không tự thêm mục TV vào. IA đã có sẵn Screen ID (`C17`, `S13`) để dựng khi Design mở đợt TV. **Cần Design quyết thời điểm mở đợt.**
 
 Ngoài ra, một điểm nhỏ đáng cân nhắc: `SOLUTION_ARCHITECTURE.md` phần mô tả AI Adapter nêu đúng invariant nickname nhưng chưa nhắc "cho thử lại / không tiêu quota / không queue". Không sai, chỉ là chưa đầy đủ bằng US11 — có thể bổ sung ở lần cập nhật kiến trúc tới.
+
+---
+
+## Phụ lục — Quyết định sau rà soát bổ sung
+
+Các quyết định dưới đây được chốt sau vòng 2 và là business rule hiện hành; README gốc và User Story tương ứng là source of truth:
+
+1. **KPI/Engagement:** Account Lock tạm loại public KPI/Engagement; Scope Đóng không loại KPI.
+2. **Retention/cascade:** root giữ 90 ngày; reply cascade purge cùng root, không có đồng hồ riêng; reply self-delete riêng lẻ giữ 90 ngày; dùng `cascade_source` để phân biệt self-delete và Admin root delete.
+3. **Visibility:** lưu các visibility gate độc lập; `cascade_source` chỉ dùng cho delete cascade. Self-delete fallback dùng “Bình luận không còn khả dụng”.
+4. **Scope Đóng:** giữ tab `Bình luận`, bỏ count, hiển thị trạng thái không khả dụng; ẩn rating/list/composer/actions.
+5. **Rating:** khi `total = 0`, ẩn khối rating trong tab; rating đầu tiên qua post-watch prompt sau `content_completed` (90% duration hoặc end event), phim bộ lưu theo tập.
+6. **Share:** share sheet mở thành công hoặc copy-link fallback thành công đều ghi một Share event.
+7. **Analytics:** filter lịch sử dùng snapshot Net Like/Rating tại thời điểm `to`; thiếu snapshot phải báo dữ liệu không đủ. CMS được roll-up Series, không tạo scope người xem.
+8. **Moderation/limits:** Comment/Reply dùng rolling 60 giây; Report dùng rolling 60 phút; Undo không có chain; AI request snapshot policy tại thời điểm nhận.
+9. **UX/platform:** SmartTV đọc, Like/Unlike, Rating, Sort, Spoiler, Timestamp; không tạo Comment/Reply/Mention/Report/Share/Edit/Delete.
+10. **Quyền CMS:** EP04 có role + scope permission matrix; API là nơi enforce cuối.
+
+Các thay đổi này đã được đồng bộ vào README, Solution Architecture, IA/UX và User Story liên quan; chưa commit vì repo không yêu cầu commit tự động.

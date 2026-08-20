@@ -13,7 +13,7 @@ flowchart TD
  B --> C[User chọn Bình luận count]
  C --> D{Scope đang mở?}
  D -->|Không| E[Tab vẫn hiện tên Bình luận, bỏ count + trạng thái không khả dụng]
- D -->|Có| F[Loading skeleton rating + sort + 3 comment]
+ D -->|Có| F[Loading skeleton rating + sort + root comment list]
  F --> G[Hiển thị public comment theo Effective Visibility]
  G --> H{Guest chọn interaction?}
  H -->|Có| I[Auth gate]
@@ -34,7 +34,7 @@ flowchart TD
 - Có dữ liệu mới khi đang đọc: không tự chèn; hiện `Có {n} bình luận mới` để user chủ động refresh.
 - Guest được đọc public content; login chỉ khi tương tác.
 - Empty: logged-in có CTA viết đầu tiên; Guest có CTA login; SmartTV có hướng dẫn + QR chuyển sang smartphone.
-- SmartTV chỉ đọc nội dung, nhưng vẫn hỗ trợ Like/Unlike, Rating, Sort và Timestamp theo các flow tương ứng; không có composer.
+- SmartTV không tạo nội dung hay interaction dạng composer/action moderation; vẫn hỗ trợ đọc, Like/Unlike, Rating, Sort, reveal Spoiler và Timestamp seek bằng remote. SmartTV không hỗ trợ Comment, Reply, Mention, Report, Share, Edit hoặc Delete; khi cần các action này hiển thị hướng dẫn + QR chuyển sang smartphone.
 
 ## States
 

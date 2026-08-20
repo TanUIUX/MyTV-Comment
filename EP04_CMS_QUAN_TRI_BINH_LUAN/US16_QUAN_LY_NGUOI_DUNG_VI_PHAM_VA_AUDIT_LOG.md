@@ -17,7 +17,7 @@
 - **Trung bình** → Khóa bình luận tạm thời.
 - **Nặng** → Admin quyết định Khóa bình luận hoặc Khóa tài khoản tùy bối cảnh; Khóa tài khoản chỉ dùng khi xác định vi phạm chính sách nghiêm trọng.
 
-Cảnh báo phải có notification bắt buộc riêng (in-app bắt buộc + push tùy chọn), **không bị tắt bởi switch cộng đồng** — xem US09 AC9.
+Cảnh báo phải có notification bắt buộc riêng (**in-app bắt buộc; push gửi thêm nếu hệ điều hành/device cho phép**), **không bị tắt bởi switch cộng đồng** — xem US09 AC9.
 
 ### Reason taxonomy cho chế tài
 

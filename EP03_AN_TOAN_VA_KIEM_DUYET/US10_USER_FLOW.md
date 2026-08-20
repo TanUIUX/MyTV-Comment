@@ -9,7 +9,7 @@ flowchart TD
  A[Menu ⋯ → Báo cáo] --> B{Đã login + target public + không phải content mình?}
  B -->|Không| C[Auth/action unavailable]
  B -->|Có| D{Cooldown 24h / limit 10 report·h?}
- D -->|Blocked| E["Thông báo cooldown kèm số giờ còn lại / rate-limit"]
+ D -->|Blocked| E["Thông báo cooldown kèm số giờ còn lại / rolling rate-limit"]
  D -->|OK| F[Mở bottom sheet Report]
  F --> G[Chọn 1 trong 6 reason]
  G --> H{Vi phạm khác?}

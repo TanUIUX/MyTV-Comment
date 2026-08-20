@@ -8,15 +8,23 @@
 
 ```mermaid
 flowchart TD
- A[Mở tab Bình luận] --> B[Hiển thị 5 sao + average + total]
- B --> C{User chọn 1–5 sao?}
- C -->|Guest| D[Auth gate]
- D --> E[Login → quay lại đúng content, không auto rating]
- C -->|Đã login| F[Submit ngay]
- F --> G{Server success?}
- G -->|Có| H[Cập nhật rating hiện hành + aggregate]
- G -->|Không| I[Revert rating hợp lệ trước đó + báo lỗi]
- H --> J[Muốn thay đổi → chọn số sao khác]
+ A[Mở tab Bình luận] --> B{total rating > 0?}
+ B -->|Có| C[Hiển thị 5 sao + average + total]
+ B -->|Không| D[Ẩn toàn bộ khối rating]
+ C --> E{User chọn 1–5 sao?}
+ E -->|Guest| F[Auth gate]
+ F --> G[Login → quay lại đúng content, không auto rating]
+ E -->|Đã login| H[Submit ngay]
+ G --> H
+ H --> I{Server success?}
+ I -->|Có| J[Cập nhật rating hiện hành + aggregate]
+ I -->|Không| K[Revert rating hợp lệ trước đó + báo lỗi]
+ J --> L[Muốn thay đổi → chọn số sao khác]
+ M[Player phát content_completed: 90% duration hoặc end event, lần đầu phiên xem] --> N[Mở Post-watch Rating Prompt riêng]
+ N --> O{Đã login?}
+ O -->|Không| P[Auth gate → quay lại prompt, không auto rating]
+ O -->|Có| Q[Chọn 1–5 sao → submit]
+ P --> Q
 ```
 
 ## UX/Business đã chốt

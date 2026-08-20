@@ -28,8 +28,8 @@ Các action bắt buộc reason dùng chung taxonomy AI/Report/CMS:
 3. **Duyệt không cần reason**.
 4. **Chỉ Từ chối / Ẩn / Xóa bắt buộc reason**: Admin phải chọn một reason chuẩn. Với 5 reason chuẩn đầu, note là tùy chọn; nếu chọn **“Vi phạm khác”**, note **bắt buộc**, không được chỉ khoảng trắng và tối đa **500 ký tự** ở cả UI/API.
 5. **Bỏ qua Report / gắn-bỏ Flag / thêm-bỏ Spoiler không bắt buộc reason**.
-6. Từ chối/Ẩn/Xóa phải làm tác giả thấy reason trong app và nhận **push + in-app notification** khi user có thể truy cập; Account Lock tuân kênh thông báo riêng tại US09/US16. Notification nghiệp vụ không bị tắt bởi community notification setting.
-7. Khi CMS/Admin **Xóa mềm root**, chính root chuyển Xóa mềm 90 ngày và toàn thread không public do cascade; **reply con không tự chuyển sang Xóa mềm** chỉ vì root bị xóa, mà giữ moderation state riêng trước cascade trừ khi có action riêng trên reply. Reply chỉ mang cờ `hidden_by_root_cascade = true`, **không có đồng hồ retention riêng**; retention 90 ngày chỉ áp dụng cho root.
+6. Từ chối/Ẩn/Xóa phải làm tác giả thấy reason trong app và luôn tạo **in-app notification** khi user còn có thể truy cập; gửi thêm **push notification** nếu hệ điều hành/device cho phép. Account Lock tuân kênh locked-account/support riêng tại US09/US16. Notification nghiệp vụ không bị tắt bởi community notification setting.
+7. Khi CMS/Admin **Xóa mềm root**, chính root chuyển Xóa mềm 90 ngày và toàn thread không public do delete cascade; **reply con không tự chuyển sang Xóa mềm** chỉ vì root bị xóa, mà giữ moderation state riêng trước cascade trừ khi có action riêng trên reply. Mỗi reply ghi `cascade_source = admin_root_delete`, **không có đồng hồ retention riêng và được purge cùng root**; retention 90 ngày chỉ áp dụng cho root. Visibility cascade do Admin Ẩn root hoặc Account Lock dùng gate riêng, không ghi `cascade_source`.
 8. **Ẩn root comment** làm toàn bộ thread tạm không public nhưng không tự đổi moderation state của replies; replies hợp lệ của user khác không bị coi là vi phạm chỉ vì root bị Ẩn.
 9. CMS kiểm tra state hiện tại trước khi lưu để tránh ghi đè im lặng giữa nhiều Admin.
 
@@ -60,12 +60,13 @@ Các action bắt buộc reason dùng chung taxonomy AI/Report/CMS:
    - Undo **Từ chối** → **Chờ duyệt**.
    - Undo **Ẩn** → **Hiển thị** nếu không có gate khác.
    - Undo **Xóa mềm** → **state ngay trước khi Xóa**.
-3. Nếu Undo Xóa mềm một **root comment do CMS/Admin xóa**, với điều kiện **root còn trong 90 ngày retention**, hệ thống khôi phục root và toàn bộ reply đã mất public chỉ do cascade root delete; mỗi reply quay về visibility tương ứng với **state riêng vốn được giữ nguyên** (reply không có đồng hồ retention riêng). Reply có moderation state riêng trước đó không bị tự public lại.
+3. Nếu Undo Xóa mềm một **root comment do CMS/Admin xóa**, với điều kiện **root còn trong 90 ngày retention**, hệ thống khôi phục root và toàn bộ reply đã mất public chỉ do cascade root delete; mỗi reply quay về visibility tương ứng với **state riêng vốn được giữ nguyên** (reply không có đồng hồ retention riêng và được purge cùng root). Reply có moderation state riêng trước đó không bị tự public lại. Reply self-delete riêng lẻ có retention 90 ngày riêng nhưng không được khôi phục bởi Undo root.
 4. Undo Ẩn root làm thread hợp lệ hiện lại theo state riêng của từng reply; không coi reply từng bị visibility cascade là đã bị moderation.
 5. Mọi Admin/Moderator có quyền moderation tương ứng đều được Undo, không cần là người thực hiện action ban đầu.
 6. **Undo không bắt buộc nhập reason**.
 7. **Undo chỉ khôi phục content state**, không tự khôi phục Pin đã mất hoặc badge Bình luận nổi bật đã bị thu hồi do moderation. Pin phải được Admin ghim lại; Featured badge phải được hệ thống đánh giá/cấp lại theo rule hiện hành.
 8. Undo tạo audit event mới với actor/time/action/before-after; không xóa/sửa audit cũ.
+9. Không có **Undo chain/Undo Undo**. Undo chỉ đảo action moderation gần nhất còn hợp lệ; sau Undo, Admin có thể thực hiện moderation mới nếu state hiện tại cho phép, và action mới tạo audit event/điều kiện Undo mới độc lập.
 
 ### Acceptance Criteria — SLA moderation
 
@@ -123,4 +124,5 @@ Các action bắt buộc reason dùng chung taxonomy AI/Report/CMS:
 | TC-US14-024 | State × action âm | 5 item đúng 5 state: pending/visible/rejected/hidden/softdeleted | Gọi Duyệt/Từ chối/Ẩn/Xóa mềm/Bỏ qua Report/Flag/Spoiler qua UI và API cho từng item | Chỉ tổ hợp state × action hợp lệ được thực hiện; tổ hợp còn lại bị chặn cả UI và API, không ghi audit "thành công". |
 | TC-US14-025 | Bulk selection trộn state | Selection gồm 5 item ở 5 state khác nhau | Thực hiện bulk action | Item sai state báo lỗi riêng theo item; item hợp lệ vẫn được xử lý; không báo "thành công toàn bộ". |
 | TC-US14-026 | Boundary Undo Xóa mềm và Từ chối/Ẩn không giới hạn | C1 bị Xóa mềm tại D-89/D-90/D-91; C2/C3 bị Từ chối/Ẩn từ 8 tháng trước | Undo từng trường hợp | D-89 Undo được; D-90 vẫn trong hạn (đúng biên 90 ngày); D-91 bị chặn; Undo Từ chối/Ẩn ở mốc 8 tháng vẫn thực hiện được vì không giới hạn thời gian. |
-| TC-US14-027 | XSS trong note "Vi phạm khác" | Từ chối/Ẩn/Xóa với reason "Vi phạm khác", note chứa payload injection (`<script>`, `=CMD(...)`, v.v.) | Lưu note rồi xem CMS list/detail và export CSV/XLSX | Payload được escape khi hiển thị trên CMS list/detail; export CSV/XLSX vô hiệu hóa formula injection (không thực thi công thức). |
+| TC-US14-028 | Undo chain | C1 bị Ẩn → Undo về Hiển thị → Admin Ẩn lại | Thử Undo lần hai cho action cũ và action mới | Action cũ không có Undo Undo; action Ẩn mới được Undo độc lập theo state hiện tại và audit chain giữ đủ actor/time/before-after. |
+| TC-US14-029 | XSS trong note "Vi phạm khác" | Từ chối/Ẩn/Xóa với reason "Vi phạm khác", note chứa payload injection (`<script>`, `=CMD(...)`, v.v.) | Lưu note rồi xem CMS list/detail và export CSV/XLSX | Payload được escape khi hiển thị trên CMS list/detail; export CSV/XLSX vô hiệu hóa formula injection (không thực thi công thức). |

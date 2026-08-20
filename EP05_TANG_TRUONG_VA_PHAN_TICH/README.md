@@ -25,7 +25,7 @@
 - Số lượt chia sẻ và tỷ lệ mở deep link quay lại MyTV.
 - Tỷ lệ chuyển đổi từ link chia sẻ sang xem phim/bình luận.
 - Tỷ lệ đề xuất AI được Admin chấp nhận/chỉnh sửa/bỏ.
-- Engagement Score và ranking phim/tập.
+- Engagement Score và ranking phim/tập; CMS có thể roll-up theo Series như aggregate vận hành, không phải scope người xem.
 - Thời gian xử lý moderation queue và tỷ lệ Report được xác nhận.
 
 ---

@@ -23,7 +23,7 @@
 8. Double-click/retry không làm tăng/giảm trùng Like.
 9. Guest chọn Like được chuyển sang login; không tạo Like trước xác thực.
 10. Comment bị Ẩn/Xóa hoặc user không còn quyền xem không thể nhận Like mới.
-11. Net Like hiện tại được dùng cho sort Được yêu thích/Featured Score; lịch sử thao tác Like/Unlike có thể được tracking riêng cho US19.
+11. Net Like hiện tại được dùng cho sort Được yêu thích/Featured Score; **public Net Like không âm** (`max(0, likes_current - unlikes_current)`); lịch sử thao tác Like/Unlike có thể được tracking riêng cho US19.
 12. Nếu account đã tạo Like sau đó bị **Khóa tài khoản**, Like record **không bị xóa**, nhưng trong thời gian khóa Like đó tạm bị loại khỏi **Net Like công khai, Featured Score/ranking và Engagement Score**. Khi account được mở khóa, Like được tính lại nếu record và target vẫn hợp lệ.
 13. Việc một liker bị Account Lock **không làm thay đổi Fan kỳ cựu eligibility của người đã nhận Like đó**; badge dùng semantics riêng tại US17 để tránh badge của recipient dao động theo lock/unlock của past liker.
 

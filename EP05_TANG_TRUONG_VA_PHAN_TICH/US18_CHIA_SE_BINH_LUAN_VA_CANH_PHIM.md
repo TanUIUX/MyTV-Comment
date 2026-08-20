@@ -31,8 +31,8 @@
 11. Nếu target vẫn hợp lệ nhưng scope đang **Đóng bình luận**, link cũ mở đúng phim/tập, không hiển thị thread và hiện **“Khu vực bình luận hiện không khả dụng”**. Khi scope mở lại, link cũ hoạt động lại nếu target vẫn hợp lệ. Khi nhiều gate cùng đúng, áp dụng Effective Visibility Resolver tại US12 (mục ưu tiên gate).
 12. Nếu target chỉ tạm non-public do **Account Lock của tác giả/root author**, link cũ mở đúng phim/tập, không hiển thị thread và hiện **“Bình luận hiện không khả dụng”**. Khi account được mở khóa, link cũ hoạt động lại nếu target/thread vẫn hợp lệ. Khi nhiều gate cùng đúng, áp dụng Effective Visibility Resolver tại US12 (mục ưu tiên gate).
 13. MVP dùng share sheet; không cần tích hợp SDK/API riêng Facebook/Zalo/TikTok.
-14. **Share event được tính khi user bấm Share và OS share sheet mở thành công**. Không cần chờ callback xác nhận user đã gửi sang ứng dụng đích.
-15. Ghi nhận kênh đích khi nền tảng cung cấp và lượt mở link phục vụ US19; retry/lỗi kỹ thuật phải dedup để không tăng Share KPI sai.
+14. **Share event được tính khi user bấm Share và OS/Web share sheet mở thành công hoặc khi fallback Sao chép liên kết hoàn tất thành công**. Không cần chờ callback xác nhận user đã gửi sang ứng dụng đích; cancel sau khi sheet mở không hoàn tác event.
+15. Ghi nhận kênh đích khi nền tảng cung cấp và lượt mở link phục vụ US19; retry/lỗi kỹ thuật phải dedup để không tăng Share KPI sai. Sheet/copy thất bại không tạo event.
 16. Guest không được thực hiện action Share từ MyTV vì Share là interaction; phải đăng nhập trước khi tạo share event.
 17. Scope đang Đóng, target không public hoặc user đang Account Lock thì không thể tạo Share event mới từ target đó.
 
@@ -46,7 +46,7 @@
 - Việc người nhận đọc public comment không yêu cầu login.
 - Deep-link fallback phải phân biệt nguyên nhân: **scope Đóng** → “Khu vực bình luận hiện không khả dụng”; **Account Lock visibility** → “Bình luận hiện không khả dụng”; **target moderation invalid/deleted** → “Bình luận không còn khả dụng”.
 - Closed scope và Account Lock là visibility gate tạm thời nên link cũ có thể hoạt động lại; moderation invalidation tuân state hiện tại của target.
-- **Mốc ghi nhận Share = share sheet mở thành công**; đóng/cancel share sheet sau đó không hoàn tác Share event đã ghi.
+- **Mốc ghi nhận Share = share sheet mở thành công hoặc fallback Sao chép liên kết hoàn tất thành công**; đóng/cancel share sheet sau đó không hoàn tác Share event đã ghi.
 - Không có watermark/media/DRM sharing rule trong MVP vì frame/clip đã loại khỏi scope.
 
 ### Điểm cần PO chốt
@@ -77,12 +77,13 @@
 | TC-US18-016 | Share metric | Share sheet mở thành công rồi user đóng/cancel không gửi | Kiểm tra event | Vẫn ghi nhận đúng 1 Share event vì mốc tính là sheet mở thành công. |
 | TC-US18-017 | Dedup | Retry/open sheet lặp do lỗi kỹ thuật cùng request | Kiểm tra event | Không tạo duplicate ngoài định nghĩa dedup; KPI Share không tăng sai. |
 | TC-US18-018 | Channel + deep link open tracking | Share cùng 1 comment qua nhiều kênh đích khác nhau (OS cung cấp tên kênh cho một số kênh, không cung cấp cho kênh khác); người nhận mở deep link trên thiết bị đã cài app và trên thiết bị chưa cài app; có retry/lỗi kỹ thuật khi mở link | Thực hiện Share qua từng kênh; mở link ở cả hai loại thiết bị; giả lập lỗi/retry khi mở | Kênh đích được ghi nhận đúng khi OS cung cấp; để trống hợp lệ khi OS không cung cấp (không báo lỗi, không suy diễn kênh); lượt mở deep link được ghi nhận tách biệt với Share event (không cộng gộp hai loại event); mở thành công trên thiết bị đã cài và chưa cài app đều được ghi nhận lượt mở; retry/lỗi kỹ thuật khi mở không tạo duplicate lượt mở ngoài định nghĩa dedup. |
+| TC-US18-019 | Web fallback | Trình duyệt không hỗ trợ Web Share API; C1 public | Sao chép liên kết thành công/thất bại | Sao chép thành công ghi đúng 1 Share event; sao chép thất bại không ghi event. |
 
 ### Microcopy
 
 | Trạng thái | Nội dung hiển thị |
 |---|---|
-| Fallback — target moderation invalid (Ẩn/Xóa/Từ chối) | **Bình luận không còn khả dụng**<br>Nội dung bạn muốn xem đã bị gỡ hoặc không còn tồn tại.<br>`[Xem tập phim]` |
+| Fallback — target moderation/lifecycle hiện không khả dụng (Ẩn/Xóa/Từ chối/self-delete/Admin cascade) | **Bình luận không còn khả dụng**<br>Nội dung bạn muốn xem hiện không khả dụng.<br>`[Xem tập phim]` |
 | Fallback — scope Đóng bình luận | **Bình luận đang tạm đóng**<br>Phần thảo luận của {tên tập} tạm thời không mở.<br>`[Xem tập phim]` |
 | Fallback — Account Lock của tác giả/root author | **Bình luận hiện không khả dụng**<br>Nội dung này tạm thời không thể hiển thị.<br>`[Xem tập phim]` |
 

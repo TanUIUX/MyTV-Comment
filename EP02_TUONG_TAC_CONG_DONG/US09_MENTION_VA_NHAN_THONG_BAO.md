@@ -13,10 +13,10 @@
 
 ### Acceptance Criteria
 
-1. User nhập `@` để chọn tài khoản hợp lệ; mention được lưu theo account ID, không chỉ chuỗi nickname.
+1. User nhập `@` để chọn tài khoản hợp lệ; mention được lưu theo account ID, không chỉ chuỗi nickname. Mỗi comment/reply được mention tối đa **10 account unique**; mention lặp cùng account được coalesce thành một relation.
 2. Danh sách gợi ý ưu tiên **user đã tham gia thread hiện tại**, sau đó mở rộng sang user đã tham gia **phim/tập hiện tại**; không mặc định tìm toàn bộ user MyTV.
 3. Gợi ý mention không làm lộ full phone/PII; dùng nickname hoặc identity hiển thị hợp lệ.
-4. Khi reply/mention đã đủ điều kiện Hiển thị, người nhận nhận **push + in-app notification** nếu công tắc Thông báo cộng đồng đang bật và hệ điều hành cho phép push.
+4. Khi reply/mention đã đủ điều kiện Hiển thị và công tắc Thông báo cộng đồng đang bật, hệ thống luôn tạo **in-app notification**; gửi thêm **push notification** nếu hệ điều hành/device cho phép push.
 5. Nếu cùng sự kiện vừa Reply vừa Mention cùng một user, chỉ tạo một notification phù hợp.
 6. Không gửi notification cho hành động của chính user.
 7. Nội dung Chờ duyệt không tạo notification cho người khác trước khi được Hiển thị.
@@ -33,6 +33,8 @@
 ### Quy tắc nghiệp vụ
 
 - Một switch chung cho notification cộng đồng.
+- Tối đa 10 account unique được mention trong mỗi comment/reply; mention trùng cùng account chỉ tạo một relation/notification.
+- Mention vẫn được lưu nếu account ID hợp lệ, kể cả target đang Account Lock hoặc đã tắt switch; các trạng thái đó chỉ suppress việc tạo/gửi community notification.
 - Notification moderation/chế tài là thông báo nghiệp vụ bắt buộc và độc lập với switch cộng đồng.
 - Account Lock là ngoại lệ truy cập: **màn hình locked-account + Tổng đài MyTV 1800 1166 (miễn phí, hỗ trợ 24/7)** là kênh chính; in-app Notification Center không được coi là kênh bắt buộc vì user không thể vào app.
 - Community notification bị suppress trong Account Lock và không gửi bù sau unlock.
@@ -53,7 +55,7 @@
 |---|---|---|---|---|
 | TC-US09-001 | Suggestion | Thread có U2/U3, phim có U4 | Nhập `@` | Ưu tiên U2/U3 trước, sau đó U4; không mở search toàn hệ thống mặc định. |
 | TC-US09-002 | Identity | U2 đổi nickname | Mở mention cũ | Quan hệ vẫn trỏ đúng account ID. |
-| TC-US09-003 | Notification | U1 reply/mention U2, switch bật | Publish nội dung | U2 nhận push + in-app nếu push OS cho phép. |
+| TC-US09-003 | Notification | U1 reply/mention U2, switch bật; OS push bật hoặc tắt | Publish nội dung | U2 luôn có in-app notification; push chỉ gửi khi OS/device cho phép. |
 | TC-US09-004 | Preference | U2 tắt switch cộng đồng | Tạo Reply/Mention | Không tạo notification tương tác mới cho U2. |
 | TC-US09-005 | Mandatory bypass | U2 tắt switch cộng đồng | Comment U2 bị Từ chối/Ẩn/Xóa hoặc account bị sanction | Notification nghiệp vụ bắt buộc vẫn được xử lý theo US14/US16. |
 | TC-US09-006 | Dedup | Một reply vừa mention U2 | Publish | Không gửi hai notification trùng. |
@@ -66,7 +68,8 @@
 | TC-US09-013 | Locked-account notice | U2 bị Account Lock | U2 thử đăng nhập; kiểm tra push nếu thiết bị cho phép | Không vào app; thấy lock status + reason + **1800 1166 (miễn phí, hỗ trợ 24/7)** và hướng dẫn appeal; push có thể được gửi nhưng không phụ thuộc Notification Center. |
 | TC-US09-014 | Appeal mandatory channel | U2 đang Account Lock và Support/CMS cập nhật appeal | Theo dõi thông tin user nhận được | Sanction/appeal status vẫn thuộc nhóm bắt buộc; không bị community switch tắt. |
 | TC-US09-015 | Push payload PII/Spoiler | Comment C1 có gắn Spoiler; U1 chưa có nickname hợp lệ (hiển thị dạng phone `0912345124`) mention/reply U2 | Publish, bắt payload push thực tế trên iOS và Android ở trạng thái màn hình khóa và notification shade | Payload push không chứa nguyên văn nội dung Spoiler của C1; không chứa full SĐT `0912345124` của U1 (chỉ dùng nickname/mask dạng `0******124` nếu cần hiển thị định danh); nội dung hiển thị trên màn hình khóa và notification shade tuân cùng rule che PII/Spoiler. |
-| TC-US09-016 | Mention suggestion PII | 3 user: U2 có nickname hợp lệ; U3 vừa bị chặn nickname mới theo chính sách Trung bình/Nặng (Quyết định 2 — không có Chờ duyệt, hiển thị theo fallback mask); U4 chưa từng có nickname hợp lệ (hiển thị `0******124`) | Gõ `@` trong thread có cả 3 user; kiểm tra UI dropdown và response API gợi ý mention; thử gõ ký tự để dò user ngoài phạm vi thread/phim | UI và response API chỉ trả nickname hợp lệ (U2) hoặc identity mask dạng `0******124` (U3, U4); không trả về full phone/email của bất kỳ user nào; không thể dùng ô mention để enumerate account ngoài phạm vi thread/phim hiện tại. |
+| TC-US09-016 | Mention suggestion PII | 3 user: U2 có nickname hợp lệ; U3 vừa bị chặn nickname mới theo chính sách Trung bình/Nặng (không có Chờ duyệt, hiển thị theo fallback mask); U4 chưa từng có nickname hợp lệ (hiển thị `0******124`) | Gõ `@` trong thread có cả 3 user; kiểm tra UI dropdown và response API gợi ý mention; thử gõ ký tự để dò user ngoài phạm vi thread/phim | UI và response API chỉ trả nickname hợp lệ (U2) hoặc identity mask dạng `0******124` (U3, U4); không trả về full phone/email của bất kỳ user nào; không thể dùng ô mention để enumerate account ngoài phạm vi thread/phim hiện tại. |
+| TC-US09-017 | Mention limit/dedup | Comment/reply có 10 account unique, mention lặp một account, và account thứ 11; một target đang Account Lock, một target tắt switch cộng đồng | Submit content public | 10 account unique được lưu; mention lặp không tạo relation/notification thứ hai; account thứ 11 bị chặn validation; target lock/opt-out vẫn có relation nhưng không tạo/gửi community notification. |
 
 ### Microcopy
 

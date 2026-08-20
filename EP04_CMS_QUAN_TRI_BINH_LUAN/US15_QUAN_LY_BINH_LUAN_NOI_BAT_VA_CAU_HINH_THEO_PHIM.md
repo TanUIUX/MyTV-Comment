@@ -18,10 +18,10 @@
 3. Khi đã đủ 3, Admin phải bỏ ghim/thay thế trước khi ghim item mới.
 4. Admin **kéo-thả để sắp xếp thủ công vị trí 1–3**; thứ tự ghim không phụ thuộc Featured Score/thời gian ghim.
 5. Mỗi comment ghim có thể có **ngày/giờ hết hạn tùy chọn**; nếu không đặt thì giữ đến khi Admin bỏ ghim hoặc comment không còn hợp lệ.
-6. Khi hết hạn hoặc comment bị moderation **Ẩn/Xóa/Từ chối**, item mất Pin và không còn public ở vùng ghim.
+6. Khi hết hạn hoặc comment bị moderation **Ẩn/Xóa/Từ chối**, item mất Pin và không còn public ở vùng ghim. Self-delete root hoặc Admin root delete cascade cũng làm Pin mất khỏi metadata active; `cascade_source = self_delete` và `cascade_source = admin_root_delete` đều không giữ Pin để tự khôi phục.
 7. Nếu tác giả comment bị **Account Lock**, comment tạm không public và **Pin tạm ẩn nhưng metadata Pin được giữ**. Khi mở khóa, Pin tự hiển thị lại nếu comment vẫn hợp lệ, chưa bị moderation riêng và Pin chưa hết hạn.
 8. Nếu trong thời gian Account Lock comment bị moderation Ẩn/Xóa/Từ chối riêng, Pin bị mất theo moderation và **không tự khôi phục** khi account mở khóa.
-9. Nếu Admin Undo action moderation đã làm mất Pin, Undo chỉ khôi phục content state; **không tự khôi phục Pin**. Admin phải ghim lại nếu muốn.
+9. Nếu Admin Undo action moderation/delete đã làm mất Pin, Undo chỉ khôi phục content state; **không tự khôi phục Pin**. Admin phải ghim lại nếu muốn.
 10. Ghim/bỏ ghim/reorder/set expiry và thay đổi Pin do lifecycle đều lưu audit phù hợp.
 
 ### Acceptance Criteria — Cấu hình moderation
@@ -63,7 +63,7 @@
 | TC-US15-005 | Invalid pin | C1 pending/Ẩn/Xóa/Từ chối | Ghim qua UI/API | Bị chặn. |
 | TC-US15-006 | Account Lock pin | C1 đang Pin; tác giả U1 bị Account Lock rồi mở khóa trước expiry | Kiểm tra vùng ghim | Khi khóa Pin tạm ẩn nhưng metadata còn; mở khóa tự hiện lại nếu C1 vẫn hợp lệ. |
 | TC-US15-007 | Account Lock + moderation | C1 đang Pin; U1 bị Account Lock; sau đó Admin Ẩn/Xóa/Từ chối C1 | Mở khóa U1 | Pin không tự trở lại vì source đã bị moderation riêng. |
-| TC-US15-008 | Undo moderation pin | C1 từng Pin rồi bị Admin Ẩn/Xóa làm mất Pin | Undo moderation | Content state có thể phục hồi nhưng Pin không tự phục hồi; cần Admin ghim lại. |
+| TC-US15-008 | Undo moderation pin | C1 từng Pin rồi bị Admin Ẩn/Xóa hoặc Admin root delete cascade làm mất Pin | Undo moderation/delete | Content state có thể phục hồi nhưng Pin metadata không tự phục hồi; cần Admin ghim lại. Self-delete cũng làm Pin metadata mất và không được Undo public. |
 | TC-US15-009 | Inheritance | Series Mode1, E1 không override, E2 override Mode2 | Gửi nội dung E1/E2 | E1 dùng Mode1 series; E2 dùng Mode2. |
 | TC-US15-010 | Episode close | Series Mở, E2 override Đóng | Mở E1/E2 | E1 hoạt động; E2 ẩn toàn khu vực và chặn interaction theo US12. |
 | TC-US15-011 | AI threshold inheritance | Default/series/episode khác nhau | Gửi cùng mẫu content | Dùng đúng episode→series→default; nickname không bị ảnh hưởng. |

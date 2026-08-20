@@ -7,7 +7,7 @@
 ```mermaid
 flowchart TD
  A[Menu ⋯ trên content của mình] --> B{Chỉnh sửa / Xóa}
- B -->|Chỉnh sửa| C{Comment Lock hoặc >5 edit/phút/target?}
+ B -->|Chỉnh sửa| C{Comment Lock hoặc >5 edit/rolling 60 giây/target?}
  C -->|Có| D[Chặn edit]
  C -->|Không| E[Mở editor]
  E --> F[Sửa text/emoji + Spoiler + timestamp]
@@ -25,5 +25,5 @@ flowchart TD
 - Action của chính user nằm trong menu `⋯`.
 - Edit được sửa toàn bộ text/emoji, Spoiler, timestamp.
 - Pending content vẫn được edit; version pending cũ được thay bằng version mới, không tạo nhiều pending song song.
-- Edit limit 5/phút/target.
+- Edit limit 5/rolling 60 giây/target.
 - Self-delete root khác CMS delete; user không có Undo public.

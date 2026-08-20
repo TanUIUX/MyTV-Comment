@@ -29,7 +29,7 @@ Một comment/thread có thể rơi vào từ 2 "gate ẩn" trở lên cùng lú
 
 | Ưu tiên | Gate | Thông báo fallback |
 |---|---|---|
-| 1 | Self-delete cascade (user tự xóa root) | *(không hiển thị lại — vĩnh viễn theo lifecycle self-delete)* |
+| 1 | Self-delete cascade (user tự xóa root) | **"Bình luận không còn khả dụng"** |
 | 2 | Moderation state riêng (Ẩn/Xóa mềm/Từ chối do CMS/Admin) | **"Bình luận không còn khả dụng"** |
 | 3 | Admin root moderation cascade | **"Bình luận không còn khả dụng"** |
 | 4 | Account Lock (tác giả/root author) | **"Bình luận hiện không khả dụng"** |
@@ -37,7 +37,7 @@ Một comment/thread có thể rơi vào từ 2 "gate ẩn" trở lên cùng lú
 
 Quy tắc chọn thông báo:
 - Nếu nhiều gate cùng đúng cho cùng một comment/thread, hệ thống dùng thông báo của gate có **số ưu tiên nhỏ nhất** trong bảng trên (gate 2/3 thắng gate 4, gate 4 thắng gate 5).
-- Gate 2 và 3 dùng chung chuỗi hiển thị "Bình luận không còn khả dụng" theo quy ước cũ — KHÔNG đổi chuỗi này, chỉ làm rõ rằng cả hai đều ưu tiên hơn gate 4 và 5.
+- Gate 1, 2 và 3 dùng chung chuỗi hiển thị "Bình luận không còn khả dụng" — self-delete không được khôi phục public, còn moderation riêng/Admin root cascade áp dụng semantics tương ứng tại US14/US05. Các gate này ưu tiên hơn gate 4 và 5.
 - Gate chỉ ảnh hưởng đến **thông báo hiển thị/khả năng public**, KHÔNG ảnh hưởng `moderation_state` lưu trữ của comment — mỗi gate quản lý một cờ/trường dữ liệu độc lập (moderation_state, cascade flag, account lock flag, scope status); việc "thắng" trong bảng ưu tiên chỉ quyết định UI/thông báo nào được người dùng nhìn thấy tại một thời điểm, không xóa hay ghi đè trạng thái của các gate khác.
 - Việc mở lại một gate có ưu tiên thấp hơn (ví dụ mở lại scope Đóng) không tự động làm nội dung public nếu vẫn còn gate có ưu tiên cao hơn đang active (ví dụ vẫn còn Account Lock hoặc vẫn Ẩn/Từ chối).
 
@@ -46,7 +46,7 @@ Quy tắc chọn thông báo:
 1. Chờ duyệt chỉ hiển thị với tác giả; không xuất hiện ở public API/count/notification cho người khác.
 2. Bản sửa Chờ duyệt không ghi đè version public cũ; nếu bị Từ chối/chặn, version cũ vẫn Hiển thị.
 3. Phim/tập có ba trạng thái vận hành: Chế độ 1, Chế độ 2, Đóng bình luận.
-4. Khi Đóng, **toàn bộ khu vực Bình luận bị ẩn**, gồm danh sách, ô tương tác và rating nằm trong khu vực; UI/API chặn **Comment, Reply, Like, Mention, Report, Rating và Share mới**.
+4. Khi Đóng, tab `Bình luận` vẫn hiển thị nhưng bỏ count; hiển thị trạng thái **“Khu vực bình luận hiện không khả dụng”**, ẩn danh sách, ô tương tác và rating; UI/API chặn **Comment, Reply, Like, Mention, Report, Rating và Share mới**.
 5. Đóng bình luận không xóa dữ liệu lịch sử và không đổi moderation state của comment/reply chỉ vì scope bị Đóng.
 6. Khi mở lại, dữ liệu đủ điều kiện được hiển thị lại; nội dung đã Từ chối/Ẩn/Xóa vẫn không public.
 7. Khi chuyển **Chế độ 2 → Chế độ 1**, comment đang Chờ duyệt mà **đã có AI result an toàn/Nhẹ trước đó** tự chuyển Hiển thị; các case Trung bình/không đủ điều kiện tiếp tục Chờ duyệt.
@@ -67,7 +67,7 @@ Quy tắc chọn thông báo:
 - Deep link trong scope Đóng dùng fallback theo **Effective Visibility Resolver**: nếu target CHỈ bị gate scope Đóng thì hiển thị “Khu vực bình luận hiện không khả dụng”; nếu target còn có moderation riêng (Ẩn/Xóa mềm/Từ chối), Admin root cascade hoặc Account Lock thì dùng thông báo của gate có ưu tiên cao hơn theo bảng ưu tiên ở mục “Effective Visibility Resolver”.
 - Notification reason cho Từ chối/Ẩn/Xóa không bị tắt bởi switch thông báo cộng đồng US09.
 - Active day chỉ được ghi khi comment area thực sự khả dụng để user đăng nhập mở/đọc.
-- Concurrency tại effective time: mọi request submit Comment/Reply/Rating/Share xử lý theo mode/scope **có hiệu lực tại thời điểm hệ thống nhận request**, không theo thời điểm AI trả kết quả — kể cả khi AI xử lý bất đồng bộ và trả kết quả sau khi effective time đã đổi, quyết định mode/scope áp dụng vẫn chốt tại thời điểm nhận request ban đầu.
+- Concurrency tại effective time: mọi request submit Comment/Reply/Rating/Share xử lý theo mode/scope **có hiệu lực tại thời điểm hệ thống nhận request**, không theo thời điểm AI trả kết quả — kể cả khi AI xử lý bất đồng bộ và trả kết quả sau khi effective time đã đổi, quyết định mode/scope áp dụng vẫn chốt tại thời điểm nhận request ban đầu. Với Comment/Reply/Edit, threshold/policy version cũng được snapshot tại thời điểm nhận request và lưu cùng record; policy mới không tự reclassify request đang in-flight.
 - Chỉ các cặp (state hiện tại → action) hợp lệ mới được thực hiện: Duyệt và Từ chối chỉ áp dụng từ Chờ duyệt; Ẩn chỉ áp dụng từ Hiển thị. Mọi tổ hợp khác bị chặn ở cả UI lẫn API, không ghi audit "thành công" và không đổi state.
 
 > *Xem thêm: [REQUIREMENTS_A11Y_SECURITY.md](../REQUIREMENTS_A11Y_SECURITY.md) mục IDOR/Session — API phải kiểm tra quyền xem theo từng gate hiển thị (Chờ duyệt/Ẩn/Xóa mềm/Account Lock/scope Đóng) ở tầng server, không chỉ ẩn ở UI; mục WCAG 2.1 AA — thông báo fallback ("Bình luận không còn khả dụng", "Bình luận hiện không khả dụng", "Khu vực bình luận hiện không khả dụng") phải được screen reader đọc rõ khi thay thế nội dung comment/thread.*

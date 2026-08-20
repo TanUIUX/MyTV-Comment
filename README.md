@@ -75,28 +75,28 @@ Tài liệu chuyển yêu cầu tính năng Bình luận trên MyTV thành backl
 - Reply không hiển thị độc lập nếu root đang non-public.
 - Admin **Ẩn root** hoặc Account Lock của root author làm toàn thread tạm non-public nhưng không tự đổi moderation state của reply user khác.
 - User **self-delete root** là lifecycle khác: root + **toàn bộ reply cascade soft-delete thật**, không tách reply thành content độc lập.
-- Soft-delete comment/reply giữ **90 ngày**.
-- Scope Đóng bình luận ẩn toàn comment area/rating và chặn Comment/Reply/Like/Mention/Report/Rating/Share mới.
-- Deep link vào scope Đóng mở đúng phim/tập nhưng không hiển thị thread và hiện **“Khu vực bình luận hiện không khả dụng”**; mở lại scope thì link cũ hoạt động lại nếu target còn hợp lệ.
+- **Retention soft-delete:** root bị self-delete hoặc CMS/Admin Xóa mềm giữ **90 ngày**; reply bị cascade theo root **không có đồng hồ riêng và purge cùng root**; reply self-delete riêng lẻ giữ **90 ngày tính từ lúc reply bị xóa**.
+- Scope Đóng bình luận giữ tab `Bình luận` nhưng bỏ count, ẩn danh sách/rating/composer và chặn Comment/Reply/Like/Mention/Report/Rating/Share mới; hiển thị “Khu vực bình luận hiện không khả dụng”.
+- Deep link vào scope Đóng mở đúng phim/tập và tab `Bình luận` nhưng không hiển thị thread, giữ trạng thái **“Khu vực bình luận hiện không khả dụng”**; mở lại scope thì link cũ hoạt động lại nếu target còn hợp lệ.
 
 ### 5.2. Sắp xếp, ghim và pagination
 
 - Nổi bật là sort mặc định.
 - Hard max **3 comment ghim/scope**; Admin drag-drop vị trí 1–3; pin có expiry tùy chọn.
 - Featured Score phần không ghim: `0.5×ln(1+Like) + 0.3×ln(1+Reply) + 0.2×e^(-AgeHours/72)`.
-- `Like` dùng cho Featured Score/sort là **Net Like công khai hiện tại**.
+- `Like` dùng cho Featured Score/sort là **public Net Like hiện tại**, luôn không âm: `max(0, likes_current - unlikes_current)`; tổng Like actions vẫn tracking riêng.
 - Like do account đang Account Lock tạo vẫn giữ record nhưng tạm **không tính public Net Like/Featured Score/ranking**; unlock tính lại nếu Like/target còn hợp lệ.
 - Initial root comments: **10**; lazy load **10/lần**.
 - Initial replies: **3**; “Xem thêm phản hồi” tải tối đa **10/lần**, phần còn lại <10 thì tải full.
 - Pin trên content của account bị Account Lock chỉ **tạm ẩn và giữ metadata**; unlock tự hiện lại nếu source còn hợp lệ và Pin chưa expiry.
-- Moderation Ẩn/Xóa/Từ chối làm mất Pin; **Undo moderation không tự khôi phục Pin**.
+- Moderation Ẩn/Xóa/Từ chối, self-delete root và Admin root delete cascade làm mất Pin metadata; **Undo moderation/delete không tự khôi phục Pin**.
 
 ### 5.3. Comment/Reply/Nickname
 
-- Comment và Reply: **1–1000 ký tự**, emoji-only hợp lệ, whitespace-only không hợp lệ.
+- Comment và Reply: **1–1000 ký tự**, emoji-only hợp lệ, whitespace-only không hợp lệ. Trước khi đếm ký tự, moderation và lưu record, phải reject RTL/bidi override (ví dụ U+202E), **mọi zero-width character gồm U+200D/ZWJ**, và control character U+0000–U+001F; UI/API dùng cùng chuẩn. Emoji không chứa ZWJ vẫn hợp lệ.
 - URL chỉ cho `mytv.com.vn` và subdomain thực của domain này.
-- Rate limit chung Comment+Reply: **5 nội dung/1 phút/user**.
-- Nickname unique không phân biệt hoa/thường, 3–30 ký tự; cho chữ/số/khoảng trắng/`_`/`-`, không URL/phone/control char.
+- Rate limit chung Comment+Reply: **5 record trong rolling 60 giây/user**, tính từ thời điểm record được tạo; validation fail, Unicode reject, AI Nặng block hoặc AI lỗi/timeout không tạo record và không tiêu quota.
+- Nickname unique không phân biệt hoa/thường, 3–30 ký tự; cho chữ/số/khoảng trắng/`_`/`-`, không URL/phone/control char, RTL/bidi override hoặc mọi zero-width gồm U+200D/ZWJ; chuẩn hóa confusable/homoglyph trước uniqueness. Emoji ZWJ không được dùng trong Nickname.
 - Nickname đổi tối đa **1 lần thành công/24 giờ/account** theo US04; submission bị validation/AI chặn không tiêu quota.
 - **Nickname dùng global AI moderation policy riêng**, độc lập Mode1/Mode2 và threshold override theo series/episode, chỉ còn **2 kết quả**: Nhẹ/An toàn dùng ngay; Trung bình hoặc Nặng đều bị chặn ngay, không tạo hàng chờ duyệt.
 - Nickname bị chặn thì giữ nickname hợp lệ cũ; chưa có nickname hợp lệ thì giữ `0` đầu + 3 số cuối, mask toàn bộ số giữa bằng `*`.
@@ -104,14 +104,14 @@ Tài liệu chuyển yêu cầu tính năng Bình luận trên MyTV thành backl
 ### 5.4. Rating
 
 - Một rating hiện hành/account/scope; đổi rating không tăng tổng lượt; **user không được xóa rating**, chỉ được đổi mức sao; **không có thao tác DELETE rating trong MVP** (xem US03).
-- Average hiển thị **1 chữ số thập phân và luôn làm tròn lên** đến 0.1.
+- Khi có rating công khai (`total > 0`), Average hiển thị **1 chữ số thập phân và luôn làm tròn lên** đến 0.1. Khi `total = 0`, ẩn toàn bộ khối rating trong tab Bình luận; rating đầu tiên được tạo qua prompt riêng sau khi player xác nhận xem xong phim/tập.
 - Khóa bình luận không loại rating.
 - Khóa toàn account loại rating khỏi **cả điểm trung bình và tổng số lượt rating công khai**; mở khóa tự tính lại cả hai nếu record còn.
 
 ### 5.5. Edit/Delete và timestamp
 
 - User sửa comment/reply bất kỳ lúc nào khi còn quyền sửa; bản cũ vẫn public khi bản mới pending.
-- **Khóa bình luận chặn Edit mới** nhưng user vẫn được **self-delete** content của mình. Mỗi comment/reply có **Edit rate limit riêng tối đa 5 lần sửa/phút/target**; vượt ngưỡng bị chặn trước khi tạo version/gọi AI.
+- **Khóa bình luận chặn Edit mới** nhưng user vẫn được **self-delete** content của mình. Mỗi comment/reply có **Edit rate limit riêng tối đa 5 lần sửa trong rolling 60 giây/target**; vượt ngưỡng bị chặn trước khi tạo version/gọi AI.
 - Comment/Reply/Edit đã gửi hợp lệ trước effective time của Khóa bình luận vẫn được moderation bình thường; Duyệt trong thời gian khóa vẫn có thể public nếu không có gate khác.
 - Bản sửa được duyệt có nhãn **“Đã chỉnh sửa”**; user không xem version history, CMS/Audit xem được.
 - User tự xóa không cần reason; **Admin không được Undo để public lại self-delete**.
@@ -136,7 +136,7 @@ Tài liệu chuyển yêu cầu tính năng Bình luận trên MyTV thành backl
 - Taxonomy chung: Spoiler; Spam/quảng cáo; Xúc phạm/ngôn từ công kích; Nội dung không phù hợp; Sai thông tin; Vi phạm khác.
 - Report chọn “Khác” bắt buộc description **1–500 ký tự hợp lệ**, không chấp nhận chỉ khoảng trắng.
 - Không được Report content của chính mình.
-- Cùng target được Report lại sau **24 giờ**; rate limit **10 Report/1 giờ/user**.
+- Cùng target được Report lại sau **24 giờ**; rate limit **10 Report trong rolling 60 phút/user**, tính từ thời điểm Report được tạo.
 - Report không tự Ẩn/Xóa content dù số lượng lớn.
 - Reporter nhận **in-app notification** khi Report được xử lý, không lộ sanction chi tiết.
 - CMS dùng một action **“Bỏ qua Report”** cho kết luận không vi phạm; không có “Duyệt giữ nguyên” riêng.
@@ -163,7 +163,7 @@ Tài liệu chuyển yêu cầu tính năng Bình luận trên MyTV thành backl
 - Export CSV + XLSX theo filter; mặc định không có full PII, muốn export PII phải tick chủ động.
 - Duyệt không cần reason. **Từ chối/Ẩn/Xóa** bắt buộc reason taxonomy chuẩn; “Vi phạm khác” bắt note 1–500, reason khác note optional.
 - Bỏ qua Report/Flag/Spoiler không bắt buộc reason.
-- Từ chối/Ẩn/Xóa → tác giả thấy reason và nhận thông tin theo kênh phù hợp; Account Lock tuân locked-account/Support flow.
+- Từ chối/Ẩn/Xóa → tác giả thấy reason và luôn có in-app notification khi còn truy cập app; push gửi thêm nếu OS/device cho phép. Account Lock tuân locked-account/Support flow; notification nghiệp vụ không bị community switch tắt.
 - Bulk moderation chỉ hỗ trợ **Duyệt / Từ chối / Ẩn / Xóa mềm**, hard max **100**, partial success; Report/Flag/Spoiler không bulk trong MVP.
 - Bulk Duyệt không cần reason; bulk Từ chối/Ẩn/Xóa dùng reason chung và có thể override từng item; item/batch reason “Vi phạm khác” bắt note hợp lệ.
 - Undo ánh xạ state: **Từ chối→Chờ duyệt; Ẩn→Hiển thị; Xóa mềm→state ngay trước Xóa**.
@@ -202,7 +202,7 @@ Tài liệu chuyển yêu cầu tính năng Bình luận trên MyTV thành backl
 - Like do một past liker sau đó Account Lock **vẫn tính cho Fan kỳ cựu của recipient**, dù Like đó tạm bị loại public Net Like/ranking/Engagement.
 - Admin Ẩn/Xóa root không làm mất badge contribution của reply user khác nếu reply không bị moderation state riêng.
 - **Self-delete root là ngoại lệ:** toàn reply cascade soft-delete thật nên reply/Like gắn với reply bị loại khỏi badge eligibility.
-- Bình luận nổi bật grant mới: source public có **≥20 public Net Like + ≥5 Reply + Top10% Featured Score toàn MyTV trong 30 ngày** tại thời điểm xét.
+- Bình luận nổi bật grant mới: source public có **≥20 public Net Like + ≥5 Reply + Top10% Featured Score toàn MyTV trong 30 ngày** tại thời điểm xét; dùng nguyên Featured Score US02 `0.5×ln(1+public_NetLike) + 0.3×ln(1+public_Reply) + 0.2×e^(-AgeHours/72)`, gồm freshness decay 72h.
 - Sau grant, Like<20/Reply<5/tụt Top10% **không tự revoke**; chỉ source moderation invalidation mới revoke.
 - Account Lock tác giả chỉ tạm ẩn Featured badge và unlock có thể tự hiện lại; **Undo moderation không tự restore badge**, phải re-evaluate/re-grant.
 - Badge Admin/Chuyên gia có expiry tùy chọn; tắt badge type ẩn UI nhưng giữ history/audit.
@@ -218,13 +218,13 @@ Tài liệu chuyển yêu cầu tính năng Bình luận trên MyTV thành backl
 - Scope Đóng → phim/tập + **“Khu vực bình luận hiện không khả dụng”**; mở scope lại thì link cũ hoạt động lại nếu target valid.
 - Target/thread chỉ non-public do Account Lock → phim/tập + **“Bình luận hiện không khả dụng”**; unlock thì link cũ hoạt động lại nếu valid.
 - Comment có timestamp: share mở đúng comment nhưng không auto-seek player.
-- **Share event được tính khi OS share sheet mở thành công**; không cần xác nhận đã gửi sang app đích, cancel sau đó không hoàn tác event; retry/lỗi kỹ thuật phải dedup.
+- **Share event được tính khi OS/Web share sheet mở thành công hoặc khi fallback Sao chép liên kết hoàn tất thành công**; không cần xác nhận đã gửi sang app đích, cancel sau khi sheet mở không hoàn tác event; retry/lỗi kỹ thuật phải dedup.
 
 ### 5.13. Analytics và AI Ops
 
 - Engagement Score: `Comment×2 + Reply×2 + Net Like×1 + Rating×1 + Share×2`.
-- `Rating` trong Engagement = **số rating hợp lệ hiện hành** trong scope/thời gian; mỗi account rating hợp lệ = +1 bất kể 1★ hay 5★.
-- `Share` trong Engagement = số **share sheet mở thành công** theo US18.
+- `Rating` trong Engagement = **số rating hợp lệ tại snapshot cuối kỳ `to`** trong scope/thời gian; mỗi account rating hợp lệ = +1 bất kể 1★ hay 5★. `Net Like` cũng dùng snapshot cuối kỳ `to`; thiếu snapshot lịch sử thì báo dữ liệu không đủ.
+- `Share` trong Engagement = số **Share event hợp lệ từ share sheet mở thành công hoặc fallback Sao chép liên kết hoàn tất thành công** theo US18.
 - Public KPI/Engagement Score **KHÔNG bị loại trừ chỉ vì scope Đóng bình luận** — Đóng là gate hiển thị vận hành (chống spoiler/thời điểm nhạy cảm), không phải chế tài nội dung; dữ liệu Like/Reply/Rating/Share/Comment phát sinh trước và trong lúc Đóng vẫn tính đầy đủ. Chỉ đúng 4 nguyên nhân sau mới loại KPI: (1) Ẩn/Từ chối/Xóa do moderation, (2) self-delete cascade, (3) Admin root moderation cascade, (4) Account Lock.
 - Account Lock tạm loại content user khỏi public KPI; nếu locked user là root author thì **toàn thread** tạm bị loại public KPI/Engagement; unlock tính lại item còn hợp lệ.
 - Like của account đang Account Lock tạm bị loại khỏi public Net Like/ranking/Engagement nhưng record vẫn giữ.
@@ -246,7 +246,7 @@ Khi một comment/thread rơi vào từ 2 gate ẩn trở lên cùng lúc, hệ 
 
 | Ưu tiên | Gate | Thông báo fallback |
 |---|---|---|
-| 1 | Self-delete cascade (user tự xóa root) | *(không hiển thị lại — vĩnh viễn theo lifecycle self-delete)* |
+| 1 | Self-delete cascade (user tự xóa root) | **"Bình luận không còn khả dụng"** |
 | 2 | Moderation state riêng (Ẩn/Xóa mềm/Từ chối do CMS/Admin) | **"Bình luận không còn khả dụng"** |
 | 3 | Admin root moderation cascade | **"Bình luận không còn khả dụng"** |
 | 4 | Account Lock (tác giả/root author) | **"Bình luận hiện không khả dụng"** |

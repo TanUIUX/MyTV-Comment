@@ -31,7 +31,7 @@
 4. Nội dung bị ẩn, bị xóa hoặc đang chờ duyệt không được hiển thị cho người xem khác.
 5. Người chưa đăng nhập chỉ được đọc; khi chọn Đăng bình luận, Reply, Like/Unlike, Mention, Report, Rating, Chia sẻ hoặc bất kỳ thao tác tương tác nào khác, hệ thống yêu cầu đăng nhập trước khi tạo dữ liệu tương tác.
 6. Sau khi đăng nhập thành công, hệ thống đưa người dùng trở lại **đúng phim/tập/thread/comment** liên quan nhưng **không tự thực hiện action đã chọn trước login**; user phải chủ động thao tác lại sau khi đã xác thực.
-7. Khi phim bị đóng bình luận, toàn bộ khu vực Bình luận không hiển thị. Quy tắc chi tiết được quản lý tại US12 và US15.
+7. Khi phim bị đóng bình luận, tab `Bình luận` vẫn hiển thị nhưng bỏ count; khi mở tab, hiển thị trạng thái **“Khu vực bình luận hiện không khả dụng”** và ẩn danh sách, rating, composer cùng toàn bộ interaction. Quy tắc chi tiết được quản lý tại US12 và US15.
 8. Nếu người dùng mở deep link cũ tới comment/thread trong scope đang **Đóng bình luận**, hệ thống vẫn mở đúng phim/tập nhưng **không hiển thị comment/thread**, hiển thị thông báo **“Khu vực bình luận hiện không khả dụng”**; đây là visibility gate của scope, không đổi target sang trạng thái Ẩn/Xóa. Khi Admin mở lại, deep link cũ hoạt động lại nếu target vẫn hợp lệ. Khi nhiều gate cùng đúng, áp dụng Effective Visibility Resolver tại US12 (mục ưu tiên gate).
 
 ### Quy tắc nghiệp vụ
@@ -70,7 +70,7 @@ Xác nhận người xem chưa đăng nhập đọc được đúng nội dung c
 - Phiên khách tạo được dữ liệu tương tác hoặc bị tính nhầm thành tương tác bình luận.
 - Mất ngữ cảnh phim/tập/thread sau khi đăng nhập.
 - Hệ thống tự thực hiện interaction cũ sau login dù user chưa thao tác lại.
-- Khu vực bình luận vẫn xuất hiện khi phim đã Đóng bình luận.
+- Tab Bình luận vẫn xuất hiện khi phim đã Đóng bình luận, nhưng bỏ count và chỉ hiển thị trạng thái không khả dụng; danh sách, rating, composer và interaction bị ẩn/chặn.
 - Deep link cũ làm lộ comment/thread khi scope đang Đóng hoặc làm sai state moderation của target.
 
 ### Dữ liệu kiểm thử
@@ -86,7 +86,7 @@ Một phim đang Mở bình luận có bình luận gốc, reply, Chờ duyệt,
 | TC-US01-003 | Compatibility | Có cùng dữ liệu trên web và mobile | Mở cùng phim trên web và mobile | Khu vực, nội dung và quyền đọc nhất quán; không làm lộ dữ liệu ở một nền tảng. |
 | TC-US01-004 | Authentication | Phiên khách; có bình luận công khai | Chọn lần lượt Đăng bình luận, Like, Reply, Mention, Report, Rating và Chia sẻ | Mỗi thao tác yêu cầu đăng nhập; không tạo record/event tương tác cộng đồng trước khi xác thực. |
 | TC-US01-005 | Navigation/post-login | Khách đang ở E1/thread T1/comment C1 và chọn Like/Reply | Đăng nhập thành công từ màn hình yêu cầu login | Quay lại đúng E1/T1/C1; Like/Reply **chưa được thực hiện**; user phải bấm lại action sau login. |
-| TC-US01-006 | State/Deep link | Phim ở trạng thái Đóng bình luận; có deep link cũ tới C1 | Mở trang chi tiết, gọi API đọc và mở deep link C1 | Toàn bộ khu vực bình luận bị ẩn; deep link mở đúng phim/tập nhưng không hiển thị C1/thread và hiện “Khu vực bình luận hiện không khả dụng”; C1 không bị đổi sang Ẩn/Xóa. |
+| TC-US01-006 | State/Deep link | Phim ở trạng thái Đóng bình luận; có deep link cũ tới C1 | Mở trang chi tiết, gọi API đọc và mở deep link C1 | Tab Bình luận vẫn hiện nhưng bỏ count và hiển thị trạng thái “Khu vực bình luận hiện không khả dụng”; danh sách/rating/interaction bị ẩn hoặc chặn; deep link mở đúng phim/tập nhưng không hiển thị C1/thread; C1 không bị đổi sang Ẩn/Xóa. |
 | TC-US01-007 | Security | Có ID bình luận Chờ duyệt/Ẩn | Gọi trực tiếp API bằng phiên khách với ID nội dung không công khai | API từ chối hoặc trả dữ liệu rỗng theo chuẩn bảo mật; không suy ra nội dung qua mã lỗi/metadata. |
 | TC-US01-008 | Reopen deep link | Scope từng Đóng, C1 vẫn hợp lệ | Mở lại scope rồi mở lại deep link cũ | Deep link lại mở đúng C1/thread; không cần phát hành link mới. |
 | TC-US01-009 | Accessibility | Khách chọn Like/Reply tại comment C1, được điều hướng qua login | Đăng nhập thành công và quay lại | Hệ thống set focus (không chỉ scroll) vào đúng C1/thread; điều hướng bàn phím tới được C1 ngay sau khi quay lại. |

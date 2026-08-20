@@ -182,7 +182,7 @@ Các khối mang tên `... Service` trong tài liệu này là **logical compone
 | Khối | Trách nhiệm chính | User Story liên quan |
 |---|---|---|
 | **Comment Service** | Vòng đời bình luận/trả lời, lịch sử phiên bản khi sửa, xóa mềm 90 ngày, cascade khi xóa gốc | US01, US02, US04, US05, US08 |
-| **Rating Service** | Một đánh giá hiện hành mỗi tài khoản mỗi phạm vi, tính điểm trung bình | US03 |
+| **Rating Service** | Một đánh giá hiện hành mỗi tài khoản mỗi phạm vi, tính điểm trung bình; nhận `content_completed` từ Player khi đạt 90% duration hoặc end-of-content event để mở post-watch rating prompt; Comment Area chỉ hiển thị aggregate khi `total > 0` | US03 |
 | **Interaction Service** | Thích/Bỏ thích gom theo lô 5 giây, gộp về trạng thái cuối, sự kiện Chia sẻ có khử trùng lặp | US07, US18 |
 | **Identity Service** | Tên hiển thị duy nhất không phân biệt hoa thường, chính sách kiểm duyệt riêng, mặt nạ số điện thoại | US04 |
 | **Effective Visibility Resolver** | **Nguồn chân lý duy nhất** trả lời "nội dung này có được hiển thị công khai không, và nếu không thì vì sao" | US12 (định nghĩa gốc), dùng bởi tất cả |
@@ -191,7 +191,7 @@ Các khối mang tên `... Service` trong tài liệu này là **logical compone
 | **Sanction Service** | Cảnh báo, khóa bình luận, khóa tài khoản, khiếu nại và SLA 48 giờ | US16 |
 | **Notification Service** | Tách bạch **thông báo bắt buộc** (kiểm duyệt, chế tài, khiếu nại) và **thông báo cộng đồng** có công tắc tắt | US09 |
 | **Badge Service** | Tác vụ hằng ngày, cửa sổ trượt 30/90 ngày, ân hạn 7 ngày | US17 |
-| **Analytics Service** | Engagement Score, độ tươi tối đa 5 phút, đối soát hằng ngày | US19 |
+| **Analytics Service** | Engagement Score, độ tươi tối đa 5 phút, snapshot Net Like/Rating theo thời điểm cuối kỳ khi filter lịch sử, báo thiếu dữ liệu nếu không có snapshot, đối soát hằng ngày | US19 |
 | **Audit Log** | Ghi bất biến mọi thao tác quản trị, lưu 2 năm độc lập với vòng đời nội dung | US14, US16 |
 
 ---
@@ -202,9 +202,9 @@ Bảy quyết định dưới đây định hình toàn bộ giải pháp. Mỗi
 
 ### AD-01 — Gom toàn bộ logic hiển thị vào một module dùng chung
 
-**Bối cảnh.** Một bình luận có thể bị ẩn bởi **năm cơ chế độc lập**: người dùng tự xóa, kiểm duyệt viên ẩn/xóa/từ chối, ẩn lây theo bình luận gốc, khóa tài khoản tác giả, và đóng khu vực bình luận theo phim. Các cơ chế này chồng lên nhau.
+**Bối cảnh.** Một bình luận có thể bị ẩn bởi **năm cơ chế độc lập**: người dùng tự xóa, kiểm duyệt viên ẩn/xóa/từ chối, ẩn lây theo bình luận gốc, khóa tài khoản tác giả, và đóng khu vực bình luận theo phim. Các cơ chế này chồng lên nhau; dữ liệu phải lưu các gate active độc lập, không chỉ gate thắng priority.
 
-**Quyết định.** Không cho phép bất kỳ dịch vụ nào tự tính khả năng hiển thị. Mọi truy vấn đi qua **Effective Visibility Resolver** với thứ tự ưu tiên đã chốt: *tự xóa → kiểm duyệt riêng → ẩn lây theo gốc → khóa tài khoản → đóng khu vực*.
+**Quyết định.** Không cho phép bất kỳ dịch vụ nào tự tính khả năng hiển thị. Mọi truy vấn đi qua **Effective Visibility Resolver** với thứ tự ưu tiên đã chốt: *tự xóa → kiểm duyệt riêng → ẩn lây theo gốc → khóa tài khoản → đóng khu vực*. Gate active được lưu bằng tập/cờ độc lập; `cascade_source` chỉ dùng cho delete cascade (`self_delete`/`admin_root_delete`), không dùng cho visibility cascade tạm thời.
 
 **Đánh đổi.** Thêm một điểm phụ thuộc chung và một chặng gọi nội bộ. Đổi lại, loại bỏ được lớp lỗi nguy hiểm nhất của tính năng này — mỗi nơi tính một kiểu dẫn tới lộ nội dung đã bị ẩn.
 
@@ -359,54 +359,7 @@ Backlog có **15/20 User Story ở mức Must** — nếu hiểu "Must" là "ph�
 
 Nguyên tắc chốt: **không ra mắt bất kỳ tính năng viết nào khi chưa có công cụ kiểm duyệt tương ứng.** Điều này giải thích vì sao CMS (US13, US14) nằm ngay ở Giai đoạn 1 dù thường bị coi là việc nội bộ.
 
-### 7.2. Bốn giai đoạn
-
-| Giai đoạn | Nội dung | User Story | Quy mô | Kết quả bàn giao |
-|---|---|---|---|---|
-| **0 — Nền tảng** | Mô hình dữ liệu, tích hợp xác thực, module hiển thị dùng chung, khung nhật ký kiểm toán | *(nền tảng kỹ thuật)* | M | Nền tảng chạy được, chưa có giao diện người dùng |
-| **1 — Vòng lặp cốt lõi** | Đọc, đăng, sửa, xóa bình luận + kiểm duyệt AI + CMS tối thiểu | US01, US02, US04, US05, US11, US12, US13, US14 | XL | **Ra mắt giới hạn** trên nhóm phim thí điểm |
-| **2 — Cộng đồng và vận hành** | Thích, Trả lời, Đánh giá, Báo cáo, ghim, chế tài, thống kê | US03, US07, US08, US10, US15, US16, US19 | L | **Ra mắt rộng** toàn bộ phim truyện |
-| **3 — Tăng trưởng** | Mốc thời gian, Nhắc tên, Huy hiệu, Chia sẻ, AI hỗ trợ vận hành | US06, US09, US17, US18, US20 | M | Tối ưu giữ chân và lan truyền |
-
-```mermaid
-gantt
-    title Lộ trình triển khai (sơ bộ — cần chốt lại với đội phát triển)
-    dateFormat YYYY-MM-DD
-    axisFormat %m/%Y
-
-    section Giai đoạn 0
-    Nền tảng dữ liệu và hiển thị      :p0, 2026-09-01, 6w
-
-    section Giai đoạn 1
-    Vòng lặp cốt lõi và CMS           :p1, after p0, 10w
-    Ra mắt giới hạn nhóm phim thí điểm :milestone, m1, after p1, 0d
-
-    section Giai đoạn 2
-    Cộng đồng và vận hành đầy đủ      :p2, after p1, 9w
-    Ra mắt rộng toàn phim truyện       :milestone, m2, after p2, 0d
-
-    section Giai đoạn 3
-    Tăng trưởng và phân tích nâng cao  :p3, after p2, 7w
-
-    section Xuyên suốt
-    Bảo mật và khả năng tiếp cận      :sec, 2026-09-01, 32w
-```
-
-**Giả định của ước lượng:** một squad gồm 2 kỹ sư backend, 2 kỹ sư frontend/mobile, 1 QA, 1 designer, làm sprint 2 tuần. Tổng khoảng **32 tuần ≈ 7 tháng** tính từ đầu tháng 9/2026.
-
-> ⚠️ **Con số thời gian là ước lượng sơ bộ dựa trên khối lượng User Story, chưa qua buổi ước lượng cùng đội phát triển.** Cần chốt lại trước khi cam kết với các bên liên quan.
-
-### 7.3. Vì sao ra mắt giới hạn trước
-
-Ra mắt trên một nhóm phim thí điểm ở cuối Giai đoạn 1 cho phép đo **ba con số chưa ai biết trước**, và cả ba đều ảnh hưởng trực tiếp tới ngân sách:
-
-1. Số bình luận trên mỗi tập phim mỗi ngày → quyết định chi phí gọi AI.
-2. Tỷ lệ nội dung rơi vào hàng chờ kiểm duyệt → quyết định số lượng kiểm duyệt viên cần tuyển.
-3. Tỷ lệ báo cáo vi phạm được xác nhận → quyết định ngưỡng AI có cần điều chỉnh không.
-
-Mở rộng toàn thư viện trước khi có ba con số này là rủi ro ngân sách không cần thiết.
-
-### 7.4. Exit criteria đề xuất trước khi mở rộng khỏi pilot
+### 7.2. Exit criteria đề xuất trước khi mở rộng khỏi pilot
 
 Các ngưỡng số cụ thể cần baseline từ pilot, nhưng tối thiểu phải chứng minh:
 
@@ -492,7 +445,7 @@ Các chỉ số được nhóm theo mục tiêu, lấy từ phần chỉ số c�
 | `README.md` @ `29c63762630b6b3ab735a8781c43cf309311b3f0` | Baseline backlog PO final dùng để review kiến trúc phiên bản 1.1 |
 | `EP01` … `EP05` | Chi tiết từng User Story kèm tiêu chí chấp nhận và ca kiểm thử |
 
-**Các bước tiếp theo sau khi bản này được duyệt:**
+**Các bước tiếp theo:**
 
 1. Technical design chi tiết: mô hình dữ liệu, hợp đồng API, deployment topology, transactional outbox/idempotency và thiết kế module Effective Visibility Resolver dùng chung.
 2. Buổi ước lượng cùng đội phát triển để thay các con số sơ bộ ở mục 7 bằng cam kết thật.

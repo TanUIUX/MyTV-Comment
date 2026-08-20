@@ -29,7 +29,8 @@ flowchart TD
 - Pin tối đa 3, luôn ở đầu trong mọi sort, có `📌 Đã ghim`, không lặp trong list thường.
 - Sort control dạng dropdown `Nổi bật ▼`.
 - Root comment lazy load **10/batch**.
-- Khi user bấm indicator comment mới: `Nổi bật` và `Nhiều lượt thích` luôn giữ ranking đúng, không ép comment mới lên đầu; `Mới nhất` có thể đưa user tới comment mới đầu tiên.
+- Khi user bấm indicator comment mới: `Nổi bật` và `Nhiều lượt thích` luôn giữ ranking đúng, không ép comment mới lên đầu; `Mới nhất` bắt buộc đưa focus tới comment mới nhất đầu tiên.
+- Tie-break deterministic: `Nổi bật` = FeaturedScore DESC → `created_at` DESC → `comment_id` DESC; `Mới nhất` = `created_at` DESC → `comment_id` DESC; `Nhiều lượt thích` = public Net Like DESC → `created_at` DESC → `comment_id` DESC.
 - SmartTV vẫn được đổi sort bằng remote.
 
 ## States

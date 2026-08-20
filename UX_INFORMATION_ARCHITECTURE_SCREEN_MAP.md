@@ -193,7 +193,7 @@ flowchart TD
     CA["Comment Area"]
     TAB["Nhãn tab: Bình luận + public count"]
     CONTEXT["Content Context: phim lẻ / tập hiện tại"]
-    RATE["Rating Aggregate + User Rating"]
+    RATE["Rating Aggregate (chỉ khi total > 0)"]
     SORT["Sort Control"]
     PIN["Pinned Comments 0–3"]
     ROOTS["Root Comment List"]
@@ -217,7 +217,7 @@ flowchart TD
 Đây là **thứ tự thông tin đề xuất**, không phải quyết định layout cứng:
 
 1. Content context hiện tại (phim lẻ hoặc tập đang xem).
-2. Rating aggregate + rating action.
+2. Rating aggregate chỉ hiển thị khi `total > 0`; rating đầu tiên dùng O11 sau khi player xác nhận xem xong.
 3. Public comment count — hiển thị ở **nhãn tab** `Bình luận ({count})`, không phải header đếm riêng bên trong Comment Area.
 4. Composer entry.
 5. Sort control.
@@ -660,7 +660,8 @@ SmartTV không có destination tạo nội dung: C06, C07, O03–O06, O08, O09, 
 | O07 | Spoiler reveal | Phone, Web, SmartTV | comment body | reveal content | US04, US08 |
 | O08 | Timestamp input/edit | Phone, Web | composer | attach one timestamp | US06 |
 | O09 | Mention suggestion | Phone, Web | composer after `@` | select account ID | US09 |
-| O10 | OS Share Sheet | Phone, Web | Share action | successful open = Share event | US18 |
+| O10 | OS Share Sheet | Phone, Web | Share action | successful open or successful copy fallback = Share event | US18 |
+| O11 | Post-watch Rating Prompt | Phone, Web, SmartTV | Player phát `content_completed` khi đạt 90% duration hoặc end-of-content event, lần đầu trong phiên xem | Chọn 1–5 sao và lưu đúng content scope; seek đơn thuần không kích hoạt; không tạo scope Series | US03 |
 
 ## 15.4. System/exception states
 
@@ -668,7 +669,7 @@ SmartTV không có destination tạo nội dung: C06, C07, O03–O06, O08, O09, 
 |---|---|---|---|---|---|
 | S01 | Comment Area Loading | Phone, Web, SmartTV | mở tab Bình luận / đổi tập / đổi sort | skeleton/progress | US01, US02 |
 | S02 | Comment Area Empty | Phone, Web, SmartTV | no public data | guest CTA login / logged-in CTA viết đầu tiên / SmartTV hướng dẫn + QR (S13) | US01 |
-| S03 | Target no longer available | Phone, Web, SmartTV | moderation/self-delete/admin cascade | “Bình luận không còn khả dụng” (vĩnh viễn) | US12, US18 |
+| S03 | Target no longer available | Phone, Web, SmartTV | moderation/self-delete/admin cascade | “Bình luận không còn khả dụng” (target hiện không khả dụng; self-delete không Undo, Admin root delete có thể Undo trong 90 ngày theo lifecycle) | US12, US18 |
 | S04 | Target temporarily unavailable | Phone, Web, SmartTV | Account Lock của tác giả/root author | “Bình luận hiện không khả dụng” (tạm thời; link hoạt động lại sau khi gỡ khóa) | US12, US16, US18 |
 | S05 | Comment Area closed | Phone, Web, SmartTV | scope Đóng | giữ tab `Bình luận` nhưng **bỏ count**; hiển thị “Khu vực bình luận hiện không khả dụng”; ẩn rating/list/composer/actions | US01, US12, US18 |
 | S06 | Pending moderation — author only | Phone, Web | Comment/Reply/Edit pending | status visible only to author | US04, US05, US11, US12 |
@@ -679,8 +680,8 @@ SmartTV không có destination tạo nội dung: C06, C07, O03–O06, O08, O09, 
 | S11 | Report cooldown | Phone, Web | same target <24h | remaining time | US10 |
 | S12 | Report rate limit | Phone, Web | >10/hour | retry countdown | US10 |
 | S13 | SmartTV — không hỗ trợ tạo nội dung | SmartTV | user muốn Comment/Reply/Mention/Report/Share trên TV | ẩn entry tạo nội dung; hiển thị **hướng dẫn + QR** để chuyển sang smartphone; vẫn giữ đọc/Like/Rating/Sort/Spoiler/Timestamp | US01, US04, US09, US10, US18 |
-| S14 | Rate limit Comment/Reply | Phone, Web | >5 nội dung/phút/user (quota chung Comment+Reply) | “Bạn đang bình luận hơi nhanh”; không tạo record; cho gửi lại sau | US04, US08, US11 |
-| S15 | Edit rate limit | Phone, Web | >5 lần sửa/phút/target | chặn trước khi tạo version mới/gọi AI; giữ nội dung đang soạn; cho thử lại | US05, US11 |
+| S14 | Rate limit Comment/Reply | Phone, Web | >5 Comment/Reply record trong rolling 60 giây/user (quota chung) | “Bạn đang bình luận hơi nhanh”; không tạo record; cho gửi lại sau | US04, US08, US11 |
+| S15 | Edit rate limit | Phone, Web | >5 lần sửa trong rolling 60 giây/target | chặn trước khi tạo version mới/gọi AI; giữ nội dung đang soạn; cho thử lại | US05, US11 |
 | S16 | Nickname bị chặn tại submit | Phone, Web | validation/AI chặn, hoặc AI không cho quyết định hợp lệ | “Tên này chưa phù hợp”; giữ nickname cũ/fallback mask; cho thử tên khác; không Pending, không tiêu quota | US04, US11 |
 | S17 | Nickname hết quota 24h | Phone, Web | đã có 1 lần đổi nickname thành công trong 24 giờ | chặn submit đổi nickname và cho biết phải chờ hết chu kỳ 24 giờ *(microcopy chưa có trong backlog)* | US04 |
 
@@ -968,10 +969,10 @@ Wireframe trước:
 - Sort/Pin/List/Thread.
 - C06/C07 Composer.
 - Auth Gate.
-- Fallback states: `S06` Pending · `S05` scope Đóng (giữ tab `Bình luận`, bỏ count) · `S03` Target no longer available (“Bình luận không còn khả dụng”) · `S04` Account Lock target (“Bình luận hiện không khả dụng”) — S03 và S04 phải là **hai frame riêng** vì microcopy và ý nghĩa (vĩnh viễn vs tạm thời) khác nhau.
+- Fallback states: `S06` Pending · `S05` scope Đóng (giữ tab `Bình luận`, bỏ count) · `S03` Target no longer available (“Bình luận không còn khả dụng”) · `S04` Account Lock target (“Bình luận hiện không khả dụng”) — S03 và S04 phải là **hai frame riêng** vì microcopy và lifecycle semantics khác nhau; S03 không mặc định vĩnh viễn vì Admin root delete có thể Undo trong 90 ngày.
 - Edit/Delete/Report.
 - `C09` Nickname Settings + state `S16` nickname bị chặn tại submit và `S17` hết quota 24h (US04/US11 nằm trong P0).
-- Rate-limit states `S14` (Comment/Reply 5/phút/user) và `S15` (Edit 5/phút/target).
+- Rate-limit states `S14` (Comment/Reply 5 record/rolling 60 giây/user) và `S15` (Edit 5/phút/target).
 - SmartTV: biến thể read-only của `C02`, màn `C17` thread read-only và state `S13` (hướng dẫn + QR chuyển sang smartphone).
 
 Bao phủ US01, US02, US04, US05, US08, US10, US11, US12.

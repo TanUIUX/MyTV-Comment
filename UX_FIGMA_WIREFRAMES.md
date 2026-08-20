@@ -67,7 +67,7 @@ Screen Inventory được giữ lại làm thư viện/reference để Design/De
 - Pending moderation chỉ tác giả thấy trạng thái; không làm tăng public count.
 - Scope Đóng giữ tab `Bình luận` nhưng **bỏ count**, ẩn rating/list/composer/interaction; user vẫn ở đúng content context.
 - Deep link target bị moderation/lifecycle không trả 404 và không lộ nội dung cũ.
-- Ba chuỗi fallback là **ba frame khác nhau**, không tái sử dụng lẫn nhau: `S05` scope Đóng → “Khu vực bình luận hiện không khả dụng” (giữ tab `Bình luận`, bỏ count); `S04` Account Lock → “Bình luận hiện không khả dụng” (tạm thời); `S03` moderation/self-delete/Admin cascade → “Bình luận không còn khả dụng” (vĩnh viễn).
+- Ba chuỗi fallback là **ba frame khác nhau**, không tái sử dụng lẫn nhau: `S05` scope Đóng → “Khu vực bình luận hiện không khả dụng” (giữ tab `Bình luận`, bỏ count); `S04` Account Lock → “Bình luận hiện không khả dụng” (tạm thời); `S03` moderation/self-delete/Admin cascade → “Bình luận không còn khả dụng” (target hiện không khả dụng; self-delete không Undo, Admin root delete có thể Undo trong 90 ngày theo lifecycle).
 - Edit giữ public version cũ trong lúc version mới chờ moderation.
 - Self-delete root cảnh báo cascade toàn thread và **không thể Undo public lại**.
 - Report là tín hiệu; gửi Report không tự động ẩn comment.
